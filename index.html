@@ -62,7 +62,8 @@
   .bm-name-col{min-width:0}
   .bm-meta-line{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bm-name{font-size:22px;font-weight:800;color:#fff;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.4)}
-  .bm-sprite-corner{position:absolute;top:2px;right:8px;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .bm-sprite-corner{position:absolute;top:2px;right:8px;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));animation:bm-float 2.2s ease-in-out infinite}
+  @keyframes bm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   .bm-bst-corner{position:absolute;bottom:8px;right:12px;font-size:17px;font-weight:800;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .bm-card-body{display:flex;gap:14px;padding:14px;background:var(--panel2)}
   .bm-body-left{flex:1;min-width:0}
@@ -71,7 +72,7 @@
   .bm-move-name{font-weight:700;color:var(--ink)}
   .bm-move-power{font-weight:400;color:var(--dim)}
   .bm-move-tags{display:flex;gap:5px;margin-top:4px;align-items:center}
-  .bm-move-cat-icon{font-size:12px;opacity:.85}
+  .bm-move-cat-icon{font-size:11px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;color:#fff;flex:none}
   .bm-moves-unknown{font-size:9.5px;color:var(--dim);font-style:italic}
   .bm-item-row{margin-top:7px;font-size:9.5px;display:flex;align-items:center;gap:5px;background:var(--bg);border-radius:6px;padding:4px 7px}
   .bm-item-icon{width:16px;height:16px;object-fit:contain;flex:none}
@@ -88,7 +89,7 @@
   .bm-lvlcap b{font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
   .guide-battle-card{background:linear-gradient(180deg,var(--panel2) 0%,var(--bg) 100%);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
   .guide-battle-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .trainer-sprite{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+  .trainer-sprite{width:136px;height:136px;object-fit:contain;image-rendering:pixelated;flex:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
   .guide-battle-header-text{display:flex;flex-direction:column;gap:3px;min-width:0}
   .guide-battle-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .guide-cat-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;color:#fff;text-transform:uppercase;letter-spacing:.3px}
@@ -2655,6 +2656,14 @@ function statBarHtml(label, value, maxRef){
   </div>`;
 }
 const CATEGORY_ICON = {"Physical":"👊","Special":"◎","Status":"☯"};
+const CATEGORY_ICON_COLOR = {"Physical":"#d0492a","Special":"#4a7fc9","Status":"#a8a878"};
+function battleLocationDisplay(b){
+  const loc = locLabel(b.location);
+  if(b.category === "Gym Leader"){
+    return currentLang==="es" ? `Gimnasio ${loc}` : `${loc} Gym`;
+  }
+  return loc;
+}
 function battleCardHtml(b, starter){
   const team = b.teamsByStarter ? b.teamsByStarter[starter] : b.team;
   const teamHtml = team.map((entry)=>{
@@ -2684,7 +2693,7 @@ function battleCardHtml(b, starter){
         return `<div class="bm-move-chip">
           <div class="bm-move-name">${moveName(mv)}${mvPower ? ` <span class="bm-move-power">×${mvPower}</span>` : ""}</div>
           <div class="bm-move-tags">
-            <span class="bm-move-cat-icon" title="${BM_CATEGORY_ES[mvCat]||mvCat}">${CATEGORY_ICON[mvCat]||""}</span>
+            <span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mvCat]||'#555'}" title="${BM_CATEGORY_ES[mvCat]||mvCat}">${CATEGORY_ICON[mvCat]||""}</span>
             <span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mvType]}">${typeLabel(mvType)}</span>
           </div>
         </div>`;
@@ -2753,7 +2762,7 @@ function battleCardHtml(b, starter){
           <span class="guide-battle-name">${trainerNameLabel(b.name)}</span>
           <span class="guide-cat-badge" style="background:${specialtyColor}">${specialtyLabel}</span>
         </div>
-        <span class="guide-battle-loc">${locLabel(b.location)}</span>
+        <span class="guide-battle-loc">${battleLocationDisplay(b)}</span>
       </div>
       <div class="guide-battle-header-right">
         <div class="bm-mini-icons">${teamIconsHtml}</div>
