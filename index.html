@@ -23,36 +23,42 @@
   .panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:16px}
   .panel.active{display:block}
 
-  .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin-bottom:18px}
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;margin-bottom:18px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px}
-  .team-bm-card{padding:0!important;overflow:hidden;min-height:0;width:100%!important}
-  .bm-name-input{background:transparent;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
+  .team-bm-card{padding:0!important;overflow:visible;min-height:0;width:100%!important}
+  .team-bm-card input,.team-bm-card select{-webkit-appearance:none;appearance:none;box-shadow:none;border-radius:0}
+  .team-bm-card input:focus,.team-bm-card select:focus{box-shadow:none}
+  .bm-name-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
   .bm-name-input::placeholder{color:rgba(255,255,255,.65)}
   .bm-name-input:hover{border-bottom-color:rgba(255,255,255,.3)}
   .bm-name-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
-  .bm-lvl-input{background:transparent;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
+  .bm-lvl-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
   .bm-lvl-input:hover{border-bottom-color:rgba(255,255,255,.3)}
   .bm-lvl-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
-  .bm-inline-select{background:transparent;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:130px;cursor:pointer}
+  .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:130px;cursor:pointer}
   .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
-  .bm-inline-select option{color:#000}
+  .bm-inline-select option{color:#000;background:#fff}
   .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
+  .team-sprite-toggle{position:absolute;top:8px;left:8px;font-size:9px;cursor:pointer;user-select:none;background:rgba(0,0,0,.3);color:rgba(255,255,255,.8);border-radius:4px;padding:2px 5px;transition:background .15s}
+  .team-sprite-toggle:hover{background:rgba(0,0,0,.5);color:#fff}
+  .team-sprite-toggle.on{background:rgba(0,0,0,.55);color:#fff}
   .team-shiny-toggle{position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));opacity:.55;transition:opacity .15s}
   .team-shiny-toggle:hover{opacity:.9}
   .team-shiny-toggle input{display:none}
   .team-shiny-toggle.is-shiny{filter:drop-shadow(0 0 4px gold);opacity:1}
-  .team-move-input{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit;transition:border-color .15s}
+  .team-move-input{background:none!important;border:none;border-bottom:1px solid transparent;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit;transition:border-color .15s}
   .team-move-input:hover{border-bottom-color:var(--line)}
   .team-move-input:focus{outline:none;border-bottom-color:var(--dim)}
-  .team-item-input-row{margin-top:8px;display:flex;align-items:center;gap:6px;padding:2px 0}
-  .team-item-input-row input{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--ink);font-size:11.5px;flex:1;padding:2px 0;font-family:inherit;transition:border-color .15s}
-  .team-item-input-row input:hover{border-bottom-color:var(--line)}
-  .team-item-input-row input:focus{outline:none;border-bottom-color:var(--dim)}
-  .team-ev-input{width:28px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-item-slot{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;width:56px}
+  .team-item-input{background:none!important;border:none;border-bottom:1px solid transparent;color:rgba(255,255,255,.85);font-size:8.5px;text-align:center;width:56px;padding:0;font-family:inherit;transition:border-color .15s}
+  .team-item-input::placeholder{color:rgba(255,255,255,.5)}
+  .team-item-input:hover{border-bottom-color:rgba(255,255,255,.3)}
+  .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
+  .team-ev-input{width:24px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9.5px;text-align:center;padding:1px 0;font-family:inherit}
   .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
-  .team-iv-input{width:26px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-iv-input{width:22px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9.5px;text-align:center;padding:1px 0;font-family:inherit}
   .team-iv-input:focus{outline:none;border-bottom-color:var(--accent2)}
-  .bm-stat-row.editable{gap:4px}
+  .bm-stat-row.editable{gap:3px}
   .team-level-note{font-size:9px;color:var(--dim);text-align:center;line-height:1}
   .slot-head{margin-bottom:8px}
   input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:7px 8px;border-radius:6px;font-size:13px}
@@ -1015,7 +1021,7 @@ document.querySelectorAll(".tab").forEach(tab=>{
 const EV_KEYS = ["hp","atk","def","spa","spd","spe"];
 const EV_LABELS = {hp:"PS",atk:"Atq",def:"Def",spa:"AEs",spd:"DEs",spe:"Vel"};
 function blankSlot(){
-  return {name:"", nature:"Hardy", ability:"", item:"", level:100, shiny:false,
+  return {name:"", nature:"Hardy", ability:"", item:"", level:100, shiny:false, hqSprite:false,
     moves:["","","",""], evs:{hp:0,atk:0,def:0,spa:0,spd:0,spe:0},
     ivs:{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}};
 }
@@ -1105,6 +1111,9 @@ function renderTeam(){
   grid.querySelectorAll(".teamShinyCheck").forEach(cb=>{
     cb.addEventListener("change", e=>{ team[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
   });
+  grid.querySelectorAll(".team-sprite-toggle").forEach(btn=>{
+    btn.addEventListener("click", e=>{ const idx = +e.target.dataset.idx; team[idx].hqSprite = !team[idx].hqSprite; renderTeam(); });
+  });
   grid.querySelectorAll(".teamNature").forEach(sel=>{
     sel.value = team[+sel.dataset.idx].nature || "Hardy";
     sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].nature = e.target.value; renderTeam(); });
@@ -1168,9 +1177,11 @@ function teamCardHtml(mon, slot, idx){
   const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
   const headerColor = TYPE_COLORS[types[0]] || "#555";
   const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
-  const spriteSrc = slot.shiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
+  const normalSprite = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
+  const hdSprite = slot.shiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
   const fallbackAnimated = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
-  const staticFallback = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
+  const spriteSrc = slot.hqSprite ? hdSprite : normalSprite;
+  const spriteClass = slot.hqSprite ? "bm-sprite-corner team-sprite-hd" : "bm-sprite-corner";
   const nm = slot.nature || "Hardy";
   const evs = slot.evs || {hp:0,atk:0,def:0,spa:0,spd:0,spe:0};
   const level = slot.level || 100;
@@ -1209,6 +1220,7 @@ function teamCardHtml(mon, slot, idx){
   return `<div class="bm-card team-bm-card">
     <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
       <div class="bm-types">${typeBadges}</div>
+      <div class="team-sprite-toggle ${slot.hqSprite?'on':''}" data-idx="${idx}" title="${currentLang==='es'?'Cambiar a sprite de alta resolución':'Switch to high-res sprite'}">HD</div>
       <label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
         <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
       </label>
@@ -1226,18 +1238,17 @@ function teamCardHtml(mon, slot, idx){
             <input type="text" class="bm-name-input teamNameInput" data-idx="${idx}" value="${slot.name||""}" placeholder="Pokémon #${idx+1}" autocomplete="off">
           </div>
         </div>
-        <div class="bm-item-slot">${itemSpriteHtml}</div>
-        <img src="${spriteSrc}" referrerpolicy="no-referrer" class="bm-sprite-corner team-sprite-hd" onerror="this.onerror=function(){this.style.display='none'};this.src='${fallbackAnimated}'">
+        <div class="team-item-slot">
+          ${itemSpriteHtml}
+          <input type="text" class="team-item-input teamItemInput" data-idx="${idx}" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">
+        </div>
+        <img src="${spriteSrc}" referrerpolicy="no-referrer" class="${spriteClass}" onerror="this.onerror=function(){this.style.display='none'};this.src='${fallbackAnimated}'">
       </div>
       <div class="bm-bst-corner">${bst}</div>
     </div>
     <div class="bm-card-body">
       <div class="bm-body-left">
         <div class="bm-moves-grid">${movesGrid}</div>
-        <div class="team-item-input-row">
-          <span style="font-size:9.5px;color:var(--dim);flex:none">${currentLang==="es"?"Objeto":"Item"}</span>
-          <input type="text" class="teamItemInput" data-idx="${idx}" value="${slot.item||""}" placeholder="${currentLang==="es"?"Escribe un objeto":"Type an item"}" autocomplete="off">
-        </div>
       </div>
       ${statsHtml}
     </div>
