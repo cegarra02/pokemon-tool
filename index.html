@@ -26,7 +26,8 @@
   .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(470px,1fr));gap:14px;margin-bottom:18px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px}
   .team-hd-global-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);margin-bottom:10px;cursor:pointer;user-select:none}
-  .team-bm-card{padding:0!important;overflow:visible;min-height:0;width:100%!important}
+  .team-bm-card{padding:0!important;overflow:visible;min-height:0;width:100%!important;cursor:default}
+  .team-bm-card:hover{transform:none!important;border-color:var(--line)!important}
   .team-bm-card input,.team-bm-card select{-webkit-appearance:none;appearance:none;box-shadow:none;border-radius:0}
   .team-bm-card input:focus,.team-bm-card select:focus{box-shadow:none}
   .bm-name-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s;display:block}
@@ -1603,17 +1604,11 @@ function positionAcList(inputEl, list, minWidth){
     if(left < 8) left = 8;
     list.style.left = left + 'px';
     list.style.right = 'auto';
+    // siempre debajo del campo, nunca arriba
+    list.style.top = Math.round(rect.bottom + 4) + 'px';
+    list.style.bottom = 'auto';
     const spaceBelow = vpHeight - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
-    if(spaceBelow >= spaceAbove){
-      list.style.top = Math.round(rect.bottom + 4) + 'px';
-      list.style.bottom = 'auto';
-      list.style.maxHeight = Math.max(40, Math.min(230, spaceBelow)) + 'px';
-    } else {
-      list.style.top = 'auto';
-      list.style.bottom = Math.round(vpHeight - rect.top + 4) + 'px';
-      list.style.maxHeight = Math.max(40, Math.min(230, spaceAbove)) + 'px';
-    }
+    list.style.maxHeight = Math.max(60, Math.min(230, spaceBelow)) + 'px';
   } catch(err){
     // si algo falla al calcular la posicion, al menos que la lista se vea en un sitio razonable
     list.style.position = 'fixed';
