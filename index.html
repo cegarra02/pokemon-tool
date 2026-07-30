@@ -23,25 +23,26 @@
   .panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:0 10px 10px 10px;padding:16px}
   .panel.active{display:block}
 
-  .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px;margin-bottom:18px}
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(470px,1fr));gap:14px;margin-bottom:18px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px}
+  .team-hd-global-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);margin-bottom:10px;cursor:pointer;user-select:none}
   .team-bm-card{padding:0!important;overflow:visible;min-height:0;width:100%!important}
   .team-bm-card input,.team-bm-card select{-webkit-appearance:none;appearance:none;box-shadow:none;border-radius:0}
   .team-bm-card input:focus,.team-bm-card select:focus{box-shadow:none}
-  .bm-name-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
+  .bm-name-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s;display:block}
   .bm-name-input::placeholder{color:rgba(255,255,255,.65)}
   .bm-name-input:hover{border-bottom-color:rgba(255,255,255,.3)}
   .bm-name-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
-  .bm-lvl-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
+  .bm-name-static{cursor:pointer}
+  .bm-name-static:hover{opacity:.85}
+  .bm-lvl-input{background:none!important;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:24px;line-height:1.1;width:58px;padding:0 0 2px 0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s;text-align:left}
   .bm-lvl-input:hover{border-bottom-color:rgba(255,255,255,.3)}
   .bm-lvl-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
-  .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:130px;cursor:pointer}
+  .bm-meta-sep{color:rgba(255,255,255,.5);font-size:10px}
+  .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:110px;cursor:pointer}
   .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
   .bm-inline-select option{color:#000;background:#fff}
   .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
-  .team-sprite-toggle{position:absolute;top:8px;left:8px;font-size:9px;cursor:pointer;user-select:none;background:rgba(0,0,0,.3);color:rgba(255,255,255,.8);border-radius:4px;padding:2px 5px;transition:background .15s}
-  .team-sprite-toggle:hover{background:rgba(0,0,0,.5);color:#fff}
-  .team-sprite-toggle.on{background:rgba(0,0,0,.55);color:#fff}
   .team-shiny-toggle{position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));opacity:.55;transition:opacity .15s}
   .team-shiny-toggle:hover{opacity:.9}
   .team-shiny-toggle input{display:none}
@@ -49,16 +50,20 @@
   .team-move-input{background:none!important;border:none;border-bottom:1px solid transparent;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit;transition:border-color .15s}
   .team-move-input:hover{border-bottom-color:var(--line)}
   .team-move-input:focus{outline:none;border-bottom-color:var(--dim)}
-  .team-item-slot{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;width:56px}
-  .team-item-input{background:none!important;border:none;border-bottom:1px solid transparent;color:rgba(255,255,255,.85);font-size:8.5px;text-align:center;width:56px;padding:0;font-family:inherit;transition:border-color .15s}
+  .team-move-static{cursor:pointer}
+  .team-move-static:hover{background:var(--panel2)}
+  .team-item-slot{display:flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px}
+  .team-item-static{cursor:pointer;transition:transform .1s}
+  .team-item-static:hover{transform:scale(1.08)}
+  .team-item-input{background:none!important;border:none;border-bottom:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.9);font-size:9px;text-align:center;width:52px;padding:2px 0;font-family:inherit}
   .team-item-input::placeholder{color:rgba(255,255,255,.5)}
-  .team-item-input:hover{border-bottom-color:rgba(255,255,255,.3)}
-  .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
-  .team-ev-input{width:24px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9.5px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.8)}
+  .team-stats-col{width:200px!important}
+  .team-stat-row{grid-template-columns:24px 20px 22px 30px 1fr!important;font-size:9.5px!important;gap:4px!important}
+  .team-ev-input{width:20px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
   .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
-  .team-iv-input{width:22px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9.5px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-iv-input{width:18px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
   .team-iv-input:focus{outline:none;border-bottom-color:var(--accent2)}
-  .bm-stat-row.editable{gap:3px}
   .team-level-note{font-size:9px;color:var(--dim);text-align:center;line-height:1}
   .slot-head{margin-bottom:8px}
   input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:7px 8px;border-radius:6px;font-size:13px}
@@ -297,6 +302,7 @@
 
 <div class="panel active" id="panel-equipo">
   <div class="hint">Estilo Pokémon Showdown: elige especie, habilidad real, naturaleza, objeto, 4 movimientos y EVs. La cobertura y las debilidades se recalculan solas con los movimientos que pongas.</div>
+  <label class="team-hd-global-toggle"><input type="checkbox" id="globalHqSpriteToggle"> Sprites en alta resolución</label>
   <div class="team-grid" id="teamGrid"></div>
   <button class="btn" id="saveTeamBtn">Guardar equipo</button>
   <span class="save-note" id="teamSaveNote"></span>
@@ -1026,6 +1032,9 @@ function blankSlot(){
     ivs:{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}};
 }
 let team = new Array(6).fill(null).map(blankSlot);
+let teamEditing = {}; // claves tipo "3-name", "3-item", "3-move-2" mientras se está editando ese campo
+let globalHqSprite = false;
+document.getElementById("globalHqSpriteToggle").addEventListener("change", e=>{ globalHqSprite = e.target.checked; renderTeam(); });
 document.getElementById("teamGrid").addEventListener("input", (e)=>{ if(e.target.classList.contains("teamEv") || e.target.classList.contains("teamIv")) handleEvInput(e); });
 
 function slotStatBars(mon, slot){
@@ -1102,7 +1111,8 @@ function renderTeam(){
 
   grid.querySelectorAll(".teamNameInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createAutocomplete(inp, (mon)=>{ team[idx].name = mon[1]; renderTeam(); renderAnalysis(); });
+    createAutocomplete(inp, (mon)=>{ team[idx].name = mon[1]; setEditingField(idx,"name",false); renderTeam(); renderAnalysis(); });
+    inp.addEventListener("blur", ()=>{ if(team[idx].name){ setEditingField(idx,"name",false); renderTeam(); } });
     inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ team[idx].name=""; renderTeam(); renderAnalysis(); } });
   });
   grid.querySelectorAll(".teamLevel").forEach(inp=>{
@@ -1110,9 +1120,6 @@ function renderTeam(){
   });
   grid.querySelectorAll(".teamShinyCheck").forEach(cb=>{
     cb.addEventListener("change", e=>{ team[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
-  });
-  grid.querySelectorAll(".team-sprite-toggle").forEach(btn=>{
-    btn.addEventListener("click", e=>{ const idx = +e.target.dataset.idx; team[idx].hqSprite = !team[idx].hqSprite; renderTeam(); });
   });
   grid.querySelectorAll(".teamNature").forEach(sel=>{
     sel.value = team[+sel.dataset.idx].nature || "Hardy";
@@ -1123,14 +1130,23 @@ function renderTeam(){
   });
   grid.querySelectorAll(".teamItemInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; renderTeam(); });
-    inp.addEventListener("change", ()=>{ team[idx].item = inp.value; renderTeam(); });
+    createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; setEditingField(idx,"item",false); renderTeam(); });
+    inp.addEventListener("blur", ()=>{ if(team[idx].item){ setEditingField(idx,"item",false); } team[idx].item = inp.value; renderTeam(); });
   });
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
-    createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; renderTeam(); renderAnalysis(); },
+    createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; setEditingField(idx,"move-"+mi,false); renderTeam(); renderAnalysis(); },
       ()=>{ const mon = findMon(team[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
-    inp.addEventListener("change", ()=>{ team[idx].moves[mi] = inp.value; renderTeam(); renderAnalysis(); });
+    inp.addEventListener("blur", ()=>{
+      team[idx].moves[mi] = inp.value;
+      if(team[idx].moves[mi]) setEditingField(idx,"move-"+mi,false);
+      renderTeam(); renderAnalysis();
+    });
+  });
+  grid.querySelectorAll("[data-editfield]").forEach(el=>{
+    const idx = +el.dataset.idx, field = el.dataset.editfield;
+    el.addEventListener("click", ()=>startEditField(idx, field));
+    el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); startEditField(idx, field); } });
   });
 
   team.forEach((slot,idx)=>updateEvTotal(idx));
@@ -1142,11 +1158,11 @@ function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
   let labelColor = "var(--dim)", arrow = "";
   if(natMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
   else if(natMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
-  return `<div class="bm-stat-row editable">
-    <span class="bm-stat-label" style="color:${labelColor};width:28px;flex:none">${label}${arrow}</span>
+  return `<div class="bm-stat-row team-stat-row">
+    <span class="bm-stat-label" style="color:${labelColor}">${label}${arrow}</span>
     <input type="number" class="team-iv-input teamIv" data-idx="${idx}" data-key="${evKey}" value="${ivValue===undefined?31:ivValue}" min="0" max="31" title="IV">
     <input type="number" class="team-ev-input teamEv" data-idx="${idx}" data-key="${evKey}" value="${evValue||0}" min="0" max="252" title="EV">
-    <span class="bm-stat-val" style="color:${color};width:34px;flex:none;text-align:right">${value}</span>
+    <span class="bm-stat-val" style="color:${color}">${value}</span>
     <div class="bm-stat-bar-track"><div class="bm-stat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
   </div>`;
 }
@@ -1162,8 +1178,8 @@ function teamStatsColHtml(mon, slot, idx){
   const finalSpa = calcStat(mon[6], ivs.spa, evs.spa||0, level, natureMult(nm,"spa"));
   const finalSpd = calcStat(mon[7], ivs.spd, evs.spd||0, level, natureMult(nm,"spd"));
   const finalSpe = calcStat(mon[8], ivs.spe, evs.spe||0, level, natureMult(nm,"spe"));
-  return `<div class="bm-stats-col" data-idx="${idx}">
-    <div class="bm-stat-row" style="opacity:.6;font-size:8.5px"><span style="width:28px;flex:none"></span><span style="width:30px;flex:none;text-align:center">IV</span><span style="width:34px;flex:none;text-align:center">EV</span><span style="flex:1"></span></div>
+  return `<div class="bm-stats-col team-stats-col" data-idx="${idx}">
+    <div class="bm-stat-row team-stat-row" style="opacity:.55;font-size:8px"><span></span><span style="text-align:center">IV</span><span style="text-align:center">EV</span><span></span><span></span></div>
     ${teamStatRowHtml("HP", finalHp, 0, "hp", evs.hp, ivs.hp, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Atq":"Atk", finalAtk, natMod("atk"), "atk", evs.atk, ivs.atk, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Def":"Def", finalDef, natMod("def"), "def", evs.def, ivs.def, idx)}
@@ -1171,6 +1187,23 @@ function teamStatsColHtml(mon, slot, idx){
     ${teamStatRowHtml(currentLang==="es"?"DEs":"SpD", finalSpd, natMod("spd"), "spd", evs.spd, ivs.spd, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Vel":"Spe", finalSpe, natMod("spe"), "spe", evs.spe, ivs.spe, idx)}
   </div>`;
+}
+function isEditingField(idx, field){ return !!teamEditing[`${idx}-${field}`]; }
+function setEditingField(idx, field, on){
+  const key = `${idx}-${field}`;
+  if(on) teamEditing[key] = true; else delete teamEditing[key];
+}
+function focusEditingField(){
+  const keys = Object.keys(teamEditing);
+  if(!keys.length) return;
+  const key = keys[keys.length-1];
+  const el = document.querySelector(`[data-editkey="${key}"]`);
+  if(el){ el.focus(); if(el.select) el.select(); }
+}
+function startEditField(idx, field){
+  setEditingField(idx, field, true);
+  renderTeam();
+  requestAnimationFrame(focusEditingField);
 }
 function teamCardHtml(mon, slot, idx){
   const types = mon[2];
@@ -1180,8 +1213,8 @@ function teamCardHtml(mon, slot, idx){
   const normalSprite = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
   const hdSprite = slot.shiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
   const fallbackAnimated = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
-  const spriteSrc = slot.hqSprite ? hdSprite : normalSprite;
-  const spriteClass = slot.hqSprite ? "bm-sprite-corner team-sprite-hd" : "bm-sprite-corner";
+  const spriteSrc = globalHqSprite ? hdSprite : normalSprite;
+  const spriteClass = globalHqSprite ? "bm-sprite-corner team-sprite-hd" : "bm-sprite-corner";
   const nm = slot.nature || "Hardy";
   const evs = slot.evs || {hp:0,atk:0,def:0,spa:0,spd:0,spe:0};
   const level = slot.level || 100;
@@ -1196,21 +1229,36 @@ function teamCardHtml(mon, slot, idx){
     }).join("") +
     (abilityList.length===0 && slot.ability ? `<option value="${slot.ability}" selected>${slot.ability}</option>` : "");
 
-  let itemSpriteHtml = "";
-  if(slot.item){
-    const it = ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase());
-    if(it) itemSpriteHtml = `<img src="${itemSpriteUrlHD(it[1])}" class="bm-item-sprite-big" referrerpolicy="no-referrer" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(it[2])}'">`;
+  // ---- nombre: texto limpio si ya está elegido y no se está editando ----
+  let nameHtml;
+  if(slot.name && !isEditingField(idx,"name")){
+    nameHtml = `<span class="bm-name-input bm-name-static" data-idx="${idx}" data-editfield="name" tabindex="0">${pokemonName(mon)}</span>`;
+  } else {
+    nameHtml = `<input type="text" class="bm-name-input teamNameInput" data-idx="${idx}" data-editkey="${idx}-name" value="${slot.name||""}" placeholder="Pokémon #${idx+1}" autocomplete="off">`;
   }
 
+  // ---- objeto: solo el sprite si ya está resuelto y no se está editando ----
+  let itemAreaHtml;
+  const resolvedItem = slot.item ? ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase()) : null;
+  if(resolvedItem && !isEditingField(idx,"item")){
+    itemAreaHtml = `<img src="${itemSpriteUrlHD(resolvedItem[1])}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" title="${itemName(resolvedItem)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(resolvedItem[2])}'">`;
+  } else {
+    itemAreaHtml = `<input type="text" class="team-item-input teamItemInput" data-idx="${idx}" data-editkey="${idx}-item" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">`;
+  }
+
+  // ---- movimientos: texto limpio con insignias si ya están resueltos ----
   const movesGrid = [0,1,2,3].map(mi=>{
     const mn = slot.moves[mi] || "";
     const mv = mn ? MOVES.find(m=>m[1].toLowerCase()===mn.trim().toLowerCase()) : null;
-    const tagsHtml = mv
-      ? `<div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>`
-      : `<div class="bm-move-tags">&nbsp;</div>`;
+    if(mv && !isEditingField(idx,"move-"+mi)){
+      return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0">
+        <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
+        <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>
+      </div>`;
+    }
     return `<div class="bm-move-chip">
-      <div class="bm-move-name-row"><input type="text" class="team-move-input teamMoveInput" data-idx="${idx}" data-mi="${mi}" value="${mn}" placeholder="${currentLang==='es'?'Movimiento':'Move'} ${mi+1}" autocomplete="off">${mv&&mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
-      ${tagsHtml}
+      <div class="bm-move-name-row"><input type="text" class="team-move-input teamMoveInput" data-idx="${idx}" data-mi="${mi}" data-editkey="${idx}-move-${mi}" value="${mn}" placeholder="${currentLang==='es'?'Movimiento':'Move'} ${mi+1}" autocomplete="off"></div>
+      <div class="bm-move-tags">&nbsp;</div>
     </div>`;
   }).join("");
 
@@ -1220,7 +1268,6 @@ function teamCardHtml(mon, slot, idx){
   return `<div class="bm-card team-bm-card">
     <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
       <div class="bm-types">${typeBadges}</div>
-      <div class="team-sprite-toggle ${slot.hqSprite?'on':''}" data-idx="${idx}" title="${currentLang==='es'?'Cambiar a sprite de alta resolución':'Switch to high-res sprite'}">HD</div>
       <label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
         <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
       </label>
@@ -1233,15 +1280,13 @@ function teamCardHtml(mon, slot, idx){
           <div class="bm-name-col">
             <div class="bm-meta-line">
               <select class="bm-inline-select teamAbility" data-idx="${idx}">${abilityOptions}</select>
-              <select class="bm-inline-select teamNature" data-idx="${idx}">${natureOptionsHtml()}</select>
+              <span class="bm-meta-sep">·</span>
+              <select class="bm-inline-select teamNature" data-idx="${idx}">${natureOptionsHtml(true)}</select>
             </div>
-            <input type="text" class="bm-name-input teamNameInput" data-idx="${idx}" value="${slot.name||""}" placeholder="Pokémon #${idx+1}" autocomplete="off">
+            ${nameHtml}
           </div>
         </div>
-        <div class="team-item-slot">
-          ${itemSpriteHtml}
-          <input type="text" class="team-item-input teamItemInput" data-idx="${idx}" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">
-        </div>
+        <div class="team-item-slot">${itemAreaHtml}</div>
         <img src="${spriteSrc}" referrerpolicy="no-referrer" class="${spriteClass}" onerror="this.onerror=function(){this.style.display='none'};this.src='${fallbackAnimated}'">
       </div>
       <div class="bm-bst-corner">${bst}</div>
@@ -1326,9 +1371,10 @@ const NATURES = [
   ["Modest","spa","atk"],["Mild","spa","def"],["Quiet","spa","spe"],["Bashful",null,null],["Rash","spa","spd"],
   ["Calm","spd","atk"],["Gentle","spd","def"],["Sassy","spd","spe"],["Careful","spd","spa"],["Quirky",null,null]
 ];
-function natureOptionsHtml(){
+function natureOptionsHtml(compact){
   return NATURES.map(n=>{
-    const label = n[1] ? `${n[0]} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${n[0]} (neutra)`;
+    const displayName = (compact && currentLang==="es") ? (NATURE_ES[n[0]]||n[0]) : n[0];
+    const label = compact ? displayName : (n[1] ? `${n[0]} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${n[0]} (neutra)`);
     return `<option value="${n[0]}">${label}</option>`;
   }).join("");
 }
