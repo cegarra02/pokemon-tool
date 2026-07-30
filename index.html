@@ -40,12 +40,9 @@
   .bm-lvl-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
   .bm-meta-sep{color:rgba(255,255,255,.5);font-size:10px}
   .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;width:auto;max-width:100px;flex:none;cursor:pointer}
-  .nature-select-wrap{position:relative;display:inline-flex;align-items:center;flex:none}
-  .nature-display-label{white-space:nowrap;font-size:10.5px;color:rgba(255,255,255,.9);pointer-events:none}
-  .nature-real-select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-  .ability-select-wrap{position:relative;display:inline-flex;align-items:center;flex:none;max-width:110px}
-  .ability-display-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;color:rgba(255,255,255,.9);pointer-events:none}
-  .ability-real-select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .nature-display-label{white-space:nowrap;font-size:10.5px;color:rgba(255,255,255,.9);cursor:pointer;max-width:110px;overflow:hidden;text-overflow:ellipsis;display:inline-block}
+  .ability-display-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;color:rgba(255,255,255,.9);cursor:pointer;max-width:110px;display:inline-block}
+  .choice-trigger:hover{text-decoration:underline}
   .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
   .bm-inline-select option{color:#000;background:#fff}
   .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
@@ -1137,12 +1134,32 @@ function renderTeam(){
   grid.querySelectorAll(".teamShinyCheck").forEach(cb=>{
     cb.addEventListener("change", e=>{ team[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
   });
-  grid.querySelectorAll(".teamNature").forEach(sel=>{
-    sel.value = team[+sel.dataset.idx].nature || "Hardy";
-    sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].nature = e.target.value; renderTeam(); });
+  grid.querySelectorAll('.choice-trigger[data-choice="nature"]').forEach(label=>{
+    const idx = +label.dataset.idx;
+    label.addEventListener("click", ()=>{
+      const options = NATURES.map(n=>({
+        value: n[0],
+        label: n[1] ? `${currentLang==="es"?(NATURE_ES[n[0]]||n[0]):n[0]} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${currentLang==="es"?(NATURE_ES[n[0]]||n[0]):n[0]} (${currentLang==='es'?'neutra':'neutral'})`
+      }));
+      openChoiceList(label, options, (opt)=>{ team[idx].nature = opt.value; renderTeam(); }, 190);
+    });
   });
-  grid.querySelectorAll(".teamAbility").forEach(sel=>{
-    sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].ability = e.target.value; renderTeam(); });
+  grid.querySelectorAll('.choice-trigger[data-choice="ability"]').forEach(label=>{
+    const idx = +label.dataset.idx;
+    label.addEventListener("click", ()=>{
+      const mon = findMon(team[idx].name);
+      const abilityList = mon ? (ABILITIES_BY_ID[String(mon[0])] || []) : [];
+      const options = abilityList.map(([n,hid])=>{
+        const aid = ABILITY_NAME_TO_ID[n];
+        const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
+        const label = ab ? abilityName(ab) : n;
+        return { value:n, label: label + (hid?(currentLang==="es"?" (oculta)":" (hidden)"):"") };
+      });
+      if(options.length===0){
+        options.push({value:"", label: currentLang==="es"?"Sin datos para este Pokémon":"No data for this Pokémon"});
+      }
+      openChoiceList(label, options, (opt)=>{ if(opt.value) team[idx].ability = opt.value; renderTeam(); }, 190);
+    });
   });
   grid.querySelectorAll(".teamItemInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
@@ -1225,9 +1242,40 @@ function focusEditingField(){
   if(el){ el.focus(); if(el.select) el.select(); }
 }
 function startEditField(idx, field){
+  if(window.hideBmTooltip) window.hideBmTooltip();
   setEditingField(idx, field, true);
   renderTeam();
   requestAnimationFrame(focusEditingField);
+}
+let activeChoiceList = null;
+function closeChoiceList(){
+  if(activeChoiceList){
+    activeChoiceList.remove();
+    activeChoiceList = null;
+    document.removeEventListener('click', closeChoiceListOnOutsideClick, true);
+    document.removeEventListener('touchstart', closeChoiceListOnOutsideClick, true);
+  }
+}
+function closeChoiceListOnOutsideClick(e){
+  if(activeChoiceList && !activeChoiceList.contains(e.target)) closeChoiceList();
+}
+function openChoiceList(anchorEl, options, onPick, minWidth){
+  closeChoiceList();
+  const list = document.createElement('div');
+  list.className = 'ac-list';
+  list.innerHTML = options.map((opt,i)=>`<div class="ac-item" data-i="${i}">${opt.label}</div>`).join('');
+  document.body.appendChild(list);
+  list.style.display = 'block';
+  positionAcList(anchorEl, list, minWidth||160);
+  list.addEventListener('mousedown', (e)=>{
+    const item = e.target.closest('.ac-item');
+    if(item){ onPick(options[+item.dataset.i]); closeChoiceList(); }
+  });
+  activeChoiceList = list;
+  setTimeout(()=>{
+    document.addEventListener('click', closeChoiceListOnOutsideClick, true);
+    document.addEventListener('touchstart', closeChoiceListOnOutsideClick, true);
+  }, 0);
 }
 function teamCardHtml(mon, slot, idx){
   const types = mon[2];
@@ -1305,15 +1353,9 @@ function teamCardHtml(mon, slot, idx){
           </div>
           <div class="bm-name-col">
             <div class="bm-meta-line">
-              <span class="ability-select-wrap ability-tip-wrap" data-tip="${(()=>{ if(!slot.ability) return ''; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?escAttr(`<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`):''; })()}">
-                <span class="ability-display-label">${(()=>{ if(!slot.ability) return currentLang==='es'?'— habilidad —':'— ability —'; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?abilityName(ab):slot.ability; })()}</span>
-                <select class="bm-inline-select teamAbility ability-real-select" data-idx="${idx}">${abilityOptions}</select>
-              </span>
+              <span class="ability-display-label choice-trigger" data-idx="${idx}" data-choice="ability" tabindex="0">${(()=>{ if(!slot.ability) return currentLang==='es'?'— habilidad —':'— ability —'; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?abilityName(ab):slot.ability; })()}</span>
               <span class="bm-meta-sep">·</span>
-              <span class="nature-select-wrap">
-                <span class="nature-display-label">${natureDisplayName(nm)}</span>
-                <select class="bm-inline-select teamNature nature-real-select" data-idx="${idx}">${natureOptionsHtml(true)}</select>
-              </span>
+              <span class="nature-display-label choice-trigger" data-idx="${idx}" data-choice="nature" tabindex="0">${natureDisplayName(nm)}</span>
             </div>
             ${nameHtml}
           </div>
@@ -1550,33 +1592,27 @@ let currentMove = null;
 function moveBadge(type){ return `<span class="badge" style="background:${TYPE_COLORS[type]}">${typeLabel(type)}</span>`; }
 function positionAcList(inputEl, list, minWidth){
   const rect = inputEl.getBoundingClientRect();
-  const vv = window.visualViewport;
-  const vpWidth = vv ? vv.width : window.innerWidth;
-  const vpHeight = vv ? vv.height : window.innerHeight;
-  const vpOffsetX = vv ? vv.offsetLeft : 0;
-  const vpOffsetY = vv ? vv.offsetTop : 0;
-  const width = Math.max(rect.width, minWidth||200);
+  const vpWidth = window.innerWidth;
+  const vpHeight = window.innerHeight;
+  const width = Math.max(Math.round(rect.width), minWidth||200);
   list.style.position = 'fixed';
-  list.style.minWidth = width + 'px';
   list.style.width = width + 'px';
-  let left = rect.left;
-  const maxLeft = vpOffsetX + vpWidth - width - 8;
-  if(left > maxLeft) left = Math.max(vpOffsetX + 8, maxLeft);
-  if(left < vpOffsetX + 8) left = vpOffsetX + 8;
+  list.style.minWidth = width + 'px';
+  let left = Math.round(rect.left);
+  if(left + width > vpWidth - 8) left = Math.max(8, vpWidth - width - 8);
+  if(left < 8) left = 8;
   list.style.left = left + 'px';
   list.style.right = 'auto';
-  // primero mostramos arriba/abajo sin límite para poder medir la altura real
-  list.style.top = (rect.bottom + 4) + 'px';
-  list.style.maxHeight = '230px';
-  const listRect = list.getBoundingClientRect();
-  const spaceBelow = (vpOffsetY + vpHeight) - rect.bottom - 8;
-  const spaceAbove = rect.top - vpOffsetY - 8;
-  if(listRect.height > spaceBelow && spaceAbove > spaceBelow){
-    const h = Math.min(230, spaceAbove);
-    list.style.maxHeight = h + 'px';
-    list.style.top = Math.max(vpOffsetY + 8, rect.top - h - 4) + 'px';
+  const spaceBelow = vpHeight - rect.bottom - 8;
+  const spaceAbove = rect.top - 8;
+  if(spaceBelow >= 120 || spaceBelow >= spaceAbove){
+    list.style.top = Math.round(rect.bottom + 4) + 'px';
+    list.style.bottom = 'auto';
+    list.style.maxHeight = Math.max(80, Math.min(230, spaceBelow)) + 'px';
   } else {
-    list.style.maxHeight = Math.min(230, spaceBelow) + 'px';
+    list.style.top = 'auto';
+    list.style.bottom = Math.round(vpHeight - rect.top + 4) + 'px';
+    list.style.maxHeight = Math.max(80, Math.min(230, spaceAbove)) + 'px';
   }
 }
 function createMoveAutocomplete(inputEl, onSelect, getPool){
@@ -2958,6 +2994,7 @@ function battleLocationDisplay(b){
 (function(){
   const tip = document.getElementById("bmTooltip");
   let currentTarget = null;
+  window.hideBmTooltip = function(){ currentTarget = null; tip.style.display = "none"; };
   function showTip(el, evt){
     const html = el.getAttribute("data-tip");
     if(!html) return;
@@ -2988,6 +3025,18 @@ function battleLocationDisplay(b){
       tip.style.display = "none";
     }
   });
+  // En pantallas táctiles "mouseover" se dispara al tocar pero "mouseout" no llega de forma fiable,
+  // sobre todo si el elemento se sustituye al activar el modo edición. Cerramos el tooltip
+  // explícitamente en cualquier toque/clic que no sea sobre el propio elemento con tooltip activo.
+  function hideTipUnless(target){
+    const el = target.closest && target.closest("[data-tip]");
+    if(el !== currentTarget){
+      currentTarget = null;
+      tip.style.display = "none";
+    }
+  }
+  document.addEventListener("touchstart", (e)=>{ hideTipUnless(e.target); }, true);
+  document.addEventListener("click", (e)=>{ hideTipUnless(e.target); }, true);
 })();
 function battleCardHtml(b, starter){
   const team = b.teamsByStarter ? b.teamsByStarter[starter] : b.team;
