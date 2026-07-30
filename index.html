@@ -25,24 +25,33 @@
 
   .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin-bottom:18px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px}
-  .team-bm-card{padding:0!important;overflow:hidden;min-height:0}
-  .bm-name-input{background:transparent;border:none;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .team-bm-card{padding:0!important;overflow:hidden;min-height:0;width:100%!important}
+  .bm-name-input{background:transparent;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
   .bm-name-input::placeholder{color:rgba(255,255,255,.65)}
-  .bm-name-input:focus{outline:none;border-bottom:1px dashed rgba(255,255,255,.6)}
-  .bm-lvl-input{background:transparent;border:none;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-  .bm-lvl-input:focus{outline:none;border-bottom:1px dashed rgba(255,255,255,.6)}
-  .bm-inline-select{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:10.5px;border-radius:4px;padding:1px 4px;font-family:inherit;max-width:120px}
-  .bm-inline-select:focus{outline:none}
-  .team-shiny-toggle{position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .bm-name-input:hover{border-bottom-color:rgba(255,255,255,.3)}
+  .bm-name-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
+  .bm-lvl-input{background:transparent;border:none;border-bottom:1px solid transparent;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5);transition:border-color .15s}
+  .bm-lvl-input:hover{border-bottom-color:rgba(255,255,255,.3)}
+  .bm-lvl-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
+  .bm-inline-select{background:transparent;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:130px;cursor:pointer}
+  .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
+  .bm-inline-select option{color:#000}
+  .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
+  .team-shiny-toggle{position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));opacity:.55;transition:opacity .15s}
+  .team-shiny-toggle:hover{opacity:.9}
   .team-shiny-toggle input{display:none}
-  .team-shiny-toggle.is-shiny{filter:drop-shadow(0 0 4px gold)}
-  .team-move-input{background:transparent;border:none;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit}
-  .team-move-input:focus{outline:none;border-bottom:1px dashed var(--dim)}
-  .team-item-input-row{margin-top:8px;display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:8px;padding:6px 9px}
-  .team-item-input-row input{background:transparent;border:none;color:var(--ink);font-size:11.5px;flex:1;padding:0;font-family:inherit}
-  .team-item-input-row input:focus{outline:none}
-  .team-ev-input{width:34px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:4px;font-size:10px;text-align:center;padding:2px;font-family:inherit}
-  .team-iv-input{width:30px;background:var(--panel2);border:1px solid var(--accent2);color:var(--accent2);border-radius:4px;font-size:10px;text-align:center;padding:2px;font-family:inherit}
+  .team-shiny-toggle.is-shiny{filter:drop-shadow(0 0 4px gold);opacity:1}
+  .team-move-input{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit;transition:border-color .15s}
+  .team-move-input:hover{border-bottom-color:var(--line)}
+  .team-move-input:focus{outline:none;border-bottom-color:var(--dim)}
+  .team-item-input-row{margin-top:8px;display:flex;align-items:center;gap:6px;padding:2px 0}
+  .team-item-input-row input{background:transparent;border:none;border-bottom:1px solid transparent;color:var(--ink);font-size:11.5px;flex:1;padding:2px 0;font-family:inherit;transition:border-color .15s}
+  .team-item-input-row input:hover{border-bottom-color:var(--line)}
+  .team-item-input-row input:focus{outline:none;border-bottom-color:var(--dim)}
+  .team-ev-input{width:28px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
+  .team-iv-input{width:26px;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-iv-input:focus{outline:none;border-bottom-color:var(--accent2)}
   .bm-stat-row.editable{gap:4px}
   .team-level-note{font-size:9px;color:var(--dim);text-align:center;line-height:1}
   .slot-head{margin-bottom:8px}
@@ -860,6 +869,8 @@ function toShowdownId(name){
 function animatedSpriteUrl(name){ return `https://play.pokemonshowdown.com/sprites/ani/${toShowdownId(name)}.gif`; }
 function shinySpriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`; }
 function animatedShinySpriteUrl(name){ return `https://play.pokemonshowdown.com/sprites/ani-shiny/${toShowdownId(name)}.gif`; }
+function homeSpriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`; }
+function homeSpriteUrlShiny(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${id}.png`; }
 function findMon(name){
   if(!name) return null;
   const n = name.trim().toLowerCase();
@@ -1108,9 +1119,9 @@ function renderTeam(){
   });
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
-    createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; renderAnalysis(); },
+    createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; renderTeam(); renderAnalysis(); },
       ()=>{ const mon = findMon(team[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
-    inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ team[idx].moves[mi]=""; renderAnalysis(); } });
+    inp.addEventListener("change", ()=>{ team[idx].moves[mi] = inp.value; renderTeam(); renderAnalysis(); });
   });
 
   team.forEach((slot,idx)=>updateEvTotal(idx));
@@ -1157,7 +1168,8 @@ function teamCardHtml(mon, slot, idx){
   const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
   const headerColor = TYPE_COLORS[types[0]] || "#555";
   const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
-  const spriteSrc = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
+  const spriteSrc = slot.shiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
+  const fallbackAnimated = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
   const staticFallback = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
   const nm = slot.nature || "Hardy";
   const evs = slot.evs || {hp:0,atk:0,def:0,spa:0,spd:0,spe:0};
@@ -1184,7 +1196,7 @@ function teamCardHtml(mon, slot, idx){
     const mv = mn ? MOVES.find(m=>m[1].toLowerCase()===mn.trim().toLowerCase()) : null;
     const tagsHtml = mv
       ? `<div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>`
-      : `<div class="bm-move-tags"><span class="bm-moves-unknown" style="font-size:9.5px">${currentLang==="es"?"sin resolver":"unresolved"}</span></div>`;
+      : `<div class="bm-move-tags">&nbsp;</div>`;
     return `<div class="bm-move-chip">
       <div class="bm-move-name-row"><input type="text" class="team-move-input teamMoveInput" data-idx="${idx}" data-mi="${mi}" value="${mn}" placeholder="${currentLang==='es'?'Movimiento':'Move'} ${mi+1}" autocomplete="off">${mv&&mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
       ${tagsHtml}
@@ -1215,7 +1227,7 @@ function teamCardHtml(mon, slot, idx){
           </div>
         </div>
         <div class="bm-item-slot">${itemSpriteHtml}</div>
-        <img src="${spriteSrc}" referrerpolicy="no-referrer" class="bm-sprite-corner" style="image-rendering:auto;animation:none" onerror="this.onerror=function(){this.style.display='none'};this.className='bm-sprite-corner';this.src='${staticFallback}'">
+        <img src="${spriteSrc}" referrerpolicy="no-referrer" class="bm-sprite-corner team-sprite-hd" onerror="this.onerror=function(){this.style.display='none'};this.src='${fallbackAnimated}'">
       </div>
       <div class="bm-bst-corner">${bst}</div>
     </div>
