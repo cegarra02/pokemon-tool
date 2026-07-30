@@ -43,6 +43,9 @@
   .nature-select-wrap{position:relative;display:inline-flex;align-items:center;flex:none}
   .nature-display-label{white-space:nowrap;font-size:10.5px;color:rgba(255,255,255,.9);pointer-events:none}
   .nature-real-select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .ability-select-wrap{position:relative;display:inline-flex;align-items:center;flex:none;max-width:110px}
+  .ability-display-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;color:rgba(255,255,255,.9);pointer-events:none}
+  .ability-real-select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
   .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
   .bm-inline-select option{color:#000;background:#fff}
   .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
@@ -58,16 +61,21 @@
   .team-item-slot{display:flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px;position:relative}
   .team-item-slot .ac-wrap{position:static}
   .team-item-slot .ac-list{left:0;right:auto;min-width:230px;z-index:50}
+  .bm-move-chip .ac-wrap{position:static}
+  .bm-move-chip .ac-list{left:0;right:auto;min-width:260px;z-index:50}
   .team-item-static{cursor:pointer;transition:transform .1s}
   .team-item-static:hover{transform:scale(1.08)}
-  .team-item-input{background:none!important;border:none;border-bottom:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.9);font-size:9px;text-align:center;width:52px;padding:2px 0;font-family:inherit}
+  .team-item-input{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.6)!important;border:none;border-bottom:1px solid rgba(255,255,255,.5);color:#fff;font-size:11px;text-align:right;width:190px;padding:4px 8px;font-family:inherit;border-radius:5px;z-index:25}
   .team-item-input::placeholder{color:rgba(255,255,255,.5)}
   .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.8)}
-  .team-stats-col{width:210px!important}
-  .team-stat-row{grid-template-columns:22px 28px 1fr 22px 24px!important;font-size:9.5px!important;gap:4px!important}
-  .team-ev-input{width:22px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-stats-col{width:230px!important}
+  .team-stat-row{grid-template-columns:24px 30px 1fr 26px 28px!important;font-size:9.5px!important;gap:4px!important}
+  .team-ev-input,.team-iv-input{-moz-appearance:textfield}
+  .team-ev-input::-webkit-inner-spin-button,.team-ev-input::-webkit-outer-spin-button,
+  .team-iv-input::-webkit-inner-spin-button,.team-iv-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .team-ev-input{width:26px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
   .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
-  .team-iv-input{width:20px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-iv-input{width:24px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
   .team-iv-input:focus{outline:none;border-bottom-color:var(--accent2)}
   .team-ev-total-note{font-size:9px;color:var(--dim);text-align:center;padding:6px 10px 10px;background:var(--panel2)}
   .slot-head{margin-bottom:8px}
@@ -115,7 +123,7 @@
   .bm-card-body{display:flex;gap:14px;padding:14px;background:var(--panel2)}
   .bm-body-left{flex:1;min-width:0}
   .bm-moves-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .bm-move-chip{font-size:12px;background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.35;cursor:help}
+  .bm-move-chip{font-size:12px;background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.35;cursor:help;position:relative}
   .bm-move-name-row{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap}
   .bm-move-name{font-weight:700;color:var(--ink);white-space:normal;min-width:0}
   .bm-move-power{font-weight:400;color:var(--dim);flex:none;white-space:nowrap}
@@ -1092,8 +1100,9 @@ function handleEvInput(e){
       rows.forEach((row,i)=>{
         const val = row.querySelector(".bm-stat-val");
         const fill = row.querySelector(".bm-stat-bar-fill");
-        if(val) val.textContent = finals[i];
-        if(fill) fill.style.width = Math.min(100, Math.round((finals[i]/400)*100))+"%";
+        const color = statTierColor(finals[i], 400);
+        if(val){ val.textContent = finals[i]; val.style.color = color; }
+        if(fill){ fill.style.width = Math.min(100, Math.round((finals[i]/400)*100))+"%"; fill.style.background = color; }
       });
     }
   }
@@ -1167,7 +1176,7 @@ function renderTeam(){
 
 function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
   const pct = Math.min(100, Math.round((value/400)*100));
-  const color = value>=300 ? "#2ecc71" : value>=180 ? "#f1c40f" : value>=100 ? "#e67e22" : "#e74c3c";
+  const color = statTierColor(value, 400);
   let labelColor = "var(--dim)", arrow = "";
   if(natMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
   else if(natMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
@@ -1294,8 +1303,9 @@ function teamCardHtml(mon, slot, idx){
           </div>
           <div class="bm-name-col">
             <div class="bm-meta-line">
-              <span class="ability-tip-wrap" data-tip="${(()=>{ if(!slot.ability) return ''; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?escAttr(`<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`):''; })()}">
-                <select class="bm-inline-select teamAbility" data-idx="${idx}">${abilityOptions}</select>
+              <span class="ability-select-wrap ability-tip-wrap" data-tip="${(()=>{ if(!slot.ability) return ''; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?escAttr(`<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`):''; })()}">
+                <span class="ability-display-label">${(()=>{ if(!slot.ability) return currentLang==='es'?'— habilidad —':'— ability —'; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?abilityName(ab):slot.ability; })()}</span>
+                <select class="bm-inline-select teamAbility ability-real-select" data-idx="${idx}">${abilityOptions}</select>
               </span>
               <span class="bm-meta-sep">·</span>
               <span class="nature-select-wrap">
@@ -1557,7 +1567,8 @@ function createMoveAutocomplete(inputEl, onSelect, getPool){
       list.style.display='block'; return;
     }
     const f = filter.trim().toLowerCase();
-    items = f ? pool.filter(m=>m[1].toLowerCase().includes(f) || (m[7]&&m[7].toLowerCase().includes(f))).slice(0,10) : pool.slice(0,10);
+    const cap = pool.length <= 120 ? pool.length : 50;
+    items = f ? pool.filter(m=>m[1].toLowerCase().includes(f) || (m[7]&&m[7].toLowerCase().includes(f))).slice(0,cap) : pool.slice(0,cap);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">No matching move (or not learnable in this generation)</div>`;
       list.style.display='block'; return;
@@ -1670,8 +1681,9 @@ function createItemAutocomplete(inputEl, onSelect){
   let items = [], hiIdx = -1;
   function render(filter){
     const f = filter.trim().toLowerCase();
-    if(f === ""){ list.style.display='none'; return; }
-    items = ITEMS.filter(it=>it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f))).slice(0,10);
+    items = f
+      ? ITEMS.filter(it=>it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f))).slice(0,40)
+      : ITEMS.slice(0,40);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin coincidencias — se guardará como objeto personalizado</div>`;
       list.style.display='block'; return;
@@ -2875,9 +2887,18 @@ function trainerSpriteUrl(name){
 }
 const BM_CATEGORY_ES = {"Physical":"FÍS","Special":"ESP","Status":"EST"};
 const CATEGORY_COLOR = {"Physical":"#c0392b","Special":"#2980b9","Status":"#7f8c8d"};
+function statTierColor(value, maxRef){
+  const pct = value / maxRef;
+  if(pct < 0.114) return "#e74c3c";  // rojo
+  if(pct < 0.231) return "#e67e22";  // naranja
+  if(pct < 0.349) return "#f1c40f";  // amarillo
+  if(pct < 0.467) return "#8bc34a";  // verde claro
+  if(pct < 0.584) return "#2e9e4f";  // verde oscuro
+  return "#3498db";                    // azul
+}
 function statBarHtml(label, value, maxRef, natureMod){
   const pct = Math.min(100, Math.round((value/maxRef)*100));
-  const color = value>=100 ? "#2ecc71" : value>=70 ? "#f1c40f" : value>=40 ? "#e67e22" : "#e74c3c";
+  const color = statTierColor(value, maxRef);
   let labelColor = "var(--dim)", arrow = "";
   if(natureMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
   else if(natureMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
