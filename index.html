@@ -55,14 +55,16 @@
   .bm-types{display:flex;gap:4px}
   .bm-type-badge{font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:5px;text-transform:uppercase;letter-spacing:.3px}
   .bm-type-badge-sm{font-size:8px;padding:1px 6px}
-  .bm-header-main{display:flex;align-items:flex-end;gap:12px;margin-top:10px;max-width:58%}
+  .bm-header-flex-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .bm-header-main{display:flex;align-items:flex-end;gap:12px;flex:1;min-width:0}
+  .bm-item-slot{flex:none;width:48px;display:flex;align-items:center;justify-content:center}
   .bm-lvl-col{flex:none}
   .bm-lvl-label{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .bm-lvl-num{font-size:34px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.4)}
   .bm-name-col{min-width:0}
   .bm-meta-line{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bm-name{font-size:22px;font-weight:800;color:#fff;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.4)}
-  .bm-sprite-corner{position:absolute;top:2px;right:8px;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));animation:bm-float 2.2s ease-in-out infinite}
+  .bm-sprite-corner{flex:none;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));animation:bm-float 2.2s ease-in-out infinite}
   @keyframes bm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   .bm-bst-corner{position:absolute;bottom:8px;right:12px;font-size:17px;font-weight:800;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .bm-card-body{display:flex;gap:14px;padding:14px;background:var(--panel2)}
@@ -75,7 +77,7 @@
   .bm-move-tags{display:flex;gap:5px;margin-top:4px;align-items:center}
   .bm-move-cat-icon{font-size:11px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;color:#fff;flex:none}
   .bm-moves-unknown{font-size:9.5px;color:var(--dim);font-style:italic}
-  .bm-item-sprite-big{position:absolute;top:50%;right:106px;transform:translateY(-50%);width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:help}
+  .bm-item-sprite-big{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:help}
   .bm-stats-col{width:120px;flex:none;display:flex;flex-direction:column;gap:5px;justify-content:center}
   .bm-stat-row{display:grid;grid-template-columns:28px 28px 1fr;align-items:center;gap:5px;font-size:10.5px}
   .bm-stat-label{font-weight:700}
@@ -729,6 +731,10 @@ const ITEM_POKESPRITE_URLS = {"stretchy-spring": "https://raw.githubusercontent.
 function itemSpriteUrl(slug){
   if(ITEM_POKESPRITE_URLS[slug]) return ITEM_POKESPRITE_URLS[slug];
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${slug}.png`;
+}
+function itemSpriteUrlHD(nameEn){
+  const fileName = nameEn.replace(/ /g,"_");
+  return `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_SV_Sprite.png`;
 }
 function itemSpriteUrlFallback(slug){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gen9/${slug}.png`; }
 function itemSpriteUrlFallback2(slug){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gen8/${slug}.png`; }
@@ -2766,7 +2772,9 @@ function battleCardHtml(b, starter){
       const it = ITEMS_ALL.find(i=>i[2]===itemSlug);
       if(it){
         const itemTip = `<b>${itemName(it)}</b><br>${itemDescText(it)}`;
-        itemSpriteHtml = `<img src="${itemSpriteUrl(it[2])}" class="bm-item-sprite-big" data-tip="${escAttr(itemTip)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
+        const hdUrl = itemSpriteUrlHD(it[1]);
+        const lowResUrl = itemSpriteUrl(it[2]);
+        itemSpriteHtml = `<img src="${hdUrl}" class="bm-item-sprite-big" data-tip="${escAttr(itemTip)}" referrerpolicy="no-referrer" onerror="this.onerror=function(){this.style.display='none'};this.src='${lowResUrl}'">`;
       }
     }
 
@@ -2785,18 +2793,20 @@ function battleCardHtml(b, starter){
     return `<div class="bm-card" data-goto="${pid}">
       <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
         <div class="bm-types">${typeBadges}</div>
-        <div class="bm-header-main">
-          <div class="bm-lvl-col">
-            <div class="bm-lvl-label">${currentLang==="es"?"Nivel":"Level"}</div>
-            <div class="bm-lvl-num">${lvl}</div>
+        <div class="bm-header-flex-row">
+          <div class="bm-header-main">
+            <div class="bm-lvl-col">
+              <div class="bm-lvl-label">${currentLang==="es"?"Nivel":"Level"}</div>
+              <div class="bm-lvl-num">${lvl}</div>
+            </div>
+            <div class="bm-name-col">
+              <div class="bm-meta-line">${metaLine}</div>
+              <div class="bm-name">${pokemonName(mon)}</div>
+            </div>
           </div>
-          <div class="bm-name-col">
-            <div class="bm-meta-line">${metaLine}</div>
-            <div class="bm-name">${pokemonName(mon)}</div>
-          </div>
+          <div class="bm-item-slot">${itemSpriteHtml}</div>
+          <img src="${spriteUrl(pid)}" referrerpolicy="no-referrer" loading="lazy" class="bm-sprite-corner">
         </div>
-        ${itemSpriteHtml}
-        <img src="${spriteUrl(pid)}" referrerpolicy="no-referrer" loading="lazy" class="bm-sprite-corner">
         <div class="bm-bst-corner">${bst}</div>
       </div>
       <div class="bm-card-body">
