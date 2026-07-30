@@ -973,8 +973,9 @@ function createAutocomplete(inputEl, onSelect){
   let items = [], hiIdx = -1;
   function render(filter){
     const f = filter.trim().toLowerCase();
-    items = f ? POKEDEX.filter(p=>p[1].toLowerCase().includes(f) || (POKEDEX_NAMES_ES[String(p[0])]||"").toLowerCase().includes(f)).slice(0,8) : [];
-    if(f === ""){ list.style.display='none'; return; }
+    items = f
+      ? POKEDEX.filter(p=>p[1].toLowerCase().includes(f) || (POKEDEX_NAMES_ES[String(p[0])]||"").toLowerCase().includes(f)).slice(0,40)
+      : POKEDEX.slice(0,40);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Ningún Pokémon coincide":"No matching Pokémon"}</div>`;
       list.style.display='block';
@@ -994,7 +995,7 @@ function createAutocomplete(inputEl, onSelect){
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(mon){ inputEl.value = pokemonName(mon); list.style.display='none'; onSelect(mon); }
   inputEl.addEventListener('input', ()=>render(inputEl.value));
-  inputEl.addEventListener('focus', ()=>{ if(inputEl.value) render(inputEl.value); });
+  inputEl.addEventListener('focus', ()=>render(inputEl.value));
   inputEl.addEventListener('blur', ()=> setTimeout(()=>{ list.style.display='none'; }, 150));
   inputEl.addEventListener('keydown', (e)=>{
     if(list.style.display==='none') return;
