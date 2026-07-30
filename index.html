@@ -1260,6 +1260,7 @@ function closeChoiceListOnOutsideClick(e){
   if(activeChoiceList && !activeChoiceList.contains(e.target)) closeChoiceList();
 }
 function openChoiceList(anchorEl, options, onPick, minWidth){
+  if(window.hideBmTooltip) window.hideBmTooltip();
   closeChoiceList();
   const list = document.createElement('div');
   list.className = 'ac-list';
@@ -1353,7 +1354,7 @@ function teamCardHtml(mon, slot, idx){
           </div>
           <div class="bm-name-col">
             <div class="bm-meta-line">
-              <span class="ability-display-label choice-trigger" data-idx="${idx}" data-choice="ability" tabindex="0">${(()=>{ if(!slot.ability) return currentLang==='es'?'— habilidad —':'— ability —'; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?abilityName(ab):slot.ability; })()}</span>
+              <span class="ability-display-label choice-trigger" data-idx="${idx}" data-choice="ability" tabindex="0" data-tip="${(()=>{ if(!slot.ability) return ''; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?escAttr(`<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`):''; })()}">${(()=>{ if(!slot.ability) return currentLang==='es'?'— habilidad —':'— ability —'; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?abilityName(ab):slot.ability; })()}</span>
               <span class="bm-meta-sep">·</span>
               <span class="nature-display-label choice-trigger" data-idx="${idx}" data-choice="nature" tabindex="0">${natureDisplayName(nm)}</span>
             </div>
