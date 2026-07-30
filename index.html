@@ -39,7 +39,10 @@
   .bm-lvl-input:hover{border-bottom-color:rgba(255,255,255,.3)}
   .bm-lvl-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.7)}
   .bm-meta-sep{color:rgba(255,255,255,.5);font-size:10px}
-  .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;max-width:110px;cursor:pointer}
+  .bm-inline-select{background:none!important;border:none;color:rgba(255,255,255,.9);font-size:10.5px;padding:0;font-family:inherit;width:auto;max-width:100px;flex:none;cursor:pointer}
+  .nature-select-wrap{position:relative;display:inline-flex;align-items:center;flex:none}
+  .nature-display-label{white-space:nowrap;font-size:10.5px;color:rgba(255,255,255,.9);pointer-events:none}
+  .nature-real-select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
   .bm-inline-select:hover,.bm-inline-select:focus{outline:none;color:#fff}
   .bm-inline-select option{color:#000;background:#fff}
   .team-sprite-hd{width:112px!important;height:112px!important;image-rendering:auto!important;animation:none!important}
@@ -52,19 +55,21 @@
   .team-move-input:focus{outline:none;border-bottom-color:var(--dim)}
   .team-move-static{cursor:pointer}
   .team-move-static:hover{background:var(--panel2)}
-  .team-item-slot{display:flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px}
+  .team-item-slot{display:flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px;position:relative}
+  .team-item-slot .ac-wrap{position:static}
+  .team-item-slot .ac-list{left:0;right:auto;min-width:230px;z-index:50}
   .team-item-static{cursor:pointer;transition:transform .1s}
   .team-item-static:hover{transform:scale(1.08)}
   .team-item-input{background:none!important;border:none;border-bottom:1px solid rgba(255,255,255,.35);color:rgba(255,255,255,.9);font-size:9px;text-align:center;width:52px;padding:2px 0;font-family:inherit}
   .team-item-input::placeholder{color:rgba(255,255,255,.5)}
   .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.8)}
-  .team-stats-col{width:200px!important}
-  .team-stat-row{grid-template-columns:24px 20px 22px 30px 1fr!important;font-size:9.5px!important;gap:4px!important}
-  .team-ev-input{width:20px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-stats-col{width:210px!important}
+  .team-stat-row{grid-template-columns:22px 28px 1fr 22px 24px!important;font-size:9.5px!important;gap:4px!important}
+  .team-ev-input{width:22px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
   .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
-  .team-iv-input{width:18px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
+  .team-iv-input{width:20px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:9px;text-align:center;padding:1px 0;font-family:inherit}
   .team-iv-input:focus{outline:none;border-bottom-color:var(--accent2)}
-  .team-level-note{font-size:9px;color:var(--dim);text-align:center;line-height:1}
+  .team-ev-total-note{font-size:9px;color:var(--dim);text-align:center;padding:6px 10px 10px;background:var(--panel2)}
   .slot-head{margin-bottom:8px}
   input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:7px 8px;border-radius:6px;font-size:13px}
   .slot-body{display:flex;gap:10px;align-items:flex-start}
@@ -102,7 +107,7 @@
   .bm-lvl-label{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .bm-lvl-num{font-size:34px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.4)}
   .bm-name-col{min-width:0}
-  .bm-meta-line{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bm-meta-line{font-size:11px;color:#fff;opacity:.85;text-shadow:0 1px 2px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
   .bm-name{font-size:22px;font-weight:800;color:#fff;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.4)}
   .bm-sprite-corner{flex:none;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));animation:bm-float 2.2s ease-in-out infinite}
   @keyframes bm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -1074,7 +1079,7 @@ function handleEvInput(e){
       box.outerHTML = teamStatsColHtml(mon, team[idx], idx);
     } else if(box){
       // actualizar solo los valores numéricos/barras sin tocar el input que tiene el foco
-      const rows = box.querySelectorAll(".bm-stat-row");
+      const rows = box.querySelectorAll(".bm-stat-row:not(.team-stat-hint-row)");
       const evs = team[idx].evs, ivs = team[idx].ivs||{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}, level = team[idx].level||100, nm = team[idx].nature||"Hardy";
       const finals = [
         calcHP(mon[3],ivs.hp,evs.hp||0,level),
@@ -1126,19 +1131,27 @@ function renderTeam(){
     sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].nature = e.target.value; renderTeam(); });
   });
   grid.querySelectorAll(".teamAbility").forEach(sel=>{
-    sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].ability = e.target.value; });
+    sel.addEventListener("change", e=>{ team[+e.target.dataset.idx].ability = e.target.value; renderTeam(); });
   });
   grid.querySelectorAll(".teamItemInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
     createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; setEditingField(idx,"item",false); renderTeam(); });
-    inp.addEventListener("blur", ()=>{ if(team[idx].item){ setEditingField(idx,"item",false); } team[idx].item = inp.value; renderTeam(); });
+    inp.addEventListener("blur", ()=>{
+      const raw = inp.value.trim();
+      const found = raw ? ITEMS_ALL.find(i=>i[1].toLowerCase()===raw.toLowerCase() || (i[3]&&i[3].toLowerCase()===raw.toLowerCase())) : null;
+      team[idx].item = found ? found[1] : raw;
+      if(team[idx].item) setEditingField(idx,"item",false);
+      renderTeam();
+    });
   });
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
     createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; setEditingField(idx,"move-"+mi,false); renderTeam(); renderAnalysis(); },
       ()=>{ const mon = findMon(team[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
     inp.addEventListener("blur", ()=>{
-      team[idx].moves[mi] = inp.value;
+      const raw = inp.value.trim();
+      const found = raw ? MOVES.find(m=>m[1].toLowerCase()===raw.toLowerCase() || (m[7]&&m[7].toLowerCase()===raw.toLowerCase())) : null;
+      team[idx].moves[mi] = found ? found[1] : raw;
       if(team[idx].moves[mi]) setEditingField(idx,"move-"+mi,false);
       renderTeam(); renderAnalysis();
     });
@@ -1160,10 +1173,10 @@ function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
   else if(natMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
   return `<div class="bm-stat-row team-stat-row">
     <span class="bm-stat-label" style="color:${labelColor}">${label}${arrow}</span>
-    <input type="number" class="team-iv-input teamIv" data-idx="${idx}" data-key="${evKey}" value="${ivValue===undefined?31:ivValue}" min="0" max="31" title="IV">
-    <input type="number" class="team-ev-input teamEv" data-idx="${idx}" data-key="${evKey}" value="${evValue||0}" min="0" max="252" title="EV">
     <span class="bm-stat-val" style="color:${color}">${value}</span>
     <div class="bm-stat-bar-track"><div class="bm-stat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <input type="number" class="team-iv-input teamIv" data-idx="${idx}" data-key="${evKey}" value="${ivValue===undefined?31:ivValue}" min="0" max="31" title="IV">
+    <input type="number" class="team-ev-input teamEv" data-idx="${idx}" data-key="${evKey}" value="${evValue||0}" min="0" max="252" title="EV">
   </div>`;
 }
 function teamStatsColHtml(mon, slot, idx){
@@ -1179,7 +1192,7 @@ function teamStatsColHtml(mon, slot, idx){
   const finalSpd = calcStat(mon[7], ivs.spd, evs.spd||0, level, natureMult(nm,"spd"));
   const finalSpe = calcStat(mon[8], ivs.spe, evs.spe||0, level, natureMult(nm,"spe"));
   return `<div class="bm-stats-col team-stats-col" data-idx="${idx}">
-    <div class="bm-stat-row team-stat-row" style="opacity:.55;font-size:8px"><span></span><span style="text-align:center">IV</span><span style="text-align:center">EV</span><span></span><span></span></div>
+    <div class="bm-stat-row team-stat-row team-stat-hint-row" style="opacity:.55;font-size:8px"><span></span><span></span><span></span><span style="text-align:center">IV</span><span style="text-align:center">EV</span></div>
     ${teamStatRowHtml("HP", finalHp, 0, "hp", evs.hp, ivs.hp, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Atq":"Atk", finalAtk, natMod("atk"), "atk", evs.atk, ivs.atk, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Def":"Def", finalDef, natMod("def"), "def", evs.def, ivs.def, idx)}
@@ -1241,7 +1254,8 @@ function teamCardHtml(mon, slot, idx){
   let itemAreaHtml;
   const resolvedItem = slot.item ? ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase()) : null;
   if(resolvedItem && !isEditingField(idx,"item")){
-    itemAreaHtml = `<img src="${itemSpriteUrlHD(resolvedItem[1])}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" title="${itemName(resolvedItem)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(resolvedItem[2])}'">`;
+    const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
+    itemAreaHtml = `<img src="${itemSpriteUrlHD(resolvedItem[1])}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(resolvedItem[2])}'">`;
   } else {
     itemAreaHtml = `<input type="text" class="team-item-input teamItemInput" data-idx="${idx}" data-editkey="${idx}-item" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">`;
   }
@@ -1251,7 +1265,8 @@ function teamCardHtml(mon, slot, idx){
     const mn = slot.moves[mi] || "";
     const mv = mn ? MOVES.find(m=>m[1].toLowerCase()===mn.trim().toLowerCase()) : null;
     if(mv && !isEditingField(idx,"move-"+mi)){
-      return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0">
+      const moveTip = `<b>${moveName(mv)}</b><br>${moveDescText(mv[0])}`;
+      return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0" data-tip="${escAttr(moveTip)}">
         <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
         <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>
       </div>`;
@@ -1279,9 +1294,14 @@ function teamCardHtml(mon, slot, idx){
           </div>
           <div class="bm-name-col">
             <div class="bm-meta-line">
-              <select class="bm-inline-select teamAbility" data-idx="${idx}">${abilityOptions}</select>
+              <span class="ability-tip-wrap" data-tip="${(()=>{ if(!slot.ability) return ''; const aid=ABILITY_NAME_TO_ID[slot.ability]; const ab=aid!==undefined?ABILITIES_ALL.find(a=>a[0]===aid):null; return ab?escAttr(`<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`):''; })()}">
+                <select class="bm-inline-select teamAbility" data-idx="${idx}">${abilityOptions}</select>
+              </span>
               <span class="bm-meta-sep">·</span>
-              <select class="bm-inline-select teamNature" data-idx="${idx}">${natureOptionsHtml(true)}</select>
+              <span class="nature-select-wrap">
+                <span class="nature-display-label">${natureDisplayName(nm)}</span>
+                <select class="bm-inline-select teamNature nature-real-select" data-idx="${idx}">${natureOptionsHtml(true)}</select>
+              </span>
             </div>
             ${nameHtml}
           </div>
@@ -1297,11 +1317,11 @@ function teamCardHtml(mon, slot, idx){
       </div>
       ${statsHtml}
     </div>
-    <div class="team-level-note ev-total" data-idx="${idx}">EVs: ${evTotal}/508</div>
+    <div class="team-ev-total-note" data-idx="${idx}">EVs: ${evTotal}/508</div>
   </div>`;
 }
 function updateEvTotal(idx){
-  const el = document.querySelector(`.ev-total[data-idx="${idx}"]`);
+  const el = document.querySelector(`.team-ev-total-note[data-idx="${idx}"]`);
   if(!el) return;
   const total = EV_KEYS.reduce((s,k)=>s+(team[idx].evs[k]||0),0);
   el.textContent = `EVs: ${total}/508`;
@@ -1371,12 +1391,22 @@ const NATURES = [
   ["Modest","spa","atk"],["Mild","spa","def"],["Quiet","spa","spe"],["Bashful",null,null],["Rash","spa","spd"],
   ["Calm","spd","atk"],["Gentle","spd","def"],["Sassy","spd","spe"],["Careful","spd","spa"],["Quirky",null,null]
 ];
-function natureOptionsHtml(compact){
+const NATURE_ES = {
+  Hardy:"Fuerte", Lonely:"Huraña", Brave:"Audaz", Adamant:"Firme", Naughty:"Pícara",
+  Bold:"Osada", Docile:"Dócil", Relaxed:"Plácida", Impish:"Agitada", Lax:"Floja",
+  Timid:"Miedosa", Hasty:"Activa", Serious:"Seria", Jolly:"Alegre", Naive:"Ingenua",
+  Modest:"Modesta", Mild:"Afable", Quiet:"Mansa", Bashful:"Tímida", Rash:"Alocada",
+  Calm:"Serena", Gentle:"Amable", Sassy:"Grosera", Careful:"Cauta", Quirky:"Rara",
+};
+function natureOptionsHtml(withHint){
   return NATURES.map(n=>{
-    const displayName = (compact && currentLang==="es") ? (NATURE_ES[n[0]]||n[0]) : n[0];
-    const label = compact ? displayName : (n[1] ? `${n[0]} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${n[0]} (neutra)`);
+    const displayName = currentLang==="es" ? (NATURE_ES[n[0]]||n[0]) : n[0];
+    const label = withHint ? (n[1] ? `${displayName} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${displayName} (${currentLang==='es'?'neutra':'neutral'})`) : displayName;
     return `<option value="${n[0]}">${label}</option>`;
   }).join("");
+}
+function natureDisplayName(natureCode){
+  return currentLang==="es" ? (NATURE_ES[natureCode]||natureCode) : natureCode;
 }
 function natureMult(natureName, statKey){
   const n = NATURES.find(x=>x[0]===natureName);
@@ -1385,8 +1415,8 @@ function natureMult(natureName, statKey){
   if(n[2]===statKey) return 0.9;
   return 1;
 }
-document.getElementById("atkNature").innerHTML = natureOptionsHtml();
-document.getElementById("defNature").innerHTML = natureOptionsHtml();
+document.getElementById("atkNature").innerHTML = natureOptionsHtml(true);
+document.getElementById("defNature").innerHTML = natureOptionsHtml(true);
 
 function calcStat(base, iv, ev, level, mult){
   return Math.floor((Math.floor(((2*base+iv+Math.floor(ev/4))*level)/100)+5)*mult);
@@ -2028,8 +2058,8 @@ function renderBreedRows(){
 }
 renderBreedRows();
 
-document.getElementById("breedNatureA").innerHTML = natureOptionsHtml();
-document.getElementById("breedNatureB").innerHTML = natureOptionsHtml();
+document.getElementById("breedNatureA").innerHTML = natureOptionsHtml(true);
+document.getElementById("breedNatureB").innerHTML = natureOptionsHtml(true);
 document.getElementById("breedTargetNature").innerHTML += NATURES.map(n=>`<option value="${n[0]}">${n[0]}</option>`).join("");
 
 function combinations(n, r){
@@ -2815,13 +2845,6 @@ function locLabel(loc){
   }
   return loc.replace(/\(no battle, escapes\)/g, "(no battle, flees)");
 }
-const NATURE_ES = {
-  Hardy:"Fuerte", Lonely:"Huraña", Brave:"Audaz", Adamant:"Firme", Naughty:"Pícara",
-  Bold:"Osada", Docile:"Dócil", Relaxed:"Plácida", Impish:"Agitada", Lax:"Floja",
-  Timid:"Miedosa", Hasty:"Activa", Serious:"Seria", Jolly:"Alegre", Naive:"Ingenua",
-  Modest:"Modesta", Mild:"Afable", Quiet:"Mansa", Bashful:"Tímida", Rash:"Alocada",
-  Calm:"Serena", Gentle:"Amable", Sassy:"Grosera", Careful:"Cauta", Quirky:"Rara",
-};
 const TRAINER_SPRITE_SLUG = {
   "Falkner":"falkner","Bugsy":"bugsy","Whitney":"whitney","Morty":"morty","Chuck":"chuck",
   "Jasmine":"jasmine","Pryce":"pryce","Clair":"clair","Lt. Surge":"lt-surge","Sabrina":"sabrina",
