@@ -73,7 +73,7 @@
   .bm-move-name{font-weight:700;color:var(--ink);white-space:normal;min-width:0}
   .bm-move-power{font-weight:400;color:var(--dim);flex:none;white-space:nowrap}
   .bm-move-tags{display:flex;gap:5px;margin-top:4px;align-items:center}
-  .bm-move-cat-icon{font-size:8px;font-weight:700;letter-spacing:.2px;padding:2px 5px;height:auto;display:inline-flex;align-items:center;justify-content:center;border-radius:4px;color:#fff;flex:none}
+  .bm-move-cat-icon{font-size:11px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;color:#fff;flex:none}
   .bm-moves-unknown{font-size:9.5px;color:var(--dim);font-style:italic}
   .bm-item-sprite-big{position:absolute;top:50%;right:106px;transform:translateY(-50%);width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:help}
   .bm-stats-col{width:120px;flex:none;display:flex;flex-direction:column;gap:5px;justify-content:center}
@@ -2671,7 +2671,7 @@ function statBarHtml(label, value, maxRef, natureMod){
     <div class="bm-stat-bar-track"><div class="bm-stat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
   </div>`;
 }
-const CATEGORY_ICON = {"Physical":"FÍS","Special":"ESP","Status":"EST"};
+const CATEGORY_ICON = {"Physical":"👊","Special":"◎","Status":"☯"};
 const CATEGORY_ICON_COLOR = {"Physical":"#d0492a","Special":"#4a7fc9","Status":"#a8a878"};
 function escAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
 function battleLocationDisplay(b){
@@ -2783,7 +2783,7 @@ function battleCardHtml(b, starter){
     const metaLine = [abilityHtml, natureLabel].filter(Boolean).join(" · ");
 
     return `<div class="bm-card" data-goto="${pid}">
-      <div class="bm-card-header" style="background-color:${headerColor};background-image:linear-gradient(115deg,${headerColor}ee 0%,${headerColor}99 45%,#00000055 100%)">
+      <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-main">
           <div class="bm-lvl-col">
