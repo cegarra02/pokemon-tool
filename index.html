@@ -189,7 +189,12 @@
   /* autocomplete */
   .ac-wrap{position:relative}
   .ac-list{position:fixed;background:#161616;border:1px solid var(--accent2);
-    border-radius:8px;max-height:230px;overflow-y:auto;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.4);display:none}
+    border-radius:8px;max-height:230px;overflow-y:auto;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.4);display:none;
+    scrollbar-width:thin;scrollbar-color:var(--accent2) #161616}
+  .ac-list::-webkit-scrollbar{width:8px}
+  .ac-list::-webkit-scrollbar-track{background:#161616;border-radius:0 8px 8px 0}
+  .ac-list::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:4px}
+  .ac-list::-webkit-scrollbar-thumb:hover{background:var(--accent)}
   .ac-item{padding:7px 11px;font-size:12.5px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:8px}
   .ac-item img{width:22px;height:22px;flex:none}
   .ac-item:hover,.ac-item.hi{background:var(--accent2);color:#fff}
@@ -787,6 +792,35 @@ function itemSpriteUrlHD(nameEn){
   const fileName = nameEn.replace(/ /g,"_");
   return `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_SV_Sprite.png`;
 }
+function itemSpriteHDCandidates(nameEn){
+  const fileName = nameEn.replace(/ /g,"_");
+  return [
+    `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_SV_Sprite.png`,   // Gen9 Escarlata/Púrpura, 160x160
+    `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_ZA_Sprite.png`,    // Leyendas Z-A, 160x160
+    `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_LA_Sprite.png`,    // Leyendas Arceus, 128x128
+    `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_BDSP_Sprite.png`,  // Diamante Bri./Perla Rel., 40x40
+  ];
+}
+function itemSpriteChainedTag(it, cssClass, extraAttrs){
+  const candidates = itemSpriteHDCandidates(it[1]);
+  const lowRes = itemSpriteUrl(it[2]);
+  const chainJson = escAttr(JSON.stringify(candidates));
+  return `<img src="${candidates[0]}" class="${cssClass}" data-hd-candidates="${chainJson}" data-hd-step="0" data-fallback="${escAttr(lowRes)}" ${extraAttrs||""} referrerpolicy="no-referrer" loading="lazy" onerror="handleHDItemImgError(this)">`;
+}
+function handleHDItemImgError(img){
+  let candidates = [];
+  try{ candidates = JSON.parse(img.dataset.hdCandidates||"[]"); }catch(e){}
+  let step = (+img.dataset.hdStep||0) + 1;
+  if(step < candidates.length){
+    img.dataset.hdStep = step;
+    img.src = candidates[step];
+  } else if(img.dataset.fallback && img.src !== img.dataset.fallback){
+    img.onerror = function(){ this.style.display='none'; };
+    img.src = img.dataset.fallback;
+  } else {
+    img.style.display = 'none';
+  }
+}
 function itemSpriteUrlFallback(slug){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gen9/${slug}.png`; }
 function itemSpriteUrlFallback2(slug){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gen8/${slug}.png`; }
 function handleItemImgError(img, slug, hideMode){
@@ -1315,7 +1349,8 @@ function teamCardHtml(mon, slot, idx){
   const resolvedItem = slot.item ? ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase()) : null;
   if(resolvedItem && !isEditingField(idx,"item")){
     const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
-    itemAreaHtml = `<img src="${itemSpriteUrlHD(resolvedItem[1])}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(resolvedItem[2])}'">`;
+    const candidates = itemSpriteHDCandidates(resolvedItem[1]);
+    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onerror="handleHDItemImgError(this)">`;
   } else {
     itemAreaHtml = `<input type="text" class="team-item-input teamItemInput" data-idx="${idx}" data-editkey="${idx}-item" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">`;
   }
@@ -2790,6 +2825,9 @@ function renderItemDexEntry(it){
   if(!it){ box.innerHTML = currentLang==="es" ? "Busca un objeto o haz clic en cualquiera de la cuadrícula de abajo." : "Search an item or click one from the grid below."; return; }
   const isMachine = isMachineItem(it);
   const spriteSrc = isMachine ? tmSpriteUrl(it, currentGeneration) : itemSpriteUrl(it[2]);
+  const spriteHtml = isMachine
+    ? `<img src="${spriteSrc}" referrerpolicy="no-referrer" style="width:56px;height:56px">`
+    : itemSpriteChainedTag(it, "", 'style="width:56px;height:56px"');
   const primary = isMachine ? tmDisplayName(it, currentGeneration) : itemName(it);
   const alt = (!isMachine && it[3]!==it[1]) ? (currentLang==="es"?it[1]:it[3]) : null;
 
@@ -2811,7 +2849,7 @@ function renderItemDexEntry(it){
 
   box.innerHTML = `
     <div style="display:flex;align-items:center;gap:14px">
-      <img src="${spriteSrc}" referrerpolicy="no-referrer" style="width:56px;height:56px" onerror="${isMachine?'':`handleItemImgError(this,'${it[2]}','visibility')`}">
+      ${spriteHtml}
       <div>
         <div style="font-size:18px;font-weight:800">${primary}${alt?` <span style="color:var(--dim);font-size:13px;font-weight:400">(${alt})</span>`:''}</div>
         <div style="font-size:11px;color:var(--dim)">${categoryLabelFor(it[4])} · ${genLabelFor(it[5])}</div>
@@ -2849,11 +2887,12 @@ function renderItemGrid(){
   document.getElementById("itemDexCount").textContent = list.length;
   itemDexGrid.innerHTML = list.map(it=>{
     const machine = isMachineItem(it);
-    const src = machine ? tmSpriteUrl(it, currentGeneration) : itemSpriteUrl(it[2]);
     const label = machine ? tmDisplayName(it, currentGeneration) : itemName(it);
-    const errHandler = machine ? "" : `onerror="handleItemImgError(this,'${it[2]}','visibility')"`;
+    const imgHtml = machine
+      ? `<img src="${tmSpriteUrl(it, currentGeneration)}" referrerpolicy="no-referrer" loading="lazy">`
+      : itemSpriteChainedTag(it, "", "");
     return `<div class="item-dex-card" data-id="${it[0]}">
-      <img src="${src}" referrerpolicy="no-referrer" loading="lazy" ${errHandler}>
+      ${imgHtml}
       <div class="item-dex-name">${label}</div>
     </div>`;
   }).join("");
@@ -3095,9 +3134,7 @@ function battleCardHtml(b, starter){
       const it = ITEMS_ALL.find(i=>i[2]===itemSlug);
       if(it){
         const itemTip = `<b>${itemName(it)}</b><br>${itemDescText(it)}`;
-        const hdUrl = itemSpriteUrlHD(it[1]);
-        const lowResUrl = itemSpriteUrl(it[2]);
-        itemSpriteHtml = `<img src="${hdUrl}" class="bm-item-sprite-big" data-tip="${escAttr(itemTip)}" referrerpolicy="no-referrer" onerror="this.onerror=function(){this.style.display='none'};this.src='${lowResUrl}'">`;
+        itemSpriteHtml = itemSpriteChainedTag(it, "bm-item-sprite-big", `data-tip="${escAttr(itemTip)}"`);
       }
     }
 
