@@ -1591,28 +1591,38 @@ function learnableMoves(pokedexId, gen){
 let currentMove = null;
 function moveBadge(type){ return `<span class="badge" style="background:${TYPE_COLORS[type]}">${typeLabel(type)}</span>`; }
 function positionAcList(inputEl, list, minWidth){
-  const rect = inputEl.getBoundingClientRect();
-  const vpWidth = window.innerWidth;
-  const vpHeight = window.innerHeight;
-  const width = Math.max(Math.round(rect.width), minWidth||200);
-  list.style.position = 'fixed';
-  list.style.width = width + 'px';
-  list.style.minWidth = width + 'px';
-  let left = Math.round(rect.left);
-  if(left + width > vpWidth - 8) left = Math.max(8, vpWidth - width - 8);
-  if(left < 8) left = 8;
-  list.style.left = left + 'px';
-  list.style.right = 'auto';
-  const spaceBelow = vpHeight - rect.bottom - 8;
-  const spaceAbove = rect.top - 8;
-  if(spaceBelow >= 120 || spaceBelow >= spaceAbove){
-    list.style.top = Math.round(rect.bottom + 4) + 'px';
-    list.style.bottom = 'auto';
-    list.style.maxHeight = Math.max(80, Math.min(230, spaceBelow)) + 'px';
-  } else {
-    list.style.top = 'auto';
-    list.style.bottom = Math.round(vpHeight - rect.top + 4) + 'px';
-    list.style.maxHeight = Math.max(80, Math.min(230, spaceAbove)) + 'px';
+  try {
+    const rect = inputEl.getBoundingClientRect();
+    const vpWidth = window.innerWidth;
+    const vpHeight = window.innerHeight;
+    const width = Math.max(Math.round(rect.width) || 0, minWidth||200);
+    list.style.position = 'fixed';
+    list.style.width = width + 'px';
+    list.style.minWidth = width + 'px';
+    let left = Math.round(rect.left) || 0;
+    if(left + width > vpWidth - 8) left = Math.max(8, vpWidth - width - 8);
+    if(left < 8) left = 8;
+    list.style.left = left + 'px';
+    list.style.right = 'auto';
+    const spaceBelow = vpHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    if(spaceBelow >= spaceAbove){
+      list.style.top = Math.round(rect.bottom + 4) + 'px';
+      list.style.bottom = 'auto';
+      list.style.maxHeight = Math.max(40, Math.min(230, spaceBelow)) + 'px';
+    } else {
+      list.style.top = 'auto';
+      list.style.bottom = Math.round(vpHeight - rect.top + 4) + 'px';
+      list.style.maxHeight = Math.max(40, Math.min(230, spaceAbove)) + 'px';
+    }
+  } catch(err){
+    // si algo falla al calcular la posicion, al menos que la lista se vea en un sitio razonable
+    list.style.position = 'fixed';
+    list.style.left = '16px';
+    list.style.right = '16px';
+    list.style.top = '80px';
+    list.style.width = 'auto';
+    list.style.maxHeight = '230px';
   }
 }
 function createMoveAutocomplete(inputEl, onSelect, getPool){
