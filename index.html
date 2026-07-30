@@ -25,6 +25,26 @@
 
   .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin-bottom:18px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:120px}
+  .team-bm-card{padding:0!important;overflow:hidden;min-height:0}
+  .bm-name-input{background:transparent;border:none;color:#fff;font-weight:800;font-size:19px;padding:0;width:100%;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .bm-name-input::placeholder{color:rgba(255,255,255,.65)}
+  .bm-name-input:focus{outline:none;border-bottom:1px dashed rgba(255,255,255,.6)}
+  .bm-lvl-input{background:transparent;border:none;color:#fff;font-weight:800;font-size:32px;line-height:1;width:60px;padding:0;font-family:inherit;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .bm-lvl-input:focus{outline:none;border-bottom:1px dashed rgba(255,255,255,.6)}
+  .bm-inline-select{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:10.5px;border-radius:4px;padding:1px 4px;font-family:inherit;max-width:120px}
+  .bm-inline-select:focus{outline:none}
+  .team-shiny-toggle{position:absolute;top:8px;right:8px;font-size:16px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .team-shiny-toggle input{display:none}
+  .team-shiny-toggle.is-shiny{filter:drop-shadow(0 0 4px gold)}
+  .team-move-input{background:transparent;border:none;color:var(--ink);font-weight:700;font-size:12px;width:100%;padding:0;font-family:inherit}
+  .team-move-input:focus{outline:none;border-bottom:1px dashed var(--dim)}
+  .team-item-input-row{margin-top:8px;display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:8px;padding:6px 9px}
+  .team-item-input-row input{background:transparent;border:none;color:var(--ink);font-size:11.5px;flex:1;padding:0;font-family:inherit}
+  .team-item-input-row input:focus{outline:none}
+  .team-ev-input{width:34px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:4px;font-size:10px;text-align:center;padding:2px;font-family:inherit}
+  .team-iv-input{width:30px;background:var(--panel2);border:1px solid var(--accent2);color:var(--accent2);border-radius:4px;font-size:10px;text-align:center;padding:2px;font-family:inherit}
+  .bm-stat-row.editable{gap:4px}
+  .team-level-note{font-size:9px;color:var(--dim);text-align:center;line-height:1}
   .slot-head{margin-bottom:8px}
   input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:7px 8px;border-radius:6px;font-size:13px}
   .slot-body{display:flex;gap:10px;align-items:flex-start}
@@ -985,9 +1005,11 @@ const EV_KEYS = ["hp","atk","def","spa","spd","spe"];
 const EV_LABELS = {hp:"PS",atk:"Atq",def:"Def",spa:"AEs",spd:"DEs",spe:"Vel"};
 function blankSlot(){
   return {name:"", nature:"Hardy", ability:"", item:"", level:100, shiny:false,
-    moves:["","","",""], evs:{hp:0,atk:0,def:0,spa:0,spd:0,spe:0}};
+    moves:["","","",""], evs:{hp:0,atk:0,def:0,spa:0,spd:0,spe:0},
+    ivs:{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}};
 }
 let team = new Array(6).fill(null).map(blankSlot);
+document.getElementById("teamGrid").addEventListener("input", (e)=>{ if(e.target.classList.contains("teamEv") || e.target.classList.contains("teamIv")) handleEvInput(e); });
 
 function slotStatBars(mon, slot){
   const nm = slot.nature || "Hardy";
@@ -1007,68 +1029,57 @@ function slotStatBars(mon, slot){
   }).join("");
 }
 
+function handleEvInput(e){
+  const isEv = e.target.classList.contains("teamEv");
+  const isIv = e.target.classList.contains("teamIv");
+  if(!isEv && !isIv) return;
+  const idx = +e.target.dataset.idx, key = e.target.dataset.key;
+  if(isEv){
+    team[idx].evs[key] = Math.max(0, Math.min(252, parseInt(e.target.value)||0));
+  } else {
+    if(!team[idx].ivs) team[idx].ivs = {hp:31,atk:31,def:31,spa:31,spd:31,spe:31};
+    team[idx].ivs[key] = Math.max(0, Math.min(31, parseInt(e.target.value)||0));
+  }
+  updateEvTotal(idx);
+  const mon = findMon(team[idx].name);
+  if(mon){
+    const box = document.querySelector(`.bm-stats-col[data-idx="${idx}"]`);
+    if(box && document.activeElement !== e.target){
+      box.outerHTML = teamStatsColHtml(mon, team[idx], idx);
+    } else if(box){
+      // actualizar solo los valores numéricos/barras sin tocar el input que tiene el foco
+      const rows = box.querySelectorAll(".bm-stat-row");
+      const evs = team[idx].evs, ivs = team[idx].ivs||{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}, level = team[idx].level||100, nm = team[idx].nature||"Hardy";
+      const finals = [
+        calcHP(mon[3],ivs.hp,evs.hp||0,level),
+        calcStat(mon[4],ivs.atk,evs.atk||0,level,natureMult(nm,"atk")),
+        calcStat(mon[5],ivs.def,evs.def||0,level,natureMult(nm,"def")),
+        calcStat(mon[6],ivs.spa,evs.spa||0,level,natureMult(nm,"spa")),
+        calcStat(mon[7],ivs.spd,evs.spd||0,level,natureMult(nm,"spd")),
+        calcStat(mon[8],ivs.spe,evs.spe||0,level,natureMult(nm,"spe")),
+      ];
+      rows.forEach((row,i)=>{
+        const val = row.querySelector(".bm-stat-val");
+        const fill = row.querySelector(".bm-stat-bar-fill");
+        if(val) val.textContent = finals[i];
+        if(fill) fill.style.width = Math.min(100, Math.round((finals[i]/400)*100))+"%";
+      });
+    }
+  }
+}
 function renderTeam(){
   const grid = document.getElementById("teamGrid");
   grid.innerHTML = "";
   team.forEach((slot, idx)=>{
     const mon = findMon(slot.name);
     const div = document.createElement("div");
-    div.className = "slot";
-    let body = `<div class="slot-head"><input type="text" placeholder="Pokémon #${idx+1}" value="${slot.name||""}" data-idx="${idx}" class="teamNameInput" autocomplete="off"></div>`;
     if(mon){
-      const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
-      const spriteSrc = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
-      const staticFallback = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
-      body += `<div class="slot-body">
-        <img class="sprite-animated" src="${spriteSrc}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.className='sprite';this.referrerPolicy='no-referrer';this.src='${staticFallback}'">
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:13px">${pokemonName(mon)}</div>
-          <div class="badges">${mon[2].map(badge).join("")}</div>
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);margin-top:4px">
-            <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}> ✨ Shiny
-          </label>
-        </div>
-      </div>
-
-      <fieldset class="slot-fieldset"><legend>Nivel / Naturaleza / Habilidad / Objeto</legend>
-        <div class="mini-grid">
-          <div class="field"><label>Nivel</label><input type="number" class="teamLevel" data-idx="${idx}" value="${slot.level}"></div>
-          <div class="field"><label>Naturaleza</label><select class="teamNature" data-idx="${idx}">${natureOptionsHtml()}</select></div>
-        </div>
-        <div class="field"><label>Habilidad</label>
-          <select class="teamAbility" data-idx="${idx}">
-            <option value="">— elige —</option>
-            ${abilityList.map(([n,hid])=>{
-              const aid = ABILITY_NAME_TO_ID[n];
-              const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
-              const label = ab ? abilityName(ab) : n;
-              return `<option value="${n}" ${slot.ability===n?"selected":""}>${label}${hid?(currentLang==="es"?" (oculta)":" (hidden)"):""}</option>`;
-            }).join("")}
-            ${abilityList.length===0?`<option value="${slot.ability||''}" selected>${slot.ability || "Sin datos, escribe abajo"}</option>`:""}
-          </select>
-        </div>
-        <div class="field"><label>Objeto</label>
-          <input type="text" class="teamItemInput" data-idx="${idx}" value="${slot.item||""}" placeholder="Escribe un objeto (o déjalo vacío)" autocomplete="off">
-          <div class="item-preview" data-idx="${idx}"></div>
-        </div>
-      </fieldset>
-
-      <fieldset class="slot-fieldset"><legend>Movimientos</legend>
-        ${[0,1,2,3].map(mi=>`<div class="move-row"><input type="text" class="teamMoveInput" data-idx="${idx}" data-mi="${mi}" value="${slot.moves[mi]||""}" placeholder="Movimiento ${mi+1}" autocomplete="off"></div>`).join("")}
-      </fieldset>
-
-      <fieldset class="slot-fieldset"><legend>EVs (máx. 508 en total)</legend>
-        <div class="ev-grid">
-          ${EV_KEYS.map(k=>`<div class="field"><label>${EV_LABELS[k]}</label><input type="number" class="teamEv" data-idx="${idx}" data-key="${k}" value="${slot.evs[k]||0}" min="0" max="252"></div>`).join("")}
-        </div>
-        <div class="ev-total" data-idx="${idx}"></div>
-      </fieldset>
-
-      <div class="slot-statbars" data-idx="${idx}">${slotStatBars(mon, slot)}</div>`;
+      div.innerHTML = teamCardHtml(mon, slot, idx);
     } else {
-      body += `<div class="empty-slot">Escribe un nombre arriba</div>`;
+      div.className = "slot";
+      div.innerHTML = `<div class="slot-head"><input type="text" placeholder="Pokémon #${idx+1}" value="${slot.name||""}" data-idx="${idx}" class="teamNameInput" autocomplete="off"></div>
+        <div class="empty-slot">${currentLang==="es"?"Escribe un nombre arriba":"Type a name above"}</div>`;
     }
-    div.innerHTML = body;
     grid.appendChild(div);
   });
 
@@ -1092,9 +1103,8 @@ function renderTeam(){
   });
   grid.querySelectorAll(".teamItemInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; renderItemPreview(idx); });
-    inp.addEventListener("change", ()=>{ team[idx].item = inp.value; renderItemPreview(idx); });
-    renderItemPreview(idx);
+    createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; renderTeam(); });
+    inp.addEventListener("change", ()=>{ team[idx].item = inp.value; renderTeam(); });
   });
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
@@ -1102,26 +1112,131 @@ function renderTeam(){
       ()=>{ const mon = findMon(team[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
     inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ team[idx].moves[mi]=""; renderAnalysis(); } });
   });
-  grid.querySelectorAll(".teamEv").forEach(inp=>{
-    inp.addEventListener("input", e=>{
-      const idx = +e.target.dataset.idx, key = e.target.dataset.key;
-      team[idx].evs[key] = Math.max(0, Math.min(252, parseInt(e.target.value)||0));
-      updateEvTotal(idx);
-      const mon = findMon(team[idx].name);
-      if(mon){
-        const box = document.querySelector(`.slot-statbars[data-idx="${idx}"]`);
-        if(box) box.innerHTML = slotStatBars(mon, team[idx]);
-      }
-    });
-  });
+
   team.forEach((slot,idx)=>updateEvTotal(idx));
 }
 
+function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
+  const pct = Math.min(100, Math.round((value/400)*100));
+  const color = value>=300 ? "#2ecc71" : value>=180 ? "#f1c40f" : value>=100 ? "#e67e22" : "#e74c3c";
+  let labelColor = "var(--dim)", arrow = "";
+  if(natMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
+  else if(natMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
+  return `<div class="bm-stat-row editable">
+    <span class="bm-stat-label" style="color:${labelColor};width:28px;flex:none">${label}${arrow}</span>
+    <input type="number" class="team-iv-input teamIv" data-idx="${idx}" data-key="${evKey}" value="${ivValue===undefined?31:ivValue}" min="0" max="31" title="IV">
+    <input type="number" class="team-ev-input teamEv" data-idx="${idx}" data-key="${evKey}" value="${evValue||0}" min="0" max="252" title="EV">
+    <span class="bm-stat-val" style="color:${color};width:34px;flex:none;text-align:right">${value}</span>
+    <div class="bm-stat-bar-track"><div class="bm-stat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+}
+function teamStatsColHtml(mon, slot, idx){
+  const nm = slot.nature || "Hardy";
+  const evs = slot.evs || {hp:0,atk:0,def:0,spa:0,spd:0,spe:0};
+  const ivs = slot.ivs || {hp:31,atk:31,def:31,spa:31,spd:31,spe:31};
+  const level = slot.level || 100;
+  const natMod = (statKey)=> statKey==="hp" ? 0 : (natureMult(nm,statKey)>1 ? 1 : natureMult(nm,statKey)<1 ? -1 : 0);
+  const finalHp = calcHP(mon[3], ivs.hp, evs.hp||0, level);
+  const finalAtk = calcStat(mon[4], ivs.atk, evs.atk||0, level, natureMult(nm,"atk"));
+  const finalDef = calcStat(mon[5], ivs.def, evs.def||0, level, natureMult(nm,"def"));
+  const finalSpa = calcStat(mon[6], ivs.spa, evs.spa||0, level, natureMult(nm,"spa"));
+  const finalSpd = calcStat(mon[7], ivs.spd, evs.spd||0, level, natureMult(nm,"spd"));
+  const finalSpe = calcStat(mon[8], ivs.spe, evs.spe||0, level, natureMult(nm,"spe"));
+  return `<div class="bm-stats-col" data-idx="${idx}">
+    <div class="bm-stat-row" style="opacity:.6;font-size:8.5px"><span style="width:28px;flex:none"></span><span style="width:30px;flex:none;text-align:center">IV</span><span style="width:34px;flex:none;text-align:center">EV</span><span style="flex:1"></span></div>
+    ${teamStatRowHtml("HP", finalHp, 0, "hp", evs.hp, ivs.hp, idx)}
+    ${teamStatRowHtml(currentLang==="es"?"Atq":"Atk", finalAtk, natMod("atk"), "atk", evs.atk, ivs.atk, idx)}
+    ${teamStatRowHtml(currentLang==="es"?"Def":"Def", finalDef, natMod("def"), "def", evs.def, ivs.def, idx)}
+    ${teamStatRowHtml(currentLang==="es"?"AEs":"SpA", finalSpa, natMod("spa"), "spa", evs.spa, ivs.spa, idx)}
+    ${teamStatRowHtml(currentLang==="es"?"DEs":"SpD", finalSpd, natMod("spd"), "spd", evs.spd, ivs.spd, idx)}
+    ${teamStatRowHtml(currentLang==="es"?"Vel":"Spe", finalSpe, natMod("spe"), "spe", evs.spe, ivs.spe, idx)}
+  </div>`;
+}
+function teamCardHtml(mon, slot, idx){
+  const types = mon[2];
+  const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
+  const headerColor = TYPE_COLORS[types[0]] || "#555";
+  const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
+  const spriteSrc = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
+  const staticFallback = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
+  const nm = slot.nature || "Hardy";
+  const evs = slot.evs || {hp:0,atk:0,def:0,spa:0,spd:0,spe:0};
+  const level = slot.level || 100;
+  const bst = mon[3]+mon[4]+mon[5]+mon[6]+mon[7]+mon[8];
+
+  const abilityOptions = `<option value="">${currentLang==="es"?"— sin elegir —":"— none —"}</option>` +
+    abilityList.map(([n,hid])=>{
+      const aid = ABILITY_NAME_TO_ID[n];
+      const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
+      const label = ab ? abilityName(ab) : n;
+      return `<option value="${n}" ${slot.ability===n?"selected":""}>${label}${hid?(currentLang==="es"?" (oculta)":" (hidden)"):""}</option>`;
+    }).join("") +
+    (abilityList.length===0 && slot.ability ? `<option value="${slot.ability}" selected>${slot.ability}</option>` : "");
+
+  let itemSpriteHtml = "";
+  if(slot.item){
+    const it = ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase());
+    if(it) itemSpriteHtml = `<img src="${itemSpriteUrlHD(it[1])}" class="bm-item-sprite-big" referrerpolicy="no-referrer" onerror="this.onerror=function(){this.style.display='none'};this.src='${itemSpriteUrl(it[2])}'">`;
+  }
+
+  const movesGrid = [0,1,2,3].map(mi=>{
+    const mn = slot.moves[mi] || "";
+    const mv = mn ? MOVES.find(m=>m[1].toLowerCase()===mn.trim().toLowerCase()) : null;
+    const tagsHtml = mv
+      ? `<div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>`
+      : `<div class="bm-move-tags"><span class="bm-moves-unknown" style="font-size:9.5px">${currentLang==="es"?"sin resolver":"unresolved"}</span></div>`;
+    return `<div class="bm-move-chip">
+      <div class="bm-move-name-row"><input type="text" class="team-move-input teamMoveInput" data-idx="${idx}" data-mi="${mi}" value="${mn}" placeholder="${currentLang==='es'?'Movimiento':'Move'} ${mi+1}" autocomplete="off">${mv&&mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
+      ${tagsHtml}
+    </div>`;
+  }).join("");
+
+  const statsHtml = teamStatsColHtml(mon, slot, idx);
+  const evTotal = EV_KEYS.reduce((s,k)=>s+(evs[k]||0),0);
+
+  return `<div class="bm-card team-bm-card">
+    <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
+      <div class="bm-types">${typeBadges}</div>
+      <label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
+        <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
+      </label>
+      <div class="bm-header-flex-row">
+        <div class="bm-header-main">
+          <div class="bm-lvl-col">
+            <div class="bm-lvl-label">${currentLang==="es"?"Nivel":"Level"}</div>
+            <input type="number" class="bm-lvl-input teamLevel" data-idx="${idx}" value="${level}" min="1" max="100">
+          </div>
+          <div class="bm-name-col">
+            <div class="bm-meta-line">
+              <select class="bm-inline-select teamAbility" data-idx="${idx}">${abilityOptions}</select>
+              <select class="bm-inline-select teamNature" data-idx="${idx}">${natureOptionsHtml()}</select>
+            </div>
+            <input type="text" class="bm-name-input teamNameInput" data-idx="${idx}" value="${slot.name||""}" placeholder="Pokémon #${idx+1}" autocomplete="off">
+          </div>
+        </div>
+        <div class="bm-item-slot">${itemSpriteHtml}</div>
+        <img src="${spriteSrc}" referrerpolicy="no-referrer" class="bm-sprite-corner" style="image-rendering:auto;animation:none" onerror="this.onerror=function(){this.style.display='none'};this.className='bm-sprite-corner';this.src='${staticFallback}'">
+      </div>
+      <div class="bm-bst-corner">${bst}</div>
+    </div>
+    <div class="bm-card-body">
+      <div class="bm-body-left">
+        <div class="bm-moves-grid">${movesGrid}</div>
+        <div class="team-item-input-row">
+          <span style="font-size:9.5px;color:var(--dim);flex:none">${currentLang==="es"?"Objeto":"Item"}</span>
+          <input type="text" class="teamItemInput" data-idx="${idx}" value="${slot.item||""}" placeholder="${currentLang==="es"?"Escribe un objeto":"Type an item"}" autocomplete="off">
+        </div>
+      </div>
+      ${statsHtml}
+    </div>
+    <div class="team-level-note ev-total" data-idx="${idx}">EVs: ${evTotal}/508</div>
+  </div>`;
+}
 function updateEvTotal(idx){
   const el = document.querySelector(`.ev-total[data-idx="${idx}"]`);
   if(!el) return;
   const total = EV_KEYS.reduce((s,k)=>s+(team[idx].evs[k]||0),0);
-  el.textContent = `Total: ${total}/508`;
+  el.textContent = `EVs: ${total}/508`;
   el.classList.toggle("over", total>508);
 }
 
