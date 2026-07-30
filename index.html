@@ -57,9 +57,7 @@
   .team-move-static:hover{background:var(--panel2)}
   .team-item-slot{display:flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px;position:relative}
   .team-item-slot .ac-wrap{position:static}
-  .team-item-slot .ac-list{left:0;right:auto;min-width:230px;z-index:50}
   .bm-move-chip .ac-wrap{position:static}
-  .bm-move-chip .ac-list{left:0;right:auto;min-width:260px;z-index:50}
   .team-item-static{cursor:pointer;transition:transform .1s}
   .team-item-static:hover{transform:scale(1.08)}
   .team-item-input{position:absolute!important;right:0!important;top:50%!important;transform:translateY(-50%)!important;background:rgba(0,0,0,.6)!important;border:none!important;border-bottom:1px solid rgba(255,255,255,.5)!important;color:#fff!important;font-size:11px!important;text-align:right!important;width:170px!important;padding:4px 8px!important;font-family:inherit;border-radius:5px!important;z-index:25!important}
@@ -1597,6 +1595,7 @@ function positionAcList(inputEl, list, minWidth){
     const vpHeight = window.innerHeight;
     const width = Math.max(Math.round(rect.width) || 0, minWidth||200);
     list.style.position = 'fixed';
+    list.style.zIndex = '10000';
     list.style.width = width + 'px';
     list.style.minWidth = width + 'px';
     let left = Math.round(rect.left) || 0;
