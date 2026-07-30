@@ -65,7 +65,7 @@
   .bm-move-chip .ac-list{left:0;right:auto;min-width:260px;z-index:50}
   .team-item-static{cursor:pointer;transition:transform .1s}
   .team-item-static:hover{transform:scale(1.08)}
-  .team-item-input{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.6)!important;border:none;border-bottom:1px solid rgba(255,255,255,.5);color:#fff;font-size:11px;text-align:right;width:190px;padding:4px 8px;font-family:inherit;border-radius:5px;z-index:25}
+  .team-item-input{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.6)!important;border:none;border-bottom:1px solid rgba(255,255,255,.5);color:#fff;font-size:11px;text-align:right;width:260px;padding:4px 8px;font-family:inherit;border-radius:5px;z-index:25}
   .team-item-input::placeholder{color:rgba(255,255,255,.5)}
   .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.8)}
   .team-stats-col{width:230px!important}
@@ -192,9 +192,9 @@
 
   /* autocomplete */
   .ac-wrap{position:relative}
-  .ac-list{position:absolute;top:100%;left:0;right:0;background:var(--panel2);border:1px solid var(--line);
-    border-radius:0 0 8px 8px;max-height:230px;overflow-y:auto;z-index:80;box-shadow:0 10px 24px #000a;display:none}
-  .ac-item{padding:6px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .ac-list{position:fixed;background:#161616;border:1px solid var(--accent2);
+    border-radius:8px;max-height:230px;overflow-y:auto;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.4);display:none}
+  .ac-item{padding:7px 11px;font-size:12.5px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:8px}
   .ac-item img{width:22px;height:22px;flex:none}
   .ac-item:hover,.ac-item.hi{background:var(--accent2);color:#fff}
 
@@ -982,6 +982,7 @@ function createAutocomplete(inputEl, onSelect){
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Ningún Pokémon coincide":"No matching Pokémon"}</div>`;
       list.style.display='block';
+      positionAcList(wrap, list, 240);
       return;
     }
     list.innerHTML = items.map((p,i)=>{
@@ -992,6 +993,7 @@ function createAutocomplete(inputEl, onSelect){
     }).join("");
     list.style.display='block';
     hiIdx = -1;
+    positionAcList(wrap, list, 240);
   }
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(mon){ inputEl.value = pokemonName(mon); list.style.display='none'; onSelect(mon); }
@@ -1546,6 +1548,26 @@ function learnableMoves(pokedexId, gen){
 // ---------- move autocomplete ----------
 let currentMove = null;
 function moveBadge(type){ return `<span class="badge" style="background:${TYPE_COLORS[type]}">${typeLabel(type)}</span>`; }
+function positionAcList(wrap, list, minWidth){
+  const rect = wrap.getBoundingClientRect();
+  const width = Math.max(rect.width, minWidth||200);
+  list.style.position = 'fixed';
+  list.style.minWidth = width + 'px';
+  list.style.width = width + 'px';
+  let left = rect.left;
+  const maxLeft = window.innerWidth - width - 8;
+  if(left > maxLeft) left = Math.max(8, maxLeft);
+  if(left < 8) left = 8;
+  list.style.left = left + 'px';
+  list.style.right = 'auto';
+  const rowHeight = 34;
+  const estHeight = Math.min(230, (list.children.length||1) * rowHeight);
+  let top = rect.bottom + 4;
+  if(top + estHeight > window.innerHeight - 8){
+    top = Math.max(8, rect.top - estHeight - 4);
+  }
+  list.style.top = top + 'px';
+}
 function createMoveAutocomplete(inputEl, onSelect, getPool){
   getPool = getPool || (()=>MOVES);
   let wrap = inputEl.parentElement;
@@ -1560,18 +1582,18 @@ function createMoveAutocomplete(inputEl, onSelect, getPool){
     const pool = getPool();
     if(pool === null){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Elige primero un Pokémon</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 260); return;
     }
     if(pool.length===0 && filter.trim()===""){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin movimientos para esta generación</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 260); return;
     }
     const f = filter.trim().toLowerCase();
     const cap = pool.length <= 120 ? pool.length : 50;
     items = f ? pool.filter(m=>m[1].toLowerCase().includes(f) || (m[7]&&m[7].toLowerCase().includes(f))).slice(0,cap) : pool.slice(0,cap);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">No matching move (or not learnable in this generation)</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 260); return;
     }
     list.innerHTML = items.map((m,i)=>{
       const primary = moveName(m);
@@ -1579,6 +1601,7 @@ function createMoveAutocomplete(inputEl, onSelect, getPool){
       return `<div class="ac-item" data-i="${i}"><span style="width:22px;height:22px;border-radius:50%;background:${TYPE_COLORS[m[2]]};flex:none"></span><span>${primary}${alt?` <small style="color:var(--dim)">(${alt})</small>`:''} <small style="color:var(--dim)">— ${typeLabel(m[2])}, ${m[3]??'—'}</small></span></div>`;
     }).join("");
     list.style.display='block'; hiIdx=-1;
+    positionAcList(wrap, list, 260);
   }
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(m){ inputEl.value = moveName(m); list.style.display='none'; onSelect(m); }
@@ -1644,7 +1667,7 @@ function createItemDexAutocomplete(inputEl, onSelect){
     }).slice(0,10);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Sin coincidencias":"No matches"}</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 240); return;
     }
     list.innerHTML = items.map((it,i)=>{
       const machine = isMachineItem(it);
@@ -1655,6 +1678,7 @@ function createItemDexAutocomplete(inputEl, onSelect){
       return `<div class="ac-item" data-i="${i}"><img src="${src}" loading="lazy" referrerpolicy="no-referrer" ${errHandler}><span>${primary}${alt?` <small style="color:var(--dim)">(${alt})</small>`:''}</span></div>`;
     }).join("");
     list.style.display='block'; hiIdx=-1;
+    positionAcList(wrap, list, 240);
   }
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(it){ inputEl.value = isMachineItem(it) ? tmDisplayName(it, currentGeneration) : itemName(it); list.style.display='none'; onSelect(it); }
@@ -1686,7 +1710,7 @@ function createItemAutocomplete(inputEl, onSelect){
       : ITEMS.slice(0,40);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin coincidencias — se guardará como objeto personalizado</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 260); return;
     }
     list.innerHTML = items.map((it,i)=>{
       const primary = itemName(it);
@@ -1694,6 +1718,7 @@ function createItemAutocomplete(inputEl, onSelect){
       return `<div class="ac-item" data-i="${i}"><img src="${itemSpriteUrl(it[2])}" loading="lazy" referrerpolicy="no-referrer" onerror="handleItemImgError(this,'${it[2]}','display')"><span>${primary}${alt?` <small style="color:var(--dim)">(${alt})</small>`:''}</span></div>`;
     }).join("");
     list.style.display='block'; hiIdx=-1;
+    positionAcList(wrap, list, 260);
   }
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(it){ inputEl.value = itemName(it); list.style.display='none'; onSelect(it); }
@@ -2538,7 +2563,7 @@ function createAbilityAutocomplete(inputEl, onSelect){
     items = ABILITIES_ALL.filter(a=>a[1].toLowerCase().includes(f) || a[2].toLowerCase().includes(f)).slice(0,10);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Ninguna habilidad coincide":"No matching ability"}</div>`;
-      list.style.display='block'; return;
+      list.style.display='block'; positionAcList(wrap, list, 220); return;
     }
     list.innerHTML = items.map((a,i)=>{
       const primary = abilityName(a);
@@ -2546,6 +2571,7 @@ function createAbilityAutocomplete(inputEl, onSelect){
       return `<div class="ac-item" data-i="${i}"><span>${primary}${alt?` <small style="color:var(--dim)">(${alt})</small>`:''}</span></div>`;
     }).join("");
     list.style.display='block'; hiIdx=-1;
+    positionAcList(wrap, list, 220);
   }
   function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
   function pick(a){ inputEl.value = abilityName(a); list.style.display='none'; onSelect(a); }
