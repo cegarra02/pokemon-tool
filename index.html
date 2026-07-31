@@ -792,17 +792,20 @@ function itemSpriteUrlHD(nameEn){
   const fileName = nameEn.replace(/ /g,"_");
   return `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_SV_Sprite.png`;
 }
-function itemSpriteHDCandidates(nameEn){
+function itemSpriteHDCandidates(it){
+  const nameEn = it[1], slug = it[2];
   const fileName = nameEn.replace(/ /g,"_");
   return [
+    `assets/items_hd/${slug}.png`,                                                             // tus propios sprites (prioridad máxima)
     `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_SV_Sprite.png`,   // Gen9 Escarlata/Púrpura, 160x160
     `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_ZA_Sprite.png`,    // Leyendas Z-A, 160x160
     `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_LA_Sprite.png`,    // Leyendas Arceus, 128x128
+    `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_CP_Sprite.png`,    // variante adicional, 128x128
     `https://archives.bulbagarden.net/wiki/Special:FilePath/Bag_${fileName}_BDSP_Sprite.png`,  // Diamante Bri./Perla Rel., 40x40
   ];
 }
 function itemSpriteChainedTag(it, cssClass, extraAttrs){
-  const candidates = itemSpriteHDCandidates(it[1]);
+  const candidates = itemSpriteHDCandidates(it);
   const lowRes = itemSpriteUrl(it[2]);
   const chainJson = escAttr(JSON.stringify(candidates));
   return `<img src="${candidates[0]}" class="${cssClass}" data-hd-candidates="${chainJson}" data-hd-step="0" data-fallback="${escAttr(lowRes)}" ${extraAttrs||""} referrerpolicy="no-referrer" loading="lazy" onerror="handleHDItemImgError(this)">`;
@@ -1133,9 +1136,10 @@ function handleEvInput(e){
       rows.forEach((row,i)=>{
         const val = row.querySelector(".bm-stat-val");
         const fill = row.querySelector(".bm-stat-bar-fill");
-        const color = statTierColor(finals[i], 400);
+        const maxRef = i===0 ? 714 : 499;
+        const color = statTierColorFinal(finals[i], i===0);
         if(val){ val.textContent = finals[i]; val.style.color = color; }
-        if(fill){ fill.style.width = Math.min(100, Math.round((finals[i]/400)*100))+"%"; fill.style.background = color; }
+        if(fill){ fill.style.width = Math.min(100, Math.round((finals[i]/maxRef)*100))+"%"; fill.style.background = color; }
       });
     }
   }
@@ -1228,8 +1232,10 @@ function renderTeam(){
 }
 
 function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
-  const pct = Math.min(100, Math.round((value/400)*100));
-  const color = statTierColor(value, 400);
+  const isHP = evKey === "hp";
+  const maxRef = isHP ? 714 : 499;
+  const pct = Math.min(100, Math.round((value/maxRef)*100));
+  const color = statTierColorFinal(value, isHP);
   let labelColor = "var(--dim)", arrow = "";
   if(natMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
   else if(natMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
@@ -1349,7 +1355,7 @@ function teamCardHtml(mon, slot, idx){
   const resolvedItem = slot.item ? ITEMS_ALL.find(i=>i[1].toLowerCase()===slot.item.trim().toLowerCase()) : null;
   if(resolvedItem && !isEditingField(idx,"item")){
     const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
-    const candidates = itemSpriteHDCandidates(resolvedItem[1]);
+    const candidates = itemSpriteHDCandidates(resolvedItem);
     itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onerror="handleHDItemImgError(this)">`;
   } else {
     itemAreaHtml = `<input type="text" class="team-item-input teamItemInput" data-idx="${idx}" data-editkey="${idx}-item" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">`;
@@ -3005,18 +3011,27 @@ function trainerSpriteUrl(name){
 }
 const BM_CATEGORY_ES = {"Physical":"FÍS","Special":"ESP","Status":"EST"};
 const CATEGORY_COLOR = {"Physical":"#c0392b","Special":"#2980b9","Status":"#7f8c8d"};
-function statTierColor(value, maxRef){
-  const pct = value / maxRef;
-  if(pct < 0.114) return "#e74c3c";  // rojo
-  if(pct < 0.231) return "#e67e22";  // naranja
-  if(pct < 0.349) return "#f1c40f";  // amarillo
-  if(pct < 0.467) return "#8bc34a";  // verde claro
-  if(pct < 0.584) return "#2e9e4f";  // verde oscuro
-  return "#3498db";                    // azul
+// Fórmula real extraída del código fuente del cliente de Pokémon Showdown
+// (play.pokemonshowdown.com/src/oldclient/client-teambuilder.js):
+// var color = Math.floor(stat * 180 / highestStat); if (color > 360) color = 360;
+// background: hsl(color, 85%, 45%)
+// highestStat en Showdown es el máximo teórico de la estadística FINAL calculada (HP:714, resto:499).
+// Para estadística BASE (la que mostramos en la guía) usamos el mismo criterio con el máximo real de base (255).
+function statHslColor(value, maxRef){
+  let hue = Math.floor((value * 180) / maxRef);
+  if(hue > 360) hue = 360;
+  if(hue < 0) hue = 0;
+  return `hsl(${hue},85%,45%)`;
+}
+function statTierColorBase(value){
+  return statHslColor(value, 255);
+}
+function statTierColorFinal(value, isHP){
+  return statHslColor(value, isHP ? 714 : 499);
 }
 function statBarHtml(label, value, maxRef, natureMod){
   const pct = Math.min(100, Math.round((value/maxRef)*100));
-  const color = statTierColor(value, maxRef);
+  const color = statTierColorBase(value);
   let labelColor = "var(--dim)", arrow = "";
   if(natureMod === 1){ labelColor = "#e05a5a"; arrow = "<span class=\"bm-nat-arrow\">⌃</span>"; }
   else if(natureMod === -1){ labelColor = "#5a9ae0"; arrow = "<span class=\"bm-nat-arrow\">⌄</span>"; }
