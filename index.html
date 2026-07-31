@@ -909,6 +909,10 @@ function typeBadgeGradient(type){
   const c = TYPE_COLORS[type] || "#555";
   return `linear-gradient(135deg, ${shadeColor(c,18)} 0%, ${c} 55%, ${shadeColor(c,-18)} 100%)`;
 }
+function moveChipGradient(type){
+  const c = TYPE_COLORS[type] || "#555";
+  return `linear-gradient(135deg, ${shadeColor(c,-55)} 0%, ${shadeColor(c,-72)} 100%)`;
+}
 function cardHeaderGradient(types){
   const c1 = TYPE_COLORS[types[0]] || "#555";
   if(types.length < 2 || !TYPE_COLORS[types[1]]){
@@ -1388,9 +1392,9 @@ function teamCardHtml(mon, slot, idx){
     const mv = mn ? MOVES.find(m=>m[1].toLowerCase()===mn.trim().toLowerCase()) : null;
     if(mv && !isEditingField(idx,"move-"+mi)){
       const moveTip = `<b>${moveName(mv)}</b><br>${moveDescText(mv[0])}`;
-      return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0" data-tip="${escAttr(moveTip)}">
+      return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0" data-tip="${escAttr(moveTip)}" style="background:${moveChipGradient(mv[2])}">
         <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
-        <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${typeBadgeGradient(mv[2])}">${typeLabel(mv[2])}</span></div>
+        <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>
       </div>`;
     }
     return `<div class="bm-move-chip">
@@ -3152,11 +3156,11 @@ function battleCardHtml(b, starter){
         if(!mv) return "";
         const mvType = mv[2], mvPower = mv[3], mvCat = mv[5];
         const tip = `<b>${moveName(mv)}</b><br>${moveDescText(mv[0])}`;
-        return `<div class="bm-move-chip" data-tip="${escAttr(tip)}">
+        return `<div class="bm-move-chip" data-tip="${escAttr(tip)}" style="background:${moveChipGradient(mvType)}">
           <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mvPower ? `<span class="bm-move-power">×${mvPower}</span>` : ""}</div>
           <div class="bm-move-tags">
             <span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mvCat]||'#555'}" title="${BM_CATEGORY_ES[mvCat]||mvCat}">${CATEGORY_ICON[mvCat]||""}</span>
-            <span class="bm-type-badge bm-type-badge-sm" style="background:${typeBadgeGradient(mvType)}">${typeLabel(mvType)}</span>
+            <span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mvType]}">${typeLabel(mvType)}</span>
           </div>
         </div>`;
       }).join("");
