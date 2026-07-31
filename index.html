@@ -897,6 +897,27 @@ const TYPE_COLORS = {Normal:"#A8A878",Fire:"#F08030",Water:"#6890F0",Electric:"#
   Dragon:"#7038F8",Dark:"#705848",Steel:"#B8B8D0",Fairy:"#EE99AC"};
 const TYPES = Object.keys(TYPE_ES);
 
+function shadeColor(hex, percent){
+  const n = parseInt(hex.slice(1),16);
+  let r = (n>>16)&255, g = (n>>8)&255, b = n&255;
+  r = Math.max(0,Math.min(255, Math.round(r + (percent/100)*(percent>0?(255-r):r))));
+  g = Math.max(0,Math.min(255, Math.round(g + (percent/100)*(percent>0?(255-g):g))));
+  b = Math.max(0,Math.min(255, Math.round(b + (percent/100)*(percent>0?(255-b):b))));
+  return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
+}
+function typeBadgeGradient(type){
+  const c = TYPE_COLORS[type] || "#555";
+  return `linear-gradient(135deg, ${shadeColor(c,18)} 0%, ${c} 55%, ${shadeColor(c,-18)} 100%)`;
+}
+function cardHeaderGradient(types){
+  const c1 = TYPE_COLORS[types[0]] || "#555";
+  if(types.length < 2 || !TYPE_COLORS[types[1]]){
+    return `linear-gradient(120deg, ${c1}dd 0%, ${c1}55 100%)`;
+  }
+  const c2 = TYPE_COLORS[types[1]];
+  return `linear-gradient(120deg, ${c1}ee 0%, ${c1}99 38%, ${c2}99 62%, ${c2}ee 100%)`;
+}
+
 const CHART = {
   Normal:{Rock:0.5,Ghost:0,Steel:0.5},
   Fire:{Fire:0.5,Water:0.5,Grass:2,Ice:2,Bug:2,Rock:0.5,Dragon:0.5,Steel:2},
@@ -1369,7 +1390,7 @@ function teamCardHtml(mon, slot, idx){
       const moveTip = `<b>${moveName(mv)}</b><br>${moveDescText(mv[0])}`;
       return `<div class="bm-move-chip team-move-static" data-idx="${idx}" data-editfield="move-${mi}" tabindex="0" data-tip="${escAttr(moveTip)}">
         <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mv[3]?`<span class="bm-move-power">×${mv[3]}</span>`:""}</div>
-        <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mv[2]]}">${typeLabel(mv[2])}</span></div>
+        <div class="bm-move-tags"><span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mv[5]]||'#555'}">${CATEGORY_ICON[mv[5]]||""}</span><span class="bm-type-badge bm-type-badge-sm" style="background:${typeBadgeGradient(mv[2])}">${typeLabel(mv[2])}</span></div>
       </div>`;
     }
     return `<div class="bm-move-chip">
@@ -1382,7 +1403,7 @@ function teamCardHtml(mon, slot, idx){
   const evTotal = EV_KEYS.reduce((s,k)=>s+(evs[k]||0),0);
 
   return `<div class="bm-card team-bm-card">
-    <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
+    <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
       <div class="bm-types">${typeBadges}</div>
       <label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
         <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
@@ -3135,7 +3156,7 @@ function battleCardHtml(b, starter){
           <div class="bm-move-name-row"><span class="bm-move-name">${moveName(mv)}</span>${mvPower ? `<span class="bm-move-power">×${mvPower}</span>` : ""}</div>
           <div class="bm-move-tags">
             <span class="bm-move-cat-icon" style="background:${CATEGORY_ICON_COLOR[mvCat]||'#555'}" title="${BM_CATEGORY_ES[mvCat]||mvCat}">${CATEGORY_ICON[mvCat]||""}</span>
-            <span class="bm-type-badge bm-type-badge-sm" style="background:${TYPE_COLORS[mvType]}">${typeLabel(mvType)}</span>
+            <span class="bm-type-badge bm-type-badge-sm" style="background:${typeBadgeGradient(mvType)}">${typeLabel(mvType)}</span>
           </div>
         </div>`;
       }).join("");
@@ -3166,7 +3187,7 @@ function battleCardHtml(b, starter){
     const metaLine = [abilityHtml, natureLabel].filter(Boolean).join(" · ");
 
     return `<div class="bm-card" data-goto="${pid}">
-      <div class="bm-card-header" style="background:linear-gradient(120deg,${headerColor}dd,${headerColor}55)">
+      <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-flex-row">
           <div class="bm-header-main">
