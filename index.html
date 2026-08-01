@@ -1977,7 +1977,7 @@ function createItemDexAutocomplete(inputEl, onSelect){
 const BATTLE_ITEM_CATEGORIES = new Set(["held-items","mega-stones","z-crystals","species-specific",
   "type-enhancement","plates","type-protection","jewels","tera-shard","memories","bad-held-items",
   "choice","picky-healing","in-a-pinch","training","effort-training","other"]);
-const BATTLE_ITEMS = ITEMS.filter(it=>BATTLE_ITEM_CATEGORIES.has(it[4]));
+const BATTLE_ITEMS = ITEMS_ALL.filter(it=>BATTLE_ITEM_CATEGORIES.has(it[4]));
 function createItemAutocomplete(inputEl, onSelect){
   let wrap = inputEl.parentElement;
   if(!wrap.classList.contains('ac-wrap')){
