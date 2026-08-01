@@ -66,9 +66,10 @@
   .team-item-input:focus{outline:none;border-bottom-color:rgba(255,255,255,.8)}
   .team-stats-col{width:230px!important}
   .team-stat-row{grid-template-columns:24px 30px 1fr 26px 28px!important;font-size:9.5px!important;gap:4px!important}
-  .team-ev-input,.team-iv-input{-moz-appearance:textfield}
+  .team-ev-input,.team-iv-input,.bm-lvl-input{-moz-appearance:textfield}
   .team-ev-input::-webkit-inner-spin-button,.team-ev-input::-webkit-outer-spin-button,
-  .team-iv-input::-webkit-inner-spin-button,.team-iv-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  .team-iv-input::-webkit-inner-spin-button,.team-iv-input::-webkit-outer-spin-button,
+  .bm-lvl-input::-webkit-inner-spin-button,.bm-lvl-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
   .team-ev-input{width:26px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--ink);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
   .team-ev-input:focus{outline:none;border-bottom-color:var(--ink)}
   .team-iv-input{width:24px;background:none!important;border:none;border-bottom:1px solid var(--line);color:var(--accent2);font-size:10px;text-align:center;padding:1px 0;font-family:inherit}
@@ -1354,7 +1355,11 @@ function renderTeam(){
     inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ team[idx].name=""; renderTeam(); renderAnalysis(); } });
   });
   grid.querySelectorAll(".teamLevel").forEach(inp=>{
-    inp.addEventListener("input", e=>{ team[+e.target.dataset.idx].level = parseInt(e.target.value)||100; renderTeam(); });
+    inp.addEventListener("input", e=>{
+      const idx = +e.target.dataset.idx;
+      team[idx].level = parseInt(e.target.value)||100;
+      updateTeamLevelDisplay(idx); // solo actualiza las estadísticas, sin redibujar el campo (así no pierde el foco/cursor)
+    });
   });
   grid.querySelectorAll(".teamShinyCheck").forEach(cb=>{
     cb.addEventListener("change", e=>{ team[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
@@ -1475,6 +1480,13 @@ function teamStatsColHtml(mon, slot, idx){
     ${teamStatRowHtml(currentLang==="es"?"DEs":"SpD", finalSpd, natMod("spd"), "spd", evs.spd, ivs.spd, idx)}
     ${teamStatRowHtml(currentLang==="es"?"Vel":"Spe", finalSpe, natMod("spe"), "spe", evs.spe, ivs.spe, idx)}
   </div>`;
+}
+function updateTeamLevelDisplay(idx){
+  const slot = team[idx];
+  const mon = findMon(slot.name);
+  if(!mon) return;
+  const container = document.querySelector(`.team-stats-col[data-idx="${idx}"]`);
+  if(container) container.outerHTML = teamStatsColHtml(mon, slot, idx);
 }
 function isEditingField(idx, field){ return !!teamEditing[`${idx}-${field}`]; }
 function setEditingField(idx, field, on){
