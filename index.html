@@ -1093,6 +1093,9 @@ const CHART = {
 function eff(atkType, defTypes){ return defTypes.reduce((m,d)=> m*((CHART[atkType]||{})[d] ?? 1), 1); }
 function spriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`; }
 const SHOWDOWN_ID_EXCEPTIONS = {"Nidoran♀":"nidoranf","Nidoran♂":"nidoranm"};
+function normText(s){
+  return (s||"").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
 function toShowdownId(name){
   if(SHOWDOWN_ID_EXCEPTIONS[name]) return SHOWDOWN_ID_EXCEPTIONS[name];
   return name.toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -1104,8 +1107,8 @@ function homeSpriteUrl(id){ return `https://raw.githubusercontent.com/PokeAPI/sp
 function homeSpriteUrlShiny(id){ return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${id}.png`; }
 function findMon(name){
   if(!name) return null;
-  const n = name.trim().toLowerCase();
-  return POKEDEX.find(p=> p[1].toLowerCase()===n || (POKEDEX_NAMES_ES[String(p[0])]||"").toLowerCase()===n) || null;
+  const n = normText(name.trim());
+  return POKEDEX.find(p=> normText(p[1])===n || normText(POKEDEX_NAMES_ES[String(p[0])]||"")===n) || null;
 }
 function findMonById(id){ return POKEDEX.find(p=>p[0]===id) || null; }
 
@@ -1182,9 +1185,9 @@ function createAutocomplete(inputEl, onSelect){
   }
   let items = [], hiIdx = -1;
   function render(filter){
-    const f = filter.trim().toLowerCase();
+    const f = normText(filter.trim());
     items = f
-      ? POKEDEX.filter(p=>p[1].toLowerCase().includes(f) || (POKEDEX_NAMES_ES[String(p[0])]||"").toLowerCase().includes(f)).slice(0,40)
+      ? POKEDEX.filter(p=>normText(p[1]).includes(f) || normText(POKEDEX_NAMES_ES[String(p[0])]||"").includes(f)).slice(0,40)
       : POKEDEX.slice(0,40);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Ningún Pokémon coincide":"No matching Pokémon"}</div>`;
@@ -1868,9 +1871,9 @@ function createMoveAutocomplete(inputEl, onSelect, getPool){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin movimientos para esta generación</div>`;
       list.style.display='block'; positionAcList(inputEl, list, 260); return;
     }
-    const f = filter.trim().toLowerCase();
+    const f = normText(filter.trim());
     const cap = pool.length <= 120 ? pool.length : 50;
-    items = f ? pool.filter(m=>m[1].toLowerCase().includes(f) || (m[7]&&m[7].toLowerCase().includes(f))).slice(0,cap) : pool.slice(0,cap);
+    items = f ? pool.filter(m=>normText(m[1]).includes(f) || (m[7]&&normText(m[7]).includes(f))).slice(0,cap) : pool.slice(0,cap);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">No matching move (or not learnable in this generation)</div>`;
       list.style.display='block'; positionAcList(inputEl, list, 260); return;
@@ -1934,14 +1937,14 @@ function createItemDexAutocomplete(inputEl, onSelect){
   if(!list){ list = document.createElement('div'); list.className = 'ac-list'; wrap.appendChild(list); }
   let items = [], hiIdx = -1;
   function render(filter){
-    const f = filter.trim().toLowerCase();
+    const f = normText(filter.trim());
     if(f === ""){ list.style.display='none'; return; }
     items = ITEMS_ALL.filter(it=>{
-      if(it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f))) return true;
+      if(normText(it[1]).includes(f) || (it[3]&&normText(it[3]).includes(f))) return true;
       if(isMachineItem(it)){
         const mvId = tmMoveIdFor(it, currentGeneration);
         const mv = mvId!==null ? MOVES.find(m=>m[0]===mvId) : null;
-        if(mv && (mv[1].toLowerCase().includes(f) || (mv[7]&&mv[7].toLowerCase().includes(f)))) return true;
+        if(mv && (normText(mv[1]).includes(f) || (mv[7]&&normText(mv[7]).includes(f)))) return true;
       }
       return false;
     }).slice(0,10);
@@ -1988,9 +1991,9 @@ function createItemAutocomplete(inputEl, onSelect){
   if(!list){ list = document.createElement('div'); list.className = 'ac-list'; wrap.appendChild(list); }
   let items = [], hiIdx = -1;
   function render(filter){
-    const f = filter.trim().toLowerCase();
+    const f = normText(filter.trim());
     items = f
-      ? BATTLE_ITEMS.filter(it=>it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f)))
+      ? BATTLE_ITEMS.filter(it=>normText(it[1]).includes(f) || (it[3]&&normText(it[3]).includes(f)))
       : BATTLE_ITEMS;
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin coincidencias — se guardará como objeto personalizado</div>`;
@@ -2842,9 +2845,9 @@ function createAbilityAutocomplete(inputEl, onSelect){
   if(!list){ list = document.createElement('div'); list.className = 'ac-list'; wrap.appendChild(list); }
   let items = [], hiIdx = -1;
   function render(filter){
-    const f = filter.trim().toLowerCase();
+    const f = normText(filter.trim());
     if(f === ""){ list.style.display='none'; return; }
-    items = ABILITIES_ALL.filter(a=>a[1].toLowerCase().includes(f) || a[2].toLowerCase().includes(f)).slice(0,10);
+    items = ABILITIES_ALL.filter(a=>normText(a[1]).includes(f) || normText(a[2]).includes(f)).slice(0,10);
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">${currentLang==="es"?"Ninguna habilidad coincide":"No matching ability"}</div>`;
       list.style.display='block'; positionAcList(inputEl, list, 220); return;
