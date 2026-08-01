@@ -1974,6 +1974,10 @@ function createItemDexAutocomplete(inputEl, onSelect){
   list.addEventListener('mousedown', (e)=>{ const item = e.target.closest('.ac-item'); if(item) pick(items[+item.dataset.i]); });
 }
 
+const BATTLE_ITEM_CATEGORIES = new Set(["held-items","mega-stones","z-crystals","species-specific",
+  "type-enhancement","plates","type-protection","jewels","tera-shard","memories","bad-held-items",
+  "choice","picky-healing","in-a-pinch","training","effort-training","other"]);
+const BATTLE_ITEMS = ITEMS.filter(it=>BATTLE_ITEM_CATEGORIES.has(it[4]));
 function createItemAutocomplete(inputEl, onSelect){
   let wrap = inputEl.parentElement;
   if(!wrap.classList.contains('ac-wrap')){
@@ -1986,8 +1990,8 @@ function createItemAutocomplete(inputEl, onSelect){
   function render(filter){
     const f = filter.trim().toLowerCase();
     items = f
-      ? ITEMS.filter(it=>it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f))).slice(0,40)
-      : ITEMS.slice(0,40);
+      ? BATTLE_ITEMS.filter(it=>it[1].toLowerCase().includes(f) || (it[3]&&it[3].toLowerCase().includes(f)))
+      : BATTLE_ITEMS;
     if(items.length===0){
       list.innerHTML = `<div class="ac-item" style="cursor:default">Sin coincidencias — se guardará como objeto personalizado</div>`;
       list.style.display='block'; positionAcList(inputEl, list, 260); return;
