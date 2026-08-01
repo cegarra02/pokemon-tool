@@ -1322,6 +1322,17 @@ function handleEvInput(e){
 }
 function renderTeam(){
   const grid = document.getElementById("teamGrid");
+  // Guardar qué input tenía el foco (y su posición del cursor) para restaurarlo tras redibujar, ya que innerHTML destruye los elementos.
+  const active = document.activeElement;
+  let focusInfo = null;
+  if(active && grid.contains(active) && active.tagName === "INPUT"){
+    focusInfo = {
+      idx: active.dataset.idx,
+      cls: [...active.classList].find(c=>c.startsWith("team")) || active.className,
+      selStart: active.selectionStart,
+      selEnd: active.selectionEnd
+    };
+  }
   grid.innerHTML = "";
   team.forEach((slot, idx)=>{
     const mon = findMon(slot.name);
@@ -1405,6 +1416,17 @@ function renderTeam(){
   });
 
   team.forEach((slot,idx)=>updateEvTotal(idx));
+
+  // Restaurar el foco (y la posición del cursor) en el input que se estaba editando, ya que innerHTML lo destruyó.
+  if(focusInfo){
+    const toFocus = grid.querySelector(`.${focusInfo.cls}[data-idx="${focusInfo.idx}"]`);
+    if(toFocus){
+      toFocus.focus();
+      if(typeof toFocus.setSelectionRange === "function" && focusInfo.selStart!=null){
+        try{ toFocus.setSelectionRange(focusInfo.selStart, focusInfo.selEnd); }catch(e){}
+      }
+    }
+  }
 }
 
 function teamStatRowHtml(label, value, natMod, evKey, evValue, ivValue, idx){
