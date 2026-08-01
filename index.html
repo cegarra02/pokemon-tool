@@ -1803,6 +1803,7 @@ const MOVE_METHOD_LABEL = {1:"Nivel",2:"Huevo",3:"Tutor",4:"MT/MO"};
 function learnsetRows(pokedexId, gen){
   const g = LEARNSET_DETAIL[String(pokedexId)];
   if(!g) return null; // sin datos para esta especie
+  if(Array.isArray(g)) return g; // formato nuevo (Gen8/9): un único listado, siempre disponible sin importar la generación
   const rows = g[String(gen)];
   if(!rows) return []; // existe la especie, pero no en esta generación
   return rows; // [[moveId, method, level], ...]
@@ -2704,7 +2705,7 @@ function pokemonThatLearn(moveId, gen){
   for(const p of POKEDEX){
     const rows = LEARNSET_DETAIL[String(p[0])];
     if(!rows) continue;
-    const genRows = rows[String(gen)];
+    const genRows = Array.isArray(rows) ? rows : rows[String(gen)];
     if(!genRows) continue;
     const hit = genRows.find(r=>r[0]===moveId);
     if(hit) out.push([p, hit[1], hit[2]]); // [mon, method, level]
