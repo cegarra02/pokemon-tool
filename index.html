@@ -1023,8 +1023,8 @@ function abilityDescText(a){
 function itemName(it){ return currentLang==="es" ? it[3] : it[1]; }
 function itemDescText(it){
   const id = String(it[0]);
-  return currentLang==="es" ? (ITEM_DESC_ES[id] || ITEM_DESC[id] || "No hay descripción disponible.")
-                             : (ITEM_DESC[id] || "No description available.");
+  return currentLang==="es" ? (ITEM_DESC_ALL_ES[id] || ITEM_DESC_ES[id] || ITEM_DESC_ALL_EN[id] || ITEM_DESC[id] || "No hay descripción disponible.")
+                             : (ITEM_DESC_ALL_EN[id] || ITEM_DESC[id] || "No description available.");
 }
 const CATEGORY_LABEL_ES = {Physical:"Físico", Special:"Especial", Status:"Estado"};
 function categoryLabel(cat){ return currentLang==="es" ? (CATEGORY_LABEL_ES[cat]||cat) : cat; }
