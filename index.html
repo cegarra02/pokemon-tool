@@ -1108,7 +1108,8 @@ function getMoveForGen(mv, gen){
     d.p!==undefined?d.p:mv[3],
     d.a!==undefined?d.a:mv[4],
     d.c!==undefined?d.c:mv[5],
-    d.pp!==undefined?d.pp:mv[6]];
+    d.pp!==undefined?d.pp:mv[6],
+    mv[7]];
 }
 function moveDiffHistory(moveId){
   return MOVE_TIMELINES[String(moveId)] || null;
@@ -2948,7 +2949,9 @@ function renderDexEntry(mon){
           const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
           const label = ab ? abilityName(ab) : n;
           const hiddenTxt = h ? (currentLang==="es"?" (oculta)":" (hidden)") : "";
-          return aid!==undefined ? `<span class="clickable-move" data-ability-id="${aid}">${label}</span>${hiddenTxt}` : label+hiddenTxt;
+          if(!ab) return label+hiddenTxt;
+          const tip = `<b>${abilityName(ab)}</b><br>${abilityDescText(ab)}`;
+          return `<span class="clickable-move" data-tip="${escAttr(tip)}">${label}</span>${hiddenTxt}`;
         }).join(", "):"—"}</span></div>
       </div>
     </div>
@@ -2976,16 +2979,6 @@ document.getElementById("dexEntry").addEventListener("click", e=>{
   }
   const moveCell = e.target.closest(".clickable-move");
   if(moveCell){
-    if(moveCell.dataset.abilityId !== undefined){
-      const ab = ABILITIES_ALL.find(a=>a[0]===parseInt(moveCell.dataset.abilityId,10));
-      if(ab){
-        goToTab("abilitydex");
-        document.getElementById("abilityDexInput").value = abilityName(ab);
-        renderAbilityDexEntry(ab);
-        document.getElementById("abilityDexEntry").scrollIntoView({behavior:"smooth", block:"start"});
-      }
-      return;
-    }
     const mv = MOVES.find(m=>m[0]===parseInt(moveCell.dataset.moveId,10));
     if(mv){
       goToTab("movedex");
