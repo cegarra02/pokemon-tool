@@ -2557,6 +2557,8 @@ function syncTargetNatureFromEverstone(){
     breedTarget.nature = breedParents.A.nature;
   } else if(everstoneB){
     breedTarget.nature = breedParents.B.nature;
+  } else {
+    breedTarget.nature = ""; // nadie lleva Piedra Firme → naturaleza aleatoria, no editable
   }
 }
 function breedIsDitto(mon){
@@ -2593,7 +2595,9 @@ function breedResultCardHtml(){
     titleHtml = pokemonName(offspring);
     spriteHtml = `<img src="${spriteUrl(offspring[0])}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(offspring[1])}'">`;
   }
-  const natureHtml = `<span class="nature-display-label choice-trigger" data-choice="target-nature" tabindex="0">${breedTarget.nature ? natureDisplayName(breedTarget.nature) : (currentLang==='es'?'— cualquier naturaleza —':'— any nature —')}</span>`;
+  const natureHtml = breedTarget.nature
+    ? `<span class="bm-meta-line" style="opacity:1">${natureDisplayName(breedTarget.nature)} <small style="opacity:.7">(Piedra Firme)</small></span>`
+    : `<span class="bm-meta-line" style="opacity:.6">${currentLang==='es'?'Naturaleza aleatoria':'Random nature'}</span>`;
   const ivsHtml = BREED_STATS.map(([key,lb])=>{
     const on = !!breedTarget.ivs[key];
     return `<div class="breed-iv-chip ${on?'is-on':''}" data-key="${key}"><span class="breed-iv-dot"></span>${lb}<span style="opacity:.6">31</span></div>`;
@@ -2617,13 +2621,6 @@ function breedResultCardHtml(){
 function renderBreedResultCard(){
   const wrap = document.getElementById("breedResultCardWrap");
   wrap.innerHTML = breedResultCardHtml();
-  const natureEl = wrap.querySelector(".nature-display-label");
-  if(natureEl){
-    natureEl.addEventListener("click", ()=>{
-      const options = [{label: currentLang==="es"?"— cualquier naturaleza —":"— any nature —", value:""}, ...NATURES.map(n=>({label:n[0], value:n[0]}))];
-      openChoiceList(natureEl, options, (opt)=>{ breedTarget.nature = opt.value; renderBreedResultCard(); computeBreeding(); });
-    });
-  }
   wrap.querySelectorAll(".breed-iv-chip").forEach(chip=>{
     chip.addEventListener("click", ()=>{
       const key = chip.dataset.key;
