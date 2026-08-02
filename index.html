@@ -217,16 +217,17 @@
   .fighter-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
   .fighter-card h3{margin:0 0 8px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
 
-  .breed-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .breed-card-header{padding:10px 14px;display:flex;align-items:center;gap:10px}
-  .breed-card-header img{width:48px;height:48px;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
-  .breed-card-header .breed-card-title{font-weight:700;font-size:14px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-  .breed-card-header .breed-card-sub{font-size:10.5px;color:rgba(255,255,255,.85);text-shadow:0 1px 2px rgba(0,0,0,.5)}
-  .breed-card-body{padding:12px 14px}
-  .breed-iv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
-  .breed-iv-chip{display:flex;align-items:center;justify-content:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 4px;font-size:11px;font-weight:700;cursor:pointer;user-select:none;transition:.15s}
-  .breed-iv-chip input{margin:0;cursor:pointer}
+  .breed-bm-card{cursor:default}
+  .breed-bm-card:hover{transform:none!important}
+  .breed-gender-toggle{position:absolute;top:8px;right:8px;font-size:20px;cursor:pointer;user-select:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));line-height:1}
+  .breed-gender-toggle.gender-male{color:#5dade2}
+  .breed-gender-toggle.gender-female{color:#ff6fa5}
+  .breed-gender-toggle:hover{opacity:.8}
+  .breed-ivs-col{flex:none;display:flex;flex-direction:column;gap:4px;min-width:150px}
+  .breed-iv-chip{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer;user-select:none;transition:.15s}
+  .breed-iv-chip .breed-iv-dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
   .breed-iv-chip.is-on{background:var(--accent);border-color:var(--accent);color:#111}
+  .breed-iv-chip.is-on .breed-iv-dot{background:#111}
   .breed-result-stat-row{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
   .breed-result-stat-row:last-child{border-bottom:none}
   .breed-result-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
@@ -532,64 +533,21 @@
   </details>
 
   <div class="section-title" style="margin-top:18px">Calculadora de cría</div>
-  <div class="hint">Elige la especie, género, objeto e IVs de cada padre. La compatibilidad, la especie de la cría y qué IVs se heredan seguro se calculan solos.</div>
+  <div class="hint">Elige la especie, el género (haz clic en el símbolo), el objeto, la naturaleza y qué IVs lleva cada padre a 31. La compatibilidad, la especie de la cría y qué IVs se heredan seguro se calculan solos.</div>
 
   <div class="calc-grid" style="margin-bottom:10px">
-    <div class="breed-card">
-      <div class="breed-card-header" id="breedHeaderA" style="background:#555">
-        <img id="breedSpriteA" style="display:none">
-        <div>
-          <div class="breed-card-title">Padre A</div>
-          <div class="breed-card-sub" id="breedSubA">Elige una especie</div>
-        </div>
-      </div>
-      <div class="breed-card-body">
-        <div class="field"><label>Especie</label><input type="text" id="breedParentA" placeholder="Ej: Charizard" autocomplete="off"></div>
-        <div class="field"><label>Género</label><select id="breedGenderA"></select></div>
-        <div class="field"><label>Objeto que lleva</label><select id="breedItemA"></select></div>
-        <div class="field"><label>Naturaleza</label><select id="breedNatureA"></select></div>
-        <div class="field"><label>IVs a 31 en este padre</label><div class="breed-iv-grid" id="breedIvGridA"></div></div>
-      </div>
-    </div>
-    <div class="breed-card">
-      <div class="breed-card-header" id="breedHeaderB" style="background:#555">
-        <img id="breedSpriteB" style="display:none">
-        <div>
-          <div class="breed-card-title">Padre B</div>
-          <div class="breed-card-sub" id="breedSubB">Elige una especie</div>
-        </div>
-      </div>
-      <div class="breed-card-body">
-        <div class="field"><label>Especie</label><input type="text" id="breedParentB" placeholder="Ej: Ditto" autocomplete="off"></div>
-        <div class="field"><label>Género</label><select id="breedGenderB"></select></div>
-        <div class="field"><label>Objeto que lleva</label><select id="breedItemB"></select></div>
-        <div class="field"><label>Naturaleza</label><select id="breedNatureB"></select></div>
-        <div class="field"><label>IVs a 31 en este padre</label><div class="breed-iv-grid" id="breedIvGridB"></div></div>
-      </div>
-    </div>
+    <div id="breedCardWrapA"></div>
+    <div id="breedCardWrapB"></div>
   </div>
 
   <div id="eggCompatBox" class="breed-compat-banner">Elige las dos especies para ver si son compatibles.</div>
 
-  <div class="breed-card" style="margin-top:16px">
-    <div class="breed-card-header" id="breedResultHeader" style="background:#555">
-      <img id="breedResultSprite" style="display:none">
-      <div>
-        <div class="breed-card-title">Resultado esperado</div>
-        <div class="breed-card-sub" id="breedResultSub">Elige ambos padres</div>
-      </div>
-    </div>
-    <div class="breed-card-body">
-      <div class="field" style="max-width:340px">
-        <label>¿Qué naturaleza quieres en la cría?</label>
-        <select id="breedTargetNature"><option value="">No me importa</option></select>
-      </div>
-      <div class="field">
-        <label>¿Qué IVs quieres a 31 en la cría?</label>
-        <div class="breed-iv-grid" id="breedTargetIvGrid"></div>
-      </div>
-      <button class="btn" id="computeBreedBtn" style="margin-top:10px">Calcular probabilidad</button>
-      <div id="breedResultRows" style="margin-top:12px"></div>
+  <div class="calc-grid" style="margin-top:16px">
+    <div id="breedResultCardWrap"></div>
+    <div class="fighter-card">
+      <h3>Probabilidad</h3>
+      <button class="btn" id="computeBreedBtn" style="margin-bottom:10px">Calcular probabilidad</button>
+      <div id="breedResultRows"></div>
       <div class="result-box" style="margin-top:10px">
         <div class="range" id="breedProbOut">—</div>
         <div class="meta" id="breedEggsOut"></div>
@@ -2377,73 +2335,203 @@ function genderLabel(gr){
   return `${Math.round((8-gr)/8*100)}% macho / ${Math.round(gr/8*100)}% hembra`;
 }
 const BREED_STATS = [["hp","PS"],["atk","Atq"],["def","Def"],["spa","AEs"],["spd","DEs"],["spe","Vel"]];
-const BREED_ITEM_OPTIONS = [
-  ["", "Ninguno"],
-  ["destiny_knot", "Lazo Destino (solo Gen 6+)"],
-  ["everstone", "Piedra Firme"],
-  ["power_hp", "Peso Poder (PS)"],
-  ["power_atk", "Brazal Poder (Atq)"],
-  ["power_def", "Banda Poder (Def)"],
-  ["power_spa", "Lente Poder (Atq.Esp)"],
-  ["power_spd", "Cinta Poder (Def.Esp)"],
-  ["power_spe", "Tobillera Poder (Vel)"],
-];
-["breedItemA","breedItemB"].forEach(id=>{
-  document.getElementById(id).innerHTML = BREED_ITEM_OPTIONS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
-});
 
-function breedGenderOptions(gr){
-  if(gr === -1) return [["none","Sin género"]];
-  if(gr === 0) return [["male","Macho (único posible)"]];
-  if(gr === 8) return [["female","Hembra (único posible)"]];
-  return [["male","Macho"],["female","Hembra"]];
-}
-function updateBreedGenderSelect(selId, mon){
-  const sel = document.getElementById(selId);
-  if(!mon){ sel.innerHTML = `<option value="">—</option>`; return; }
-  const data = EGG_DATA[String(mon[0])];
-  const gr = data ? data[1] : -1;
-  sel.innerHTML = breedGenderOptions(gr).map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+// ---------- tarjetas de cría (mismo formato visual que el creador de equipos) ----------
+const BREED_ITEM_SLUGS = ["everstone","destiny-knot","power-weight","power-bracer","power-belt","power-lens","power-band","power-anklet"];
+const BREED_ITEMS_ALL = ITEMS_ALL.filter(it=>BREED_ITEM_SLUGS.includes(it[2]));
+const BREED_POWER_ITEM_STAT = {"power-weight":"hp","power-bracer":"atk","power-belt":"def","power-lens":"spa","power-band":"spd","power-anklet":"spe"};
+
+let breedParents = {
+  A: { name:"", gender:null, item:"", nature:"Hardy", ivs:{hp:false,atk:false,def:false,spa:false,spd:false,spe:false} },
+  B: { name:"", gender:null, item:"", nature:"Hardy", ivs:{hp:false,atk:false,def:false,spa:false,spd:false,spe:false} },
+};
+let breedTarget = { nature:"", ivs:{hp:false,atk:false,def:false,spa:false,spd:false,spe:false} };
+let breedEditing = {};
+function isEditingBreedField(side, field){ return !!breedEditing[`${side}-${field}`]; }
+function setEditingBreedField(side, field, on){ const k=`${side}-${field}`; if(on) breedEditing[k]=true; else delete breedEditing[k]; }
+
+function createBreedItemAutocomplete(inputEl, onSelect){
+  let wrap = inputEl.parentElement;
+  if(!wrap.classList.contains('ac-wrap')){
+    wrap = document.createElement('div'); wrap.className='ac-wrap';
+    inputEl.parentNode.insertBefore(wrap, inputEl); wrap.appendChild(inputEl);
+  }
+  let list = wrap.querySelector('.ac-list');
+  if(!list){ list = document.createElement('div'); list.className='ac-list'; wrap.appendChild(list); }
+  let items = [], hiIdx = -1;
+  function render(filter){
+    const f = normText(filter.trim());
+    items = f ? BREED_ITEMS_ALL.filter(it=>normText(it[1]).includes(f)||(it[3]&&normText(it[3]).includes(f))) : BREED_ITEMS_ALL;
+    if(items.length===0){ list.style.display='none'; return; }
+    list.innerHTML = items.map((it,i)=>`<div class="ac-item" data-i="${i}">${itemName(it)}</div>`).join("");
+    list.style.display='block'; positionAcList(inputEl, list, 220); hiIdx=-1;
+  }
+  inputEl.addEventListener('focus', ()=>render(inputEl.value));
+  inputEl.addEventListener('input', ()=>render(inputEl.value));
+  inputEl.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape'){ list.style.display='none'; return; }
+    if(e.key==='ArrowDown'){ e.preventDefault(); hiIdx=Math.min(hiIdx+1, items.length-1); updateHi(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); hiIdx=Math.max(hiIdx-1,0); updateHi(); }
+    else if(e.key==='Enter'){ if(hiIdx>=0 && items[hiIdx]){ e.preventDefault(); pick(items[hiIdx]); } }
+  });
+  function updateHi(){ [...list.children].forEach((el,i)=>el.classList.toggle('hi', i===hiIdx)); }
+  function pick(it){ inputEl.value = itemName(it); list.style.display='none'; onSelect(it); }
+  list.addEventListener('mousedown', (e)=>{ const el=e.target.closest('.ac-item'); if(el) pick(items[+el.dataset.i]); });
+  document.addEventListener('click', (e)=>{ if(!wrap.contains(e.target)) list.style.display='none'; });
 }
 
-function renderIvGrid(containerId, cls){
-  const el = document.getElementById(containerId);
-  el.innerHTML = BREED_STATS.map(([key,label])=>`
-    <label class="breed-iv-chip" data-key="${key}">
-      <input type="checkbox" class="${cls}" data-key="${key}"> ${label}
-    </label>
-  `).join("");
-  el.querySelectorAll(".breed-iv-chip").forEach(chip=>{
-    const cb = chip.querySelector("input");
-    const sync = ()=> chip.classList.toggle("is-on", cb.checked);
-    chip.addEventListener("click", (e)=>{
-      if(e.target.tagName !== "INPUT"){ cb.checked = !cb.checked; }
-      sync();
-      computeBreeding();
+function breedCardHtml(side){
+  const p = breedParents[side];
+  const mon = findMon(p.name);
+  const label = side==="A" ? (currentLang==="es"?"Padre A":"Parent A") : (currentLang==="es"?"Padre B":"Parent B");
+
+  if(!mon){
+    return `<div class="bm-card breed-bm-card">
+      <div class="bm-card-header" style="background:#555">
+        <div class="bm-header-flex-row">
+          <div class="bm-header-main"><div class="bm-name-col">
+            <div class="bm-meta-line">${label}</div>
+            <input type="text" class="bm-name-input breedNameInput" data-side="${side}" value="${p.name}" placeholder="${currentLang==='es'?'Especie...':'Species...'}" autocomplete="off">
+          </div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const types = mon[2];
+  const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
+  const eggData = EGG_DATA[String(mon[0])];
+  const gr = eggData ? eggData[1] : -1;
+  let genderHtml = "";
+  if(gr !== -1){
+    let g = p.gender;
+    if(gr===0) g="male"; else if(gr===8) g="female"; else if(!g) g="male";
+    p.gender = g;
+    const canToggle = gr!==0 && gr!==8;
+    const symbol = g==="male" ? "♂" : "♀";
+    genderHtml = `<div class="breed-gender-toggle gender-${g}" data-side="${side}" ${canToggle?'data-toggle="1"':''} title="${canToggle?(currentLang==='es'?'Clic para cambiar de género':'Click to change gender'):(currentLang==='es'?'Género fijo':'Fixed gender')}">${symbol}</div>`;
+  }
+
+  let nameHtml;
+  if(!isEditingBreedField(side,"name")){
+    nameHtml = `<span class="bm-name-input bm-name-static breedNameStatic" data-side="${side}" tabindex="0">${pokemonName(mon)}</span>`;
+  } else {
+    nameHtml = `<input type="text" class="bm-name-input breedNameInput" data-side="${side}" value="${p.name}" autocomplete="off">`;
+  }
+
+  const natureHtml = `<span class="nature-display-label choice-trigger" data-side="${side}" tabindex="0">${natureDisplayName(p.nature)}</span>`;
+
+  const resolvedItem = p.item ? BREED_ITEMS_ALL.find(i=>i[1]===p.item) : null;
+  let itemAreaHtml;
+  if(resolvedItem && !isEditingBreedField(side,"item")){
+    const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
+    const candidates = itemSpriteHDCandidates(resolvedItem);
+    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big breedItemStatic" data-side="${side}" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onerror="handleHDItemImgError(this)">`;
+  } else {
+    itemAreaHtml = `<input type="text" class="team-item-input breedItemInput" data-side="${side}" value="${resolvedItem?itemName(resolvedItem):''}" placeholder="${currentLang==='es'?'Ninguno':'None'}" autocomplete="off">`;
+  }
+
+  const ivsHtml = BREED_STATS.map(([key,lb])=>{
+    const on = !!p.ivs[key];
+    return `<div class="breed-iv-chip ${on?'is-on':''}" data-side="${side}" data-key="${key}"><span class="breed-iv-dot"></span>${lb}<span style="opacity:.6">31</span></div>`;
+  }).join("");
+
+  return `<div class="bm-card breed-bm-card">
+    <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
+      <div class="bm-types">${typeBadges}</div>
+      ${genderHtml}
+      <div class="bm-header-flex-row">
+        <div class="bm-header-main"><div class="bm-name-col">
+          <div class="bm-meta-line">${natureHtml}</div>
+          ${nameHtml}
+        </div></div>
+      </div>
+    </div>
+    <div class="bm-card-body">
+      <div class="bm-body-left"><div class="team-item-slot">${itemAreaHtml}</div></div>
+      <div class="breed-ivs-col">${ivsHtml}</div>
+    </div>
+  </div>`;
+}
+
+function renderBreedCard(side){
+  const wrap = document.getElementById(side==="A"?"breedCardWrapA":"breedCardWrapB");
+  wrap.innerHTML = breedCardHtml(side);
+  attachBreedCardEvents(side, wrap);
+}
+
+function attachBreedCardEvents(side, wrap){
+  const p = breedParents[side];
+
+  const nameInput = wrap.querySelector(".breedNameInput");
+  if(nameInput){
+    createAutocomplete(nameInput, (mon)=>{
+      p.name = mon[1]; p.gender = null;
+      setEditingBreedField(side,"name",false);
+      renderBreedCard(side); renderEggCompat(); computeBreeding();
     });
-    sync();
+    nameInput.addEventListener("blur", ()=>{
+      p.name = nameInput.value;
+      setTimeout(()=>{ setEditingBreedField(side,"name",false); renderBreedCard(side); renderEggCompat(); computeBreeding(); }, 150);
+    });
+  }
+  const nameStatic = wrap.querySelector(".breedNameStatic");
+  if(nameStatic){
+    nameStatic.addEventListener("click", ()=>{
+      setEditingBreedField(side,"name",true); renderBreedCard(side);
+      const inp = wrap.querySelector(".breedNameInput"); if(inp){ inp.focus(); inp.select(); }
+    });
+  }
+
+  const genderEl = wrap.querySelector(".breed-gender-toggle");
+  if(genderEl && genderEl.dataset.toggle){
+    genderEl.addEventListener("click", ()=>{
+      p.gender = p.gender==="male" ? "female" : "male";
+      renderBreedCard(side); renderEggCompat(); computeBreeding();
+    });
+  }
+
+  const natureEl = wrap.querySelector(".nature-display-label");
+  if(natureEl){
+    natureEl.addEventListener("click", ()=>{
+      const options = NATURES.map(n=>({label:n[0], value:n[0]}));
+      openChoiceList(natureEl, options, (opt)=>{ p.nature = opt.value; renderBreedCard(side); computeBreeding(); });
+    });
+  }
+
+  const itemStatic = wrap.querySelector(".breedItemStatic");
+  if(itemStatic){
+    itemStatic.addEventListener("click", ()=>{
+      setEditingBreedField(side,"item",true); renderBreedCard(side);
+      const inp = wrap.querySelector(".breedItemInput"); if(inp){ inp.focus(); inp.select(); }
+    });
+  }
+  const itemInput = wrap.querySelector(".breedItemInput");
+  if(itemInput){
+    createBreedItemAutocomplete(itemInput, (it)=>{
+      p.item = it[1];
+      setEditingBreedField(side,"item",false);
+      renderBreedCard(side); computeBreeding();
+    });
+    itemInput.addEventListener("blur", ()=>{
+      if(itemInput.value.trim()===""){ p.item=""; }
+      setTimeout(()=>{ setEditingBreedField(side,"item",false); renderBreedCard(side); computeBreeding(); }, 150);
+    });
+  }
+
+  wrap.querySelectorAll(".breed-iv-chip").forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      const key = chip.dataset.key;
+      p.ivs[key] = !p.ivs[key];
+      renderBreedCard(side); computeBreeding();
+    });
   });
 }
-renderIvGrid("breedIvGridA","breedIvA");
-renderIvGrid("breedIvGridB","breedIvB");
-renderIvGrid("breedTargetIvGrid","breedIvTarget");
 
-function updateBreedCardHeader(headerId, spriteId, subId, mon){
-  const header = document.getElementById(headerId);
-  const sprite = document.getElementById(spriteId);
-  const sub = document.getElementById(subId);
-  if(!mon){
-    header.style.background = "#555";
-    sprite.style.display = "none";
-    sub.textContent = "Elige una especie";
-    return;
-  }
-  header.style.background = cardHeaderGradient(mon[2]);
-  sprite.src = spriteUrl(mon[0]);
-  sprite.style.display = "block";
-  sub.innerHTML = mon[2].map(badge).join(" ");
+function breedIsDitto(mon){
+  const data = EGG_DATA[String(mon[0])];
+  return data ? data[0].includes(13) : false;
 }
-
 function breedFindBaseSpecies(mon){
   let current = mon, guard = 0;
   while(guard++ < 12){
@@ -2455,51 +2543,74 @@ function breedFindBaseSpecies(mon){
   }
   return current;
 }
-
-function breedIsDitto(mon){
-  const data = EGG_DATA[String(mon[0])];
-  return data ? data[0].includes(13) : false;
+function breedComputeOffspring(monA, monB){
+  const dittoA = breedIsDitto(monA), dittoB = breedIsDitto(monB);
+  if(dittoA && !dittoB) return breedFindBaseSpecies(monB);
+  if(dittoB && !dittoA) return breedFindBaseSpecies(monA);
+  if(breedParents.A.gender === "female") return breedFindBaseSpecies(monA);
+  if(breedParents.B.gender === "female") return breedFindBaseSpecies(monB);
+  return breedFindBaseSpecies(monA);
 }
 
-function updateBreedResultHeader(){
-  const monA = findMon(document.getElementById("breedParentA").value);
-  const monB = findMon(document.getElementById("breedParentB").value);
-  const genderA = document.getElementById("breedGenderA").value;
-  const genderB = document.getElementById("breedGenderB").value;
-  const header = document.getElementById("breedResultHeader");
-  const sprite = document.getElementById("breedResultSprite");
-  const sub = document.getElementById("breedResultSub");
-  if(!monA || !monB){
-    header.style.background = "#555"; sprite.style.display = "none";
-    sub.textContent = "Elige ambos padres"; return null;
+function breedResultCardHtml(){
+  const monA = findMon(breedParents.A.name), monB = findMon(breedParents.B.name);
+  let headerBg = "#555", typeBadges = "", titleHtml = currentLang==="es" ? "Elige ambos padres" : "Choose both parents";
+  if(monA && monB){
+    const offspring = breedComputeOffspring(monA, monB);
+    headerBg = cardHeaderGradient(offspring[2]);
+    typeBadges = offspring[2].map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
+    titleHtml = pokemonName(offspring);
   }
-  const dittoA = breedIsDitto(monA), dittoB = breedIsDitto(monB);
-  let offspring;
-  if(dittoA && !dittoB) offspring = breedFindBaseSpecies(monB);
-  else if(dittoB && !dittoA) offspring = breedFindBaseSpecies(monA);
-  else if(genderA === "female") offspring = breedFindBaseSpecies(monA);
-  else if(genderB === "female") offspring = breedFindBaseSpecies(monB);
-  else offspring = breedFindBaseSpecies(monA);
-  header.style.background = cardHeaderGradient(offspring[2]);
-  sprite.src = spriteUrl(offspring[0]);
-  sprite.style.display = "block";
-  sub.innerHTML = `${pokemonName(offspring)} · ${offspring[2].map(badge).join(" ")}`;
-  return offspring;
+  const natureHtml = `<span class="nature-display-label choice-trigger" data-choice="target-nature" tabindex="0">${breedTarget.nature ? natureDisplayName(breedTarget.nature) : (currentLang==='es'?'— cualquier naturaleza —':'— any nature —')}</span>`;
+  const ivsHtml = BREED_STATS.map(([key,lb])=>{
+    const on = !!breedTarget.ivs[key];
+    return `<div class="breed-iv-chip ${on?'is-on':''}" data-key="${key}"><span class="breed-iv-dot"></span>${lb}<span style="opacity:.6">31</span></div>`;
+  }).join("");
+  return `<div class="bm-card breed-bm-card">
+    <div class="bm-card-header" style="background:${headerBg}">
+      <div class="bm-types">${typeBadges}</div>
+      <div class="bm-header-flex-row">
+        <div class="bm-header-main"><div class="bm-name-col">
+          <div class="bm-meta-line">${natureHtml}</div>
+          <span class="bm-name-input" style="opacity:.95">${titleHtml}</span>
+        </div></div>
+      </div>
+    </div>
+    <div class="bm-card-body">
+      <div class="breed-ivs-col" style="flex:1">${ivsHtml}</div>
+    </div>
+  </div>`;
+}
+function renderBreedResultCard(){
+  const wrap = document.getElementById("breedResultCardWrap");
+  wrap.innerHTML = breedResultCardHtml();
+  const natureEl = wrap.querySelector(".nature-display-label");
+  if(natureEl){
+    natureEl.addEventListener("click", ()=>{
+      const options = [{label: currentLang==="es"?"— cualquier naturaleza —":"— any nature —", value:""}, ...NATURES.map(n=>({label:n[0], value:n[0]}))];
+      openChoiceList(natureEl, options, (opt)=>{ breedTarget.nature = opt.value; renderBreedResultCard(); computeBreeding(); });
+    });
+  }
+  wrap.querySelectorAll(".breed-iv-chip").forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      const key = chip.dataset.key;
+      breedTarget.ivs[key] = !breedTarget.ivs[key];
+      renderBreedResultCard(); computeBreeding();
+    });
+  });
 }
 
 function renderEggCompat(){
   const box = document.getElementById("eggCompatBox");
-  const monA = findMon(document.getElementById("breedParentA").value);
-  const monB = findMon(document.getElementById("breedParentB").value);
+  const monA = findMon(breedParents.A.name), monB = findMon(breedParents.B.name);
   box.className = "breed-compat-banner";
-  if(!monA || !monB){ box.textContent = "Elige las dos especies para ver si son compatibles."; return; }
+  if(!monA || !monB){ box.textContent = "Elige las dos especies para ver si son compatibles."; renderBreedResultCard(); return; }
 
   const dataA = EGG_DATA[String(monA[0])], dataB = EGG_DATA[String(monB[0])];
-  if(!dataA || !dataB){ box.textContent = "Sin datos de grupo huevo para alguna de las dos especies."; return; }
+  if(!dataA || !dataB){ box.textContent = "Sin datos de grupo huevo para alguna de las dos especies."; renderBreedResultCard(); return; }
 
   const [groupsA] = dataA, [groupsB] = dataB;
-  const genderA = document.getElementById("breedGenderA").value;
-  const genderB = document.getElementById("breedGenderB").value;
+  const genderA = breedParents.A.gender, genderB = breedParents.B.gender;
   const namesA = groupsA.map(g=>eggGroupLabel(g));
   const namesB = groupsB.map(g=>eggGroupLabel(g));
   const isDittoA = breedIsDitto(monA), isDittoB = breedIsDitto(monB);
@@ -2517,8 +2628,8 @@ function renderEggCompat(){
     const shared = namesA.filter(n=>namesB.includes(n));
     if(shared.length>0){ compatible = true; reason = `Comparten grupo huevo: ${shared.join(", ")}.`; }
     else reason = "No comparten ningún grupo huevo, así que no pueden criar entre ellos (usa un Ditto en su lugar).";
-    if(compatible && (genderA==="none")){ compatible=false; reason = `${pokemonName(monA)} no tiene género, solo puede criar con un Ditto.`; }
-    if(compatible && (genderB==="none")){ compatible=false; reason = `${pokemonName(monB)} no tiene género, solo puede criar con un Ditto.`; }
+    if(compatible && genderA==="none"){ compatible=false; reason = `${pokemonName(monA)} no tiene género, solo puede criar con un Ditto.`; }
+    if(compatible && genderB==="none"){ compatible=false; reason = `${pokemonName(monB)} no tiene género, solo puede criar con un Ditto.`; }
     if(compatible && genderA && genderB && genderA===genderB){ compatible=false; reason = "Ambos padres tienen el mismo género — necesitas uno de cada (o usar un Ditto)."; }
   }
 
@@ -2528,30 +2639,12 @@ function renderEggCompat(){
     <b>${pokemonName(monB)}</b>: ${namesB.join(", ")||"—"}<br><br>
     ${compatible ? "✅ <b>Sí, pueden criar</b>" : "❌ <b>No pueden criar</b>"} — ${reason}
   `;
-  updateBreedResultHeader();
+  renderBreedResultCard();
 }
 
-createAutocomplete(document.getElementById("breedParentA"), (mon)=>{
-  updateBreedCardHeader("breedHeaderA","breedSpriteA","breedSubA", mon);
-  updateBreedGenderSelect("breedGenderA", mon);
-  renderEggCompat();
-  computeBreeding();
-});
-createAutocomplete(document.getElementById("breedParentB"), (mon)=>{
-  updateBreedCardHeader("breedHeaderB","breedSpriteB","breedSubB", mon);
-  updateBreedGenderSelect("breedGenderB", mon);
-  renderEggCompat();
-  computeBreeding();
-});
-["breedGenderA","breedGenderB"].forEach(id=>{
-  document.getElementById(id).addEventListener("change", ()=>{ renderEggCompat(); computeBreeding(); });
-});
-
-// ---------- breeding calculator ----------
-
-document.getElementById("breedNatureA").innerHTML = natureOptionsHtml(true);
-document.getElementById("breedNatureB").innerHTML = natureOptionsHtml(true);
-document.getElementById("breedTargetNature").innerHTML += NATURES.map(n=>`<option value="${n[0]}">${n[0]}</option>`).join("");
+renderBreedCard("A");
+renderBreedCard("B");
+renderEggCompat();
 
 function combinations(n, r){
   if(r<0 || r>n) return 0;
@@ -2560,27 +2653,27 @@ function combinations(n, r){
   return num/den;
 }
 
-const POWER_ITEM_STAT = {power_hp:"hp",power_atk:"atk",power_def:"def",power_spa:"spa",power_spd:"spd",power_spe:"spe"};
-
 function computeBreeding(){
-  const itemA = document.getElementById("breedItemA").value;
-  const itemB = document.getElementById("breedItemB").value;
-  const natureA = document.getElementById("breedNatureA").value;
-  const natureB = document.getElementById("breedNatureB").value;
-  const targetNature = document.getElementById("breedTargetNature").value;
+  const p = breedParents;
+  const itemAObj = p.A.item ? BREED_ITEMS_ALL.find(i=>i[1]===p.A.item) : null;
+  const itemBObj = p.B.item ? BREED_ITEMS_ALL.find(i=>i[1]===p.B.item) : null;
+  const itemA = itemAObj ? itemAObj[2] : "";
+  const itemB = itemBObj ? itemBObj[2] : "";
+  const natureA = p.A.nature, natureB = p.B.nature;
+  const targetNature = breedTarget.nature;
 
-  const dkOnA = itemA === "destiny_knot", dkOnB = itemB === "destiny_knot";
+  const dkOnA = itemA === "destiny-knot", dkOnB = itemB === "destiny-knot";
   const hasDKSelected = dkOnA || dkOnB;
   const dkWorks = hasDKSelected && currentGeneration >= 6;
   const k = dkWorks ? 5 : 3;
 
   let powerItemKey = null, powerItemHolder = null;
-  if(POWER_ITEM_STAT[itemA]){ powerItemKey = POWER_ITEM_STAT[itemA]; powerItemHolder = "A"; }
-  else if(POWER_ITEM_STAT[itemB]){ powerItemKey = POWER_ITEM_STAT[itemB]; powerItemHolder = "B"; }
+  if(BREED_POWER_ITEM_STAT[itemA]){ powerItemKey = BREED_POWER_ITEM_STAT[itemA]; powerItemHolder = "A"; }
+  else if(BREED_POWER_ITEM_STAT[itemB]){ powerItemKey = BREED_POWER_ITEM_STAT[itemB]; powerItemHolder = "B"; }
 
-  const targets = [...document.querySelectorAll(".breedIvTarget")].filter(c=>c.checked).map(c=>c.dataset.key);
-  const aHas = new Set([...document.querySelectorAll(".breedIvA")].filter(c=>c.checked).map(c=>c.dataset.key));
-  const bHas = new Set([...document.querySelectorAll(".breedIvB")].filter(c=>c.checked).map(c=>c.dataset.key));
+  const targets = BREED_STATS.map(([k2])=>k2).filter(k2=>breedTarget.ivs[k2]);
+  const aHas = new Set(BREED_STATS.map(([k2])=>k2).filter(k2=>p.A.ivs[k2]));
+  const bHas = new Set(BREED_STATS.map(([k2])=>k2).filter(k2=>p.B.ivs[k2]));
 
   const outProb = document.getElementById("breedProbOut");
   const outEggs = document.getElementById("breedEggsOut");
@@ -2596,8 +2689,7 @@ function computeBreeding(){
   const poolSize = hasPI ? 5 : 6;
   const chooseSize = hasPI ? (k-1) : k;
 
-  // Fila por estadística: muestra si está garantizada, es imposible, o su rango de probabilidad
-  outRows.innerHTML = BREED_STATS.map(([key,label])=>{
+  outRows.innerHTML = BREED_STATS.map(([key,lb])=>{
     const wants31 = targets.includes(key);
     const isPowerStat = hasPI && key === powerItemKey;
     let badgeClass = "range", badgeText = "—";
@@ -2619,15 +2711,14 @@ function computeBreeding(){
       badgeText = "No pedida";
     }
     return `<div class="breed-result-stat-row">
-      <span style="font-weight:700">${label}</span>
+      <span style="font-weight:700">${lb}</span>
       <span style="color:var(--dim);font-size:11px">${wants31||isPowerStat ? "quieres a 31" : "sin preferencia"}</span>
       <span class="breed-result-badge ${badgeClass}">${badgeText}</span>
     </div>`;
   }).join("");
 
   if(targets.length===0){
-    outProb.textContent = "—";
-    outEggs.textContent = "";
+    outProb.textContent = "—"; outEggs.textContent = "";
     outBreak.innerHTML = genWarning + "Marca al menos una estadística objetivo en el resultado.";
     return;
   }
@@ -2648,11 +2739,9 @@ function computeBreeding(){
   let pCoin = 1;
   targetsRest.forEach(t=>{
     const a31 = aHas.has(t), b31 = bHas.has(t);
-    let p;
-    if(a31 && b31) p = 1;
-    else if(a31 || b31) p = 0.5;
-    else p = 0;
-    pCoin *= p;
+    let pv;
+    if(a31 && b31) pv = 1; else if(a31 || b31) pv = 0.5; else pv = 0;
+    pCoin *= pv;
     notes.push(`${BREED_STATS.find(s=>s[0]===t)[1]}: ${a31&&b31?"ambos padres a 31 → x1":a31||b31?"solo un padre a 31 → x0.5":"ningún padre a 31 → x0 (imposible)"}`);
   });
 
@@ -2689,8 +2778,7 @@ function computeBreeding(){
   const totalP = pInherited * pCoin * pPowerItem * pNature;
 
   if(totalP <= 0){
-    outProb.textContent = "0% (imposible con esta configuración)";
-    outEggs.textContent = "";
+    outProb.textContent = "0% (imposible con esta configuración)"; outEggs.textContent = "";
   } else {
     outProb.textContent = `${(totalP*100).toFixed(2)}% por huevo`;
     const expectedEggs = 1/totalP;
@@ -2701,10 +2789,8 @@ function computeBreeding(){
   outBreak.innerHTML = genWarning + notes.join("<br>") + `<br><small style="color:var(--dim)">(No cuenta la pequeña probabilidad extra de que una estadística no heredada salga 31 por puro azar, ~3% cada una — es un cálculo ligeramente conservador.)</small>`;
 }
 document.getElementById("computeBreedBtn").addEventListener("click", computeBreeding);
-["breedItemA","breedItemB","breedNatureA","breedNatureB","breedTargetNature"].forEach(id=>{
-  document.getElementById(id).addEventListener("change", computeBreeding);
-});
 
+// ---------- pokedex tab ----------
 // ---------- pokedex tab ----------
 let currentDexMon = null;
 function dexEvoHtml(id){
