@@ -2363,7 +2363,7 @@ function createBreedItemAutocomplete(inputEl, onSelect){
     const f = normText(filter.trim());
     items = f ? BREED_ITEMS_ALL.filter(it=>normText(it[1]).includes(f)||(it[3]&&normText(it[3]).includes(f))) : BREED_ITEMS_ALL;
     if(items.length===0){ list.style.display='none'; return; }
-    list.innerHTML = items.map((it,i)=>`<div class="ac-item" data-i="${i}">${itemName(it)}</div>`).join("");
+    list.innerHTML = items.map((it,i)=>`<div class="ac-item" data-i="${i}"><img src="${itemSpriteUrl(it[2])}" loading="lazy" referrerpolicy="no-referrer" onerror="handleItemImgError(this,'${it[2]}','display')"><span>${itemName(it)}</span></div>`).join("");
     list.style.display='block'; positionAcList(inputEl, list, 220); hiIdx=-1;
   }
   inputEl.addEventListener('focus', ()=>render(inputEl.value));
@@ -2445,6 +2445,7 @@ function breedCardHtml(side){
           <div class="bm-meta-line">${natureHtml}</div>
           ${nameHtml}
         </div></div>
+        <img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(mon[1])}'">
       </div>
     </div>
     <div class="bm-card-body">
@@ -2495,7 +2496,11 @@ function attachBreedCardEvents(side, wrap){
   if(natureEl){
     natureEl.addEventListener("click", ()=>{
       const options = NATURES.map(n=>({label:n[0], value:n[0]}));
-      openChoiceList(natureEl, options, (opt)=>{ p.nature = opt.value; renderBreedCard(side); computeBreeding(); });
+      openChoiceList(natureEl, options, (opt)=>{
+        p.nature = opt.value;
+        syncTargetNatureFromEverstone();
+        renderBreedCard(side); renderBreedResultCard(); computeBreeding();
+      });
     });
   }
 
@@ -2510,12 +2515,24 @@ function attachBreedCardEvents(side, wrap){
   if(itemInput){
     createBreedItemAutocomplete(itemInput, (it)=>{
       p.item = it[1];
+      if(it[2] === "everstone"){
+        const other = side === "A" ? breedParents.B : breedParents.A;
+        if(other.item){
+          const otherItemObj = BREED_ITEMS_ALL.find(i=>i[1]===other.item);
+          if(otherItemObj && otherItemObj[2] === "everstone") other.item = "";
+        }
+      }
       setEditingBreedField(side,"item",false);
-      renderBreedCard(side); computeBreeding();
+      syncTargetNatureFromEverstone();
+      renderBreedCard(side); renderBreedCard(side==="A"?"B":"A"); renderBreedResultCard(); computeBreeding();
     });
     itemInput.addEventListener("blur", ()=>{
       if(itemInput.value.trim()===""){ p.item=""; }
-      setTimeout(()=>{ setEditingBreedField(side,"item",false); renderBreedCard(side); computeBreeding(); }, 150);
+      setTimeout(()=>{
+        setEditingBreedField(side,"item",false);
+        syncTargetNatureFromEverstone();
+        renderBreedCard(side); renderBreedResultCard(); computeBreeding();
+      }, 150);
     });
   }
 
@@ -2528,6 +2545,20 @@ function attachBreedCardEvents(side, wrap){
   });
 }
 
+function syncTargetNatureFromEverstone(){
+  const itemAObj = breedParents.A.item ? BREED_ITEMS_ALL.find(i=>i[1]===breedParents.A.item) : null;
+  const itemBObj = breedParents.B.item ? BREED_ITEMS_ALL.find(i=>i[1]===breedParents.B.item) : null;
+  const everstoneA = itemAObj && itemAObj[2] === "everstone";
+  const everstoneB = itemBObj && itemBObj[2] === "everstone";
+  if(everstoneA && everstoneB){
+    // si ambos llevan Piedra Firme con la misma naturaleza, se pone esa; si son distintas, se deja como está (es 50/50, no hay una única automática)
+    if(breedParents.A.nature === breedParents.B.nature) breedTarget.nature = breedParents.A.nature;
+  } else if(everstoneA){
+    breedTarget.nature = breedParents.A.nature;
+  } else if(everstoneB){
+    breedTarget.nature = breedParents.B.nature;
+  }
+}
 function breedIsDitto(mon){
   const data = EGG_DATA[String(mon[0])];
   return data ? data[0].includes(13) : false;
@@ -2554,12 +2585,13 @@ function breedComputeOffspring(monA, monB){
 
 function breedResultCardHtml(){
   const monA = findMon(breedParents.A.name), monB = findMon(breedParents.B.name);
-  let headerBg = "#555", typeBadges = "", titleHtml = currentLang==="es" ? "Elige ambos padres" : "Choose both parents";
+  let headerBg = "#555", typeBadges = "", titleHtml = currentLang==="es" ? "Elige ambos padres" : "Choose both parents", spriteHtml = "";
   if(monA && monB){
     const offspring = breedComputeOffspring(monA, monB);
     headerBg = cardHeaderGradient(offspring[2]);
     typeBadges = offspring[2].map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
     titleHtml = pokemonName(offspring);
+    spriteHtml = `<img src="${spriteUrl(offspring[0])}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(offspring[1])}'">`;
   }
   const natureHtml = `<span class="nature-display-label choice-trigger" data-choice="target-nature" tabindex="0">${breedTarget.nature ? natureDisplayName(breedTarget.nature) : (currentLang==='es'?'— cualquier naturaleza —':'— any nature —')}</span>`;
   const ivsHtml = BREED_STATS.map(([key,lb])=>{
@@ -2574,6 +2606,7 @@ function breedResultCardHtml(){
           <div class="bm-meta-line">${natureHtml}</div>
           <span class="bm-name-input" style="opacity:.95">${titleHtml}</span>
         </div></div>
+        ${spriteHtml}
       </div>
     </div>
     <div class="bm-card-body">
