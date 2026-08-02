@@ -216,6 +216,26 @@
   @media (max-width:640px){.calc-grid{grid-template-columns:1fr}}
   .fighter-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
   .fighter-card h3{margin:0 0 8px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+
+  .breed-card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .breed-card-header{padding:10px 14px;display:flex;align-items:center;gap:10px}
+  .breed-card-header img{width:48px;height:48px;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .breed-card-header .breed-card-title{font-weight:700;font-size:14px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .breed-card-header .breed-card-sub{font-size:10.5px;color:rgba(255,255,255,.85);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .breed-card-body{padding:12px 14px}
+  .breed-iv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+  .breed-iv-chip{display:flex;align-items:center;justify-content:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 4px;font-size:11px;font-weight:700;cursor:pointer;user-select:none;transition:.15s}
+  .breed-iv-chip input{margin:0;cursor:pointer}
+  .breed-iv-chip.is-on{background:var(--accent);border-color:var(--accent);color:#111}
+  .breed-result-stat-row{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .breed-result-stat-row:last-child{border-bottom:none}
+  .breed-result-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .breed-result-badge.guaranteed{background:var(--good);color:#fff}
+  .breed-result-badge.impossible{background:var(--danger);color:#fff}
+  .breed-result-badge.range{background:var(--accent);color:#111}
+  .breed-compat-banner{border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.6;margin:10px 0}
+  .breed-compat-banner.ok{background:rgba(46,160,67,.12);border:1px solid var(--good)}
+  .breed-compat-banner.bad{background:rgba(220,53,69,.12);border:1px solid var(--danger)}
   .field{margin-bottom:8px}
   .field label{display:block;font-size:11px;color:var(--dim);margin-bottom:3px}
   .field input, .field select{width:100%}
@@ -511,70 +531,71 @@
     </div>
   </details>
 
-  <div class="section-title" style="margin-top:18px">¿Pueden criar entre ellos?</div>
-  <div class="hint">Escribe las dos especies y te digo sus grupos huevo y si son compatibles — no hace falta que te los sepas.</div>
-  <div class="calc-grid" style="margin-bottom:6px">
-    <div class="field"><label>Padre A (o madre)</label><input type="text" id="breedParentA" placeholder="Ej: Charizard" autocomplete="off"></div>
-    <div class="field"><label>Padre B (o madre)</label><input type="text" id="breedParentB" placeholder="Ej: Ditto" autocomplete="off"></div>
-  </div>
-  <div class="calc-grid" style="margin-bottom:10px">
-    <div id="breedParentAPreview"></div>
-    <div id="breedParentBPreview"></div>
-  </div>
-  <div id="eggCompatBox" class="breakdown">Elige las dos especies para ver si son compatibles.</div>
-
-  <div class="section-title" style="margin-top:18px">Calculadora de probabilidad de cría</div>
-  <div class="hint">Elige qué lleva cada padre, su naturaleza, qué naturaleza quieres, y qué IVs quieres a 31. Calcula la probabilidad exacta por huevo (no aproximada).</div>
+  <div class="section-title" style="margin-top:18px">Calculadora de cría</div>
+  <div class="hint">Elige la especie, género, objeto e IVs de cada padre. La compatibilidad, la especie de la cría y qué IVs se heredan seguro se calculan solos.</div>
 
   <div class="calc-grid" style="margin-bottom:10px">
-    <div class="fighter-card">
-      <h3>Padre A</h3>
-      <div class="field"><label>Objeto que lleva</label><select id="breedItemA">
-        <option value="">Ninguno</option>
-        <option value="destiny_knot">Lazo Destino (solo Gen 6+)</option>
-        <option value="everstone">Piedra Firme</option>
-        <option value="power_hp">Peso Poder (PS)</option>
-        <option value="power_atk">Brazal Poder (Atq)</option>
-        <option value="power_def">Banda Poder (Def)</option>
-        <option value="power_spa">Lente Poder (Atq.Esp)</option>
-        <option value="power_spd">Cinta Poder (Def.Esp)</option>
-        <option value="power_spe">Tobillera Poder (Vel)</option>
-      </select></div>
-      <div class="field"><label>Naturaleza de Padre A</label><select id="breedNatureA"></select></div>
+    <div class="breed-card">
+      <div class="breed-card-header" id="breedHeaderA" style="background:#555">
+        <img id="breedSpriteA" style="display:none">
+        <div>
+          <div class="breed-card-title">Padre A</div>
+          <div class="breed-card-sub" id="breedSubA">Elige una especie</div>
+        </div>
+      </div>
+      <div class="breed-card-body">
+        <div class="field"><label>Especie</label><input type="text" id="breedParentA" placeholder="Ej: Charizard" autocomplete="off"></div>
+        <div class="field"><label>Género</label><select id="breedGenderA"></select></div>
+        <div class="field"><label>Objeto que lleva</label><select id="breedItemA"></select></div>
+        <div class="field"><label>Naturaleza</label><select id="breedNatureA"></select></div>
+        <div class="field"><label>IVs a 31 en este padre</label><div class="breed-iv-grid" id="breedIvGridA"></div></div>
+      </div>
     </div>
-    <div class="fighter-card">
-      <h3>Padre B</h3>
-      <div class="field"><label>Objeto que lleva</label><select id="breedItemB">
-        <option value="">Ninguno</option>
-        <option value="destiny_knot">Lazo Destino (solo Gen 6+)</option>
-        <option value="everstone">Piedra Firme</option>
-        <option value="power_hp">Peso Poder (PS)</option>
-        <option value="power_atk">Brazal Poder (Atq)</option>
-        <option value="power_def">Banda Poder (Def)</option>
-        <option value="power_spa">Lente Poder (Atq.Esp)</option>
-        <option value="power_spd">Cinta Poder (Def.Esp)</option>
-        <option value="power_spe">Tobillera Poder (Vel)</option>
-      </select></div>
-      <div class="field"><label>Naturaleza de Padre B</label><select id="breedNatureB"></select></div>
+    <div class="breed-card">
+      <div class="breed-card-header" id="breedHeaderB" style="background:#555">
+        <img id="breedSpriteB" style="display:none">
+        <div>
+          <div class="breed-card-title">Padre B</div>
+          <div class="breed-card-sub" id="breedSubB">Elige una especie</div>
+        </div>
+      </div>
+      <div class="breed-card-body">
+        <div class="field"><label>Especie</label><input type="text" id="breedParentB" placeholder="Ej: Ditto" autocomplete="off"></div>
+        <div class="field"><label>Género</label><select id="breedGenderB"></select></div>
+        <div class="field"><label>Objeto que lleva</label><select id="breedItemB"></select></div>
+        <div class="field"><label>Naturaleza</label><select id="breedNatureB"></select></div>
+        <div class="field"><label>IVs a 31 en este padre</label><div class="breed-iv-grid" id="breedIvGridB"></div></div>
+      </div>
     </div>
   </div>
 
-  <div class="field" style="max-width:340px;margin-bottom:14px">
-    <label>¿Qué naturaleza quieres en la cría?</label>
-    <select id="breedTargetNature"><option value="">No me importa</option></select>
-  </div>
+  <div id="eggCompatBox" class="breed-compat-banner">Elige las dos especies para ver si son compatibles.</div>
 
-  <table class="chart" style="text-align:center">
-    <tr><th>Estadística</th><th>¿La quieres a 31?</th><th>Padre A a 31 aquí</th><th>Padre B a 31 aquí</th></tr>
-    <tbody id="breedStatRows"></tbody>
-  </table>
-
-  <button class="btn" id="computeBreedBtn" style="margin-top:10px">Calcular probabilidad</button>
-
-  <div class="result-box" style="margin-top:14px">
-    <div class="range" id="breedProbOut">—</div>
-    <div class="meta" id="breedEggsOut"></div>
-    <div class="breakdown" id="breedBreakdown"></div>
+  <div class="breed-card" style="margin-top:16px">
+    <div class="breed-card-header" id="breedResultHeader" style="background:#555">
+      <img id="breedResultSprite" style="display:none">
+      <div>
+        <div class="breed-card-title">Resultado esperado</div>
+        <div class="breed-card-sub" id="breedResultSub">Elige ambos padres</div>
+      </div>
+    </div>
+    <div class="breed-card-body">
+      <div class="field" style="max-width:340px">
+        <label>¿Qué naturaleza quieres en la cría?</label>
+        <select id="breedTargetNature"><option value="">No me importa</option></select>
+      </div>
+      <div class="field">
+        <label>¿Qué IVs quieres a 31 en la cría?</label>
+        <div class="breed-iv-grid" id="breedTargetIvGrid"></div>
+      </div>
+      <button class="btn" id="computeBreedBtn" style="margin-top:10px">Calcular probabilidad</button>
+      <div id="breedResultRows" style="margin-top:12px"></div>
+      <div class="result-box" style="margin-top:10px">
+        <div class="range" id="breedProbOut">—</div>
+        <div class="meta" id="breedEggsOut"></div>
+        <div class="breakdown" id="breedBreakdown"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2355,75 +2376,178 @@ function genderLabel(gr){
   if(gr === 8) return "100% hembra";
   return `${Math.round((8-gr)/8*100)}% macho / ${Math.round(gr/8*100)}% hembra`;
 }
+const BREED_STATS = [["hp","PS"],["atk","Atq"],["def","Def"],["spa","AEs"],["spd","DEs"],["spe","Vel"]];
+const BREED_ITEM_OPTIONS = [
+  ["", "Ninguno"],
+  ["destiny_knot", "Lazo Destino (solo Gen 6+)"],
+  ["everstone", "Piedra Firme"],
+  ["power_hp", "Peso Poder (PS)"],
+  ["power_atk", "Brazal Poder (Atq)"],
+  ["power_def", "Banda Poder (Def)"],
+  ["power_spa", "Lente Poder (Atq.Esp)"],
+  ["power_spd", "Cinta Poder (Def.Esp)"],
+  ["power_spe", "Tobillera Poder (Vel)"],
+];
+["breedItemA","breedItemB"].forEach(id=>{
+  document.getElementById(id).innerHTML = BREED_ITEM_OPTIONS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+});
+
+function breedGenderOptions(gr){
+  if(gr === -1) return [["none","Sin género"]];
+  if(gr === 0) return [["male","Macho (único posible)"]];
+  if(gr === 8) return [["female","Hembra (único posible)"]];
+  return [["male","Macho"],["female","Hembra"]];
+}
+function updateBreedGenderSelect(selId, mon){
+  const sel = document.getElementById(selId);
+  if(!mon){ sel.innerHTML = `<option value="">—</option>`; return; }
+  const data = EGG_DATA[String(mon[0])];
+  const gr = data ? data[1] : -1;
+  sel.innerHTML = breedGenderOptions(gr).map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+}
+
+function renderIvGrid(containerId, cls){
+  const el = document.getElementById(containerId);
+  el.innerHTML = BREED_STATS.map(([key,label])=>`
+    <label class="breed-iv-chip" data-key="${key}">
+      <input type="checkbox" class="${cls}" data-key="${key}"> ${label}
+    </label>
+  `).join("");
+  el.querySelectorAll(".breed-iv-chip").forEach(chip=>{
+    const cb = chip.querySelector("input");
+    const sync = ()=> chip.classList.toggle("is-on", cb.checked);
+    chip.addEventListener("click", (e)=>{
+      if(e.target.tagName !== "INPUT"){ cb.checked = !cb.checked; }
+      sync();
+      computeBreeding();
+    });
+    sync();
+  });
+}
+renderIvGrid("breedIvGridA","breedIvA");
+renderIvGrid("breedIvGridB","breedIvB");
+renderIvGrid("breedTargetIvGrid","breedIvTarget");
+
+function updateBreedCardHeader(headerId, spriteId, subId, mon){
+  const header = document.getElementById(headerId);
+  const sprite = document.getElementById(spriteId);
+  const sub = document.getElementById(subId);
+  if(!mon){
+    header.style.background = "#555";
+    sprite.style.display = "none";
+    sub.textContent = "Elige una especie";
+    return;
+  }
+  header.style.background = cardHeaderGradient(mon[2]);
+  sprite.src = spriteUrl(mon[0]);
+  sprite.style.display = "block";
+  sub.innerHTML = mon[2].map(badge).join(" ");
+}
+
+function breedFindBaseSpecies(mon){
+  let current = mon, guard = 0;
+  while(guard++ < 12){
+    const preEvo = EVOLUTIONS.find(e=>e[1]===current[0]);
+    if(!preEvo) break;
+    const prevMon = POKEDEX.find(p=>p[0]===preEvo[0]);
+    if(!prevMon) break;
+    current = prevMon;
+  }
+  return current;
+}
+
+function breedIsDitto(mon){
+  const data = EGG_DATA[String(mon[0])];
+  return data ? data[0].includes(13) : false;
+}
+
+function updateBreedResultHeader(){
+  const monA = findMon(document.getElementById("breedParentA").value);
+  const monB = findMon(document.getElementById("breedParentB").value);
+  const genderA = document.getElementById("breedGenderA").value;
+  const genderB = document.getElementById("breedGenderB").value;
+  const header = document.getElementById("breedResultHeader");
+  const sprite = document.getElementById("breedResultSprite");
+  const sub = document.getElementById("breedResultSub");
+  if(!monA || !monB){
+    header.style.background = "#555"; sprite.style.display = "none";
+    sub.textContent = "Elige ambos padres"; return null;
+  }
+  const dittoA = breedIsDitto(monA), dittoB = breedIsDitto(monB);
+  let offspring;
+  if(dittoA && !dittoB) offspring = breedFindBaseSpecies(monB);
+  else if(dittoB && !dittoA) offspring = breedFindBaseSpecies(monA);
+  else if(genderA === "female") offspring = breedFindBaseSpecies(monA);
+  else if(genderB === "female") offspring = breedFindBaseSpecies(monB);
+  else offspring = breedFindBaseSpecies(monA);
+  header.style.background = cardHeaderGradient(offspring[2]);
+  sprite.src = spriteUrl(offspring[0]);
+  sprite.style.display = "block";
+  sub.innerHTML = `${pokemonName(offspring)} · ${offspring[2].map(badge).join(" ")}`;
+  return offspring;
+}
+
 function renderEggCompat(){
   const box = document.getElementById("eggCompatBox");
   const monA = findMon(document.getElementById("breedParentA").value);
   const monB = findMon(document.getElementById("breedParentB").value);
-  if(!monA || !monB){ box.innerHTML = "Elige las dos especies para ver si son compatibles."; return; }
+  box.className = "breed-compat-banner";
+  if(!monA || !monB){ box.textContent = "Elige las dos especies para ver si son compatibles."; return; }
 
   const dataA = EGG_DATA[String(monA[0])], dataB = EGG_DATA[String(monB[0])];
-  if(!dataA || !dataB){ box.innerHTML = "Sin datos de grupo huevo para alguna de las dos especies."; return; }
+  if(!dataA || !dataB){ box.textContent = "Sin datos de grupo huevo para alguna de las dos especies."; return; }
 
-  const [groupsA, genderA] = dataA, [groupsB, genderB] = dataB;
+  const [groupsA] = dataA, [groupsB] = dataB;
+  const genderA = document.getElementById("breedGenderA").value;
+  const genderB = document.getElementById("breedGenderB").value;
   const namesA = groupsA.map(g=>eggGroupLabel(g));
   const namesB = groupsB.map(g=>eggGroupLabel(g));
-  const isDittoA = groupsA.includes(13), isDittoB = groupsB.includes(13);
+  const isDittoA = breedIsDitto(monA), isDittoB = breedIsDitto(monB);
   const undiscA = groupsA.includes(15), undiscB = groupsB.includes(15);
 
   let compatible = false, reason = "";
   if(undiscA || undiscB){
-    compatible = false;
     reason = "Al menos una de las dos especies es del grupo Desconocido (no puede criar de ninguna forma, ni siquiera con Ditto).";
   } else if(isDittoA && isDittoB){
-    compatible = false;
     reason = "Dos Ditto no pueden criar entre sí.";
   } else if(isDittoA || isDittoB){
     compatible = true;
     reason = "Ditto cría con casi cualquier especie (menos con el grupo Desconocido y con otro Ditto).";
   } else {
     const shared = namesA.filter(n=>namesB.includes(n));
-    if(shared.length>0){
-      compatible = true;
-      reason = `Comparten grupo huevo: ${shared.join(", ")}.`;
-    } else {
-      compatible = false;
-      reason = "No comparten ningún grupo huevo, así que no pueden criar entre ellos (usa un Ditto en su lugar).";
-    }
-    if(compatible && genderA===-1){ compatible=false; reason = `${pokemonName(monA)} no tiene género, solo puede criar con un Ditto.`; }
-    if(compatible && genderB===-1){ compatible=false; reason = `${pokemonName(monB)} no tiene género, solo puede criar con un Ditto.`; }
-    if(compatible && genderA===0 && genderB===0){ compatible=false; reason = "Ambos son siempre macho — necesitas que uno sea hembra (o usar un Ditto)."; }
-    if(compatible && genderA===8 && genderB===8){ compatible=false; reason = "Ambos son siempre hembra — necesitas que uno sea macho (o usar un Ditto)."; }
+    if(shared.length>0){ compatible = true; reason = `Comparten grupo huevo: ${shared.join(", ")}.`; }
+    else reason = "No comparten ningún grupo huevo, así que no pueden criar entre ellos (usa un Ditto en su lugar).";
+    if(compatible && (genderA==="none")){ compatible=false; reason = `${pokemonName(monA)} no tiene género, solo puede criar con un Ditto.`; }
+    if(compatible && (genderB==="none")){ compatible=false; reason = `${pokemonName(monB)} no tiene género, solo puede criar con un Ditto.`; }
+    if(compatible && genderA && genderB && genderA===genderB){ compatible=false; reason = "Ambos padres tienen el mismo género — necesitas uno de cada (o usar un Ditto)."; }
   }
 
+  box.classList.add(compatible ? "ok" : "bad");
   box.innerHTML = `
-    <b>${pokemonName(monA)}</b>: ${namesA.join(", ")||"—"} · ${genderLabel(genderA)}<br>
-    <b>${pokemonName(monB)}</b>: ${namesB.join(", ")||"—"} · ${genderLabel(genderB)}<br><br>
-    ${compatible ? "✅ <b style=\"color:var(--good)\">Sí, pueden criar</b>" : "❌ <b style=\"color:var(--danger)\">No pueden criar</b>"} — ${reason}
+    <b>${pokemonName(monA)}</b>: ${namesA.join(", ")||"—"}<br>
+    <b>${pokemonName(monB)}</b>: ${namesB.join(", ")||"—"}<br><br>
+    ${compatible ? "✅ <b>Sí, pueden criar</b>" : "❌ <b>No pueden criar</b>"} — ${reason}
   `;
+  updateBreedResultHeader();
 }
+
 createAutocomplete(document.getElementById("breedParentA"), (mon)=>{
-  renderFighterPreview(mon, document.getElementById("breedParentAPreview"));
+  updateBreedCardHeader("breedHeaderA","breedSpriteA","breedSubA", mon);
+  updateBreedGenderSelect("breedGenderA", mon);
   renderEggCompat();
+  computeBreeding();
 });
 createAutocomplete(document.getElementById("breedParentB"), (mon)=>{
-  renderFighterPreview(mon, document.getElementById("breedParentBPreview"));
+  updateBreedCardHeader("breedHeaderB","breedSpriteB","breedSubB", mon);
+  updateBreedGenderSelect("breedGenderB", mon);
   renderEggCompat();
+  computeBreeding();
+});
+["breedGenderA","breedGenderB"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", ()=>{ renderEggCompat(); computeBreeding(); });
 });
 
 // ---------- breeding calculator ----------
-const BREED_STATS = [["hp","PS"],["atk","Atq"],["def","Def"],["spa","Atq.Esp"],["spd","Def.Esp"],["spe","Vel"]];
-function renderBreedRows(){
-  const body = document.getElementById("breedStatRows");
-  body.innerHTML = BREED_STATS.map(([key,label])=>`
-    <tr>
-      <td style="text-align:left;font-weight:700">${label}</td>
-      <td><input type="checkbox" class="breedTarget" data-key="${key}"></td>
-      <td><input type="checkbox" class="breedA" data-key="${key}"></td>
-      <td><input type="checkbox" class="breedB" data-key="${key}"></td>
-    </tr>
-  `).join("");
-}
-renderBreedRows();
 
 document.getElementById("breedNatureA").innerHTML = natureOptionsHtml(true);
 document.getElementById("breedNatureB").innerHTML = natureOptionsHtml(true);
@@ -2454,31 +2578,61 @@ function computeBreeding(){
   if(POWER_ITEM_STAT[itemA]){ powerItemKey = POWER_ITEM_STAT[itemA]; powerItemHolder = "A"; }
   else if(POWER_ITEM_STAT[itemB]){ powerItemKey = POWER_ITEM_STAT[itemB]; powerItemHolder = "B"; }
 
-  const targets = [...document.querySelectorAll(".breedTarget")].filter(c=>c.checked).map(c=>c.dataset.key);
-  const aHas = new Set([...document.querySelectorAll(".breedA")].filter(c=>c.checked).map(c=>c.dataset.key));
-  const bHas = new Set([...document.querySelectorAll(".breedB")].filter(c=>c.checked).map(c=>c.dataset.key));
+  const targets = [...document.querySelectorAll(".breedIvTarget")].filter(c=>c.checked).map(c=>c.dataset.key);
+  const aHas = new Set([...document.querySelectorAll(".breedIvA")].filter(c=>c.checked).map(c=>c.dataset.key));
+  const bHas = new Set([...document.querySelectorAll(".breedIvB")].filter(c=>c.checked).map(c=>c.dataset.key));
 
   const outProb = document.getElementById("breedProbOut");
   const outEggs = document.getElementById("breedEggsOut");
   const outBreak = document.getElementById("breedBreakdown");
+  const outRows = document.getElementById("breedResultRows");
 
   let genWarning = "";
   if(hasDKSelected && !dkWorks){
     genWarning = `⚠️ <b>El Lazo Destino no funciona así en la Generación ${currentGeneration}</b> (su efecto de heredar 5 IVs solo existe desde Gen 6). Se está calculando como si nadie lo llevara (3 IVs).<br><br>`;
   }
 
+  const hasPI = powerItemKey !== null;
+  const poolSize = hasPI ? 5 : 6;
+  const chooseSize = hasPI ? (k-1) : k;
+
+  // Fila por estadística: muestra si está garantizada, es imposible, o su rango de probabilidad
+  outRows.innerHTML = BREED_STATS.map(([key,label])=>{
+    const wants31 = targets.includes(key);
+    const isPowerStat = hasPI && key === powerItemKey;
+    let badgeClass = "range", badgeText = "—";
+    if(isPowerStat){
+      const holderHas = powerItemHolder === "A" ? aHas.has(key) : bHas.has(key);
+      badgeClass = holderHas ? "guaranteed" : "impossible";
+      badgeText = holderHas ? "Garantizado (objeto)" : "Imposible aquí";
+    } else if(wants31){
+      const a31 = aHas.has(key), b31 = bHas.has(key);
+      if(!a31 && !b31){ badgeClass = "impossible"; badgeText = "Imposible (ningún padre a 31)"; }
+      else {
+        const pCoin = (a31 && b31) ? 1 : 0.5;
+        const pInherit = combinations(poolSize-1, chooseSize-1) / combinations(poolSize, chooseSize);
+        const pLow = pInherit * pCoin;
+        badgeClass = "range";
+        badgeText = `${(pLow*100).toFixed(0)}% – ${(pCoin*100).toFixed(0)}%`;
+      }
+    } else {
+      badgeText = "No pedida";
+    }
+    return `<div class="breed-result-stat-row">
+      <span style="font-weight:700">${label}</span>
+      <span style="color:var(--dim);font-size:11px">${wants31||isPowerStat ? "quieres a 31" : "sin preferencia"}</span>
+      <span class="breed-result-badge ${badgeClass}">${badgeText}</span>
+    </div>`;
+  }).join("");
+
   if(targets.length===0){
     outProb.textContent = "—";
     outEggs.textContent = "";
-    outBreak.innerHTML = genWarning + "Marca al menos una estadística objetivo.";
+    outBreak.innerHTML = genWarning + "Marca al menos una estadística objetivo en el resultado.";
     return;
   }
 
-  const hasPI = powerItemKey !== null;
-
   const targetsRest = targets.filter(t => t !== powerItemKey);
-  const poolSize = hasPI ? 5 : 6;
-  const chooseSize = hasPI ? (k-1) : k;
   const m = targetsRest.length;
 
   let notes = [];
@@ -2509,11 +2663,10 @@ function computeBreeding(){
     notes.push(`${BREED_STATS.find(s=>s[0]===powerItemKey)[1]} (objeto de poder, garantizado del Padre ${powerItemHolder}): ${holderHas?"a 31 → x1":"NO está a 31 aquí → x0"}`);
   }
 
-  // probabilidad de naturaleza
   let pNature = 1;
   const everstoneA = itemA === "everstone", everstoneB = itemB === "everstone";
   if(targetNature === ""){
-    // no importa, no afecta
+    // no importa
   } else if(everstoneA && everstoneB){
     if(natureA === natureB){
       pNature = natureA === targetNature ? 1 : 0;
