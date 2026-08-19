@@ -394,7 +394,7 @@
 
       <fieldset><legend>Habilidad / objeto / estado</legend>
         <div class="field"><label>Habilidad del atacante</label><select id="atkAbility"></select></div>
-        <div class="field"><label>Objeto</label><input type="text" id="atkItemInput" placeholder="Escribe un objeto real (ej: Vidrio Reventado)" autocomplete="off"></div>
+        <div class="field"><label>Objeto</label><input type="text" id="atkItemInput" placeholder="Escribe un objeto real (ej: Vidasfera)" autocomplete="off"></div>
         <div class="hint" id="atkItemNote" style="margin-top:2px"></div>
         <div class="field" id="customItemField" style="display:none"><label>Multiplicador del objeto personalizado</label><input type="number" step="0.05" class="num-input" id="customItemMult" value="1"></div>
         <div class="check-row"><input type="checkbox" id="burnedCheck"><label for="burnedCheck">Atacante quemado</label></div>
@@ -666,7 +666,6 @@
     <b>Objetos X (Ataque X, Defensa X, Velocidad X, etc.):</b> en Gen 1-6 suben la estadística 1 nivel; desde Gen 7 suben 2 niveles.<br>
     <b>MTs (Máquinas Técnicas):</b> de un solo uso hasta Gen 4; se vuelven reutilizables infinitamente desde Gen 5. En Diamante Brillante/Perla Reluciente y en Gen 9 vuelven a ser de un solo uso.<br>
     <b>Objetos Elegidos</b> (Choice Band/Specs/Scarf): Choice Band existe desde Gen 3; Choice Specs y Choice Scarf se añadieron en Gen 4.<br>
-    <b>Vidrio Reventado</b> (Life Orb): introducido en Gen 4, sustituyendo parcialmente al rol del viejo objeto Metrónomo.<br>
     <b>Banda Focus:</b> desde Gen 2, con un 10% de probabilidad de sobrevivir con 1 PS. La <b>Cinta Focus</b> (Focus Sash, Gen 4) hace lo mismo pero garantizado, una vez, y solo si estaba a PS máximos.<br>
     <b>Bayas:</b> en Gen 2 existían como objetos curativos simples; el sistema completo de bayas (Zaidi, Meloc, Sitrus, etc.) con más variedad de efectos se introdujo en Gen 3.<br>
     <b>Restos</b> (Leftovers): su efecto de curar PS cada turno se ha mantenido igual desde Gen 2.
@@ -1171,8 +1170,13 @@ function formCategoryLabel(cat){
 }
 function detectFormCategoryQuery(text){
   const f = normText(text);
+  if(f.length < 2) return null;
+  const looksLikeRealMon = POKEDEX.some(p=>normText(p[1]).startsWith(f) || normText(POKEDEX_NAMES_ES[String(p[0])]||"").startsWith(f));
   for(const [cat, kw] of Object.entries(FORM_REGION_KEYWORDS)){
-    if(f.startsWith(kw)) return {cat, rest: f.slice(kw.length).trim()};
+    if(f === kw) return {cat, rest: ""}; // palabra clave exacta, sin ambigüedad posible (ej. "mega")
+    if(looksLikeRealMon) continue; // "megan" (Meganium), "meg" (Meganium)... se prioriza la búsqueda normal
+    if(f.startsWith(kw)) return {cat, rest: f.slice(kw.length).trim()}; // palabra clave + texto extra, ej. "mega char"
+    if(kw.startsWith(f)) return {cat, rest: ""}; // escribiendo la palabra clave a medias, ej. "ga", "hisu"
   }
   return null;
 }
@@ -1846,10 +1850,10 @@ let atkSelectedItem = null;
 function atkItemMultInfo(moveTypeName){
   if(!atkSelectedItem) return {mult:1, note:""};
   const slug = atkSelectedItem[2];
-  if(slug==="life-orb") return {mult:1.3, note:"Vidrio Reventado: x1.3"};
-  if(CHOICE_ITEMS.includes(slug)) return {mult:1.5, note:"Objeto Elegido: x1.5"};
+  if(slug==="life-orb") return {mult:1.3, note:`${itemName(atkSelectedItem)}: x1.3`};
+  if(CHOICE_ITEMS.includes(slug)) return {mult:1.5, note:`${itemName(atkSelectedItem)}: x1.5`};
   if(TYPE_BOOST_ITEMS[slug] && moveTypeName===TYPE_BOOST_ITEMS[slug]) return {mult:1.2, note:`${itemName(atkSelectedItem)}: x1.2 (potencia tipo ${moveTypeName})`};
-  if(slug==="expert-belt") return {mult:"expert_belt", note:"Cinta Experta: x1.2 si es súper efectivo"};
+  if(slug==="expert-belt") return {mult:"expert_belt", note:`${itemName(atkSelectedItem)}: x1.2 si es súper efectivo`};
   return {mult:1, note:`${itemName(atkSelectedItem)}: sin efecto conocido en daño`};
 }
 createItemAutocomplete(document.getElementById("atkItemInput"), (it)=>{
@@ -1862,6 +1866,25 @@ document.getElementById("atkItemInput").addEventListener("input", e=>{
   computeDamage();
 });
 let defSelectedItem = null;
+const TYPE_RESIST_BERRIES = {
+  "occa-berry":"Fire", "passho-berry":"Water", "wacan-berry":"Electric", "rindo-berry":"Grass",
+  "yache-berry":"Ice", "chople-berry":"Fighting", "kebia-berry":"Poison", "shuca-berry":"Ground",
+  "coba-berry":"Flying", "payapa-berry":"Psychic", "tanga-berry":"Bug", "charti-berry":"Rock",
+  "kasib-berry":"Ghost", "haban-berry":"Dragon", "colbur-berry":"Dark", "babiri-berry":"Steel",
+  "chilan-berry":"Normal", "roseli-berry":"Fairy",
+};
+function defCanEvolve(mon){ return EVOLUTIONS.some(e=>e[0]===mon[0]); }
+function defItemMultInfo(moveTypeName, statKind, effMult){
+  if(!defSelectedItem) return {defMult:1, dmgMult:1, note:""};
+  const slug = defSelectedItem[2];
+  if(slug==="eviolite" && (statKind==="def"||statKind==="spd") && defCanEvolve(currentDefMon)){
+    const note = statKind==="def" ? `${itemName(defSelectedItem)}: x1.5 Defensa y Def. Especial (no ha evolucionado del todo)` : "";
+    return {defMult:1.5, dmgMult:1, note};
+  }
+  if(slug==="assault-vest" && statKind==="spd") return {defMult:1.5, dmgMult:1, note:`${itemName(defSelectedItem)}: x1.5 Def. Especial`};
+  if(statKind==="berry" && TYPE_RESIST_BERRIES[slug] === moveTypeName && effMult > 1) return {defMult:1, dmgMult:0.5, note:`${itemName(defSelectedItem)}: x0.5 al daño (se consume tras usarse una vez)`};
+  return {defMult:1, dmgMult:1, note:""};
+}
 createItemAutocomplete(document.getElementById("defItemInput"), (it)=>{
   defSelectedItem = it;
   computeDamage();
@@ -2232,6 +2255,11 @@ function computeDamage(){
   let spdStat = calcStat(currentDefMon[7], num("ivSpd"), num("evSpd"), defLevel, natureMult(defNature,"spd"));
   const hpStat = calcHP(currentDefMon[3], num("ivHp"), num("evHp"), defLevel);
 
+  const defItemDefInfo = defItemMultInfo(moveType, "def", 1);
+  const defItemSpdInfo = defItemMultInfo(moveType, "spd", 1);
+  if(defItemDefInfo.defMult !== 1) defStat = Math.floor(defStat * defItemDefInfo.defMult);
+  if(defItemSpdInfo.defMult !== 1) spdStat = Math.floor(spdStat * defItemSpdInfo.defMult);
+
   document.getElementById("atkStatOut").textContent = atkStat;
   document.getElementById("spaStatOut").textContent = spaStat;
   document.getElementById("defStatOut").textContent = defStat;
@@ -2245,6 +2273,8 @@ function computeDamage(){
   let A = atkCategory==="Físico" ? atkStat : spaStat;
   let D = atkCategory==="Físico" ? defStat : spdStat;
   const notes = [];
+  if(defItemDefInfo.note) notes.push(defItemDefInfo.note);
+  if(defItemSpdInfo.note) notes.push(defItemSpdInfo.note);
 
   // Ruin abilities (Gen 9): reduce the relevant stat of all OTHER Pokémon on the field
   if(atkCategory==="Físico" && document.getElementById("ruinTablets").checked){ A = Math.floor(A*0.75); notes.push("Tablets of Ruin: x0.75 Ataque"); }
@@ -2304,6 +2334,9 @@ function computeDamage(){
   const tintedLens = (atkAbility==="tinted_lens" && effMult>0 && effMult<1);
   if(tintedLens) notes.push("Tinted Lens: x2 (poco efectivo)");
 
+  const defBerryInfo = defItemMultInfo(moveType, "berry", effMult);
+  if(defBerryInfo.note) notes.push(defBerryInfo.note);
+
   const stab = currentAtkMon[2].includes(moveType) ? (atkAbility==="adaptability" ? 2 : 1.5) : 1;
   if(stab>1) notes.push(`STAB${atkAbility==="adaptability"?" (Adaptability)":""}: x${stab}`);
 
@@ -2333,7 +2366,7 @@ function computeDamage(){
   if(defAbility==="multiscale" && fullHp){ multiscaleMult = 0.5; notes.push("Multiscale/Shadow Shield: x0.5 (HP completo)"); }
 
   const base = (((2*atkLevel/5+2) * effectivePower * A / Math.max(1,D)) / 50 + 2);
-  const fixedMult = stab * effMult * critMult * itemMult * screenMult * targetsMult * technicianMult * multiscaleMult * (tintedLens?2:1) * extra;
+  const fixedMult = stab * effMult * critMult * itemMult * screenMult * targetsMult * technicianMult * multiscaleMult * (tintedLens?2:1) * defBerryInfo.dmgMult * extra;
 
   const dmgMin = Math.max(0, Math.floor(base * fixedMult * 0.85));
   const dmgMax = Math.max(0, Math.floor(base * fixedMult * 1.0));
@@ -2911,6 +2944,7 @@ let currentDexMon = null;
 function dexEvoHtml(id){
   const from = EVOLUTIONS.filter(e=>e[1]===id);
   const to = EVOLUTIONS.filter(e=>e[0]===id);
+  const forms = FORMS_DEX.filter(f=>f.species_id===id);
   let html = "";
   if(from.length){
     html += from.map(e=>{
@@ -2929,6 +2963,12 @@ function dexEvoHtml(id){
         <div class="evo-text">${currentLang==="es"?"Evoluciona a":"Evolves into"} <b>${pokemonName(m)}</b><br><span style="color:var(--dim);font-size:12px">${evoDescText(e[0],e[1])}</span></div>
       </div>` : "";
     }).join("");
+  }
+  if(forms.length){
+    html += forms.map(f=>`<div class="dex-evo-item" data-goto-form="${f.id}">
+      <img src="${spriteUrl(f.pokeapi_id)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+      <div class="evo-text">${formCategoryLabel(f.category)}<br><span style="color:var(--dim);font-size:12px">${formName(f)}</span></div>
+    </div>`).join("");
   }
   return html || `<span style="color:var(--dim)">${currentLang==="es"?"No evoluciona ni proviene de otra evolución.":"Does not evolve from or into anything."}</span>`;
 }
@@ -3045,17 +3085,6 @@ function renderDexEntry(mon){
     ${dexEvoHtml(mon[0])}
     <div class="section-title">Movimientos (Generación ${currentGeneration})</div>
     ${dexMovesHtml(mon[0])}
-    ${(()=>{
-      const relatedForms = FORMS_DEX.filter(f=>f.species_id===mon[0]);
-      if(relatedForms.length===0) return "";
-      return `<div class="section-title">${currentLang==="es"?"Formas disponibles":"Available forms"}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        ${relatedForms.map(f=>`<div class="dex-form-item" data-form-id="${f.id}" style="display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer">
-          <img src="${spriteUrl(f.pokeapi_id)}" style="width:32px;height:32px;image-rendering:pixelated" referrerpolicy="no-referrer" onerror="this.style.display='none'">
-          <span style="font-size:12px;font-weight:700">${formName(f)}</span>
-        </div>`).join("")}
-      </div>`;
-    })()}
     ${historyHtml}
   `;
 }
@@ -3074,7 +3103,6 @@ function renderFormEntry(form){
       </div>
       <div style="flex:1;min-width:200px">
         <div style="font-size:16px;font-weight:800">${formName(form)}</div>
-        <div style="font-size:11px;color:var(--dim);margin-bottom:4px">${currentLang==="es"?"Forma de":"Form of"} <span class="clickable-move" data-goto-mon="${form.species_id}" style="cursor:pointer">${baseMon?pokemonName(baseMon):form.base_name_en}</span></div>
         <div class="badges" style="margin:4px 0">${form.types.map(badge).join("")}</div>
         <div style="font-size:12px;color:var(--dim)">${currentLang==="es"?"Habilidades":"Abilities"}: <span style="color:var(--ink)">${form.abilities.length?form.abilities.map(([n,h])=>{
           const aid = ABILITY_NAME_TO_ID[n];
@@ -3087,25 +3115,20 @@ function renderFormEntry(form){
         }).join(", "):"—"}</span></div>
       </div>
     </div>
+    <div class="section-title">Evoluciones</div>
+    <div class="dex-evo-item" data-goto="${form.species_id}">
+      <img src="${baseMon?animatedSpriteUrl(baseMon[1]):spriteUrl(form.species_id)}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${spriteUrl(form.species_id)}';this.style.imageRendering='pixelated'">
+      <div class="evo-text">${formCategoryLabel(form.category)} ${currentLang==="es"?"de":"of"}<br><span style="color:var(--dim);font-size:12px"><b>${baseMon?pokemonName(baseMon):form.base_name_en}</b></span></div>
+    </div>
     <div class="section-title">${currentLang==="es"?"Estadísticas base":"Base stats"}</div>
     <div style="max-width:320px">${statBarsFromArray(form.stats)}</div>
     <div class="hint" style="margin-top:14px">${currentLang==="es"
-      ? `${form.category==="mega" ? "Las Megaevoluciones solo están disponibles en combate tras usar la Megapiedra correspondiente y vuelven a la forma normal al acabar el combate." : "Esta forma regional se obtiene de otra manera a la especie original, y sus estadísticas/tipos/habilidades pueden ser distintos."} Los movimientos y evoluciones se consultan en la ficha de la especie base.`
-      : `${form.category==="mega" ? "Mega Evolutions are only available in battle after using the matching Mega Stone, and revert at the end of the battle." : "This regional form is obtained differently from the original species, and its stats/types/abilities may differ."} Moves and evolutions are shown on the base species' entry.`}</div>
+      ? `${form.category==="mega" ? "Las Megaevoluciones solo están disponibles en combate tras usar la Megapiedra correspondiente y vuelven a la forma normal al acabar el combate." : "Esta forma regional se obtiene de otra manera a la especie original, y sus estadísticas/tipos/habilidades pueden ser distintos."} Los movimientos se consultan en la ficha de la especie base.`
+      : `${form.category==="mega" ? "Mega Evolutions are only available in battle after using the matching Mega Stone, and revert at the end of the battle." : "This regional form is obtained differently from the original species, and its stats/types/abilities may differ."} Moves are shown on the base species' entry.`}</div>
   `;
 }
 
 document.getElementById("dexEntry").addEventListener("click", e=>{
-  const formItem = e.target.closest(".dex-form-item");
-  if(formItem){
-    const form = FORMS_DEX.find(f=>f.id===parseInt(formItem.dataset.formId,10));
-    if(form){
-      document.getElementById("dexInput").value = formName(form);
-      renderFormEntry(form);
-      document.getElementById("dexEntry").scrollIntoView({behavior:"smooth", block:"start"});
-    }
-    return;
-  }
   const gotoMon = e.target.closest("[data-goto-mon]");
   if(gotoMon){
     const mon = findMonById(parseInt(gotoMon.dataset.gotoMon,10));
@@ -3118,6 +3141,15 @@ document.getElementById("dexEntry").addEventListener("click", e=>{
   }
   const evoItem = e.target.closest(".dex-evo-item");
   if(evoItem){
+    if(evoItem.dataset.gotoForm !== undefined){
+      const form = FORMS_DEX.find(f=>f.id===parseInt(evoItem.dataset.gotoForm,10));
+      if(form){
+        document.getElementById("dexInput").value = formName(form);
+        renderFormEntry(form);
+        document.getElementById("dexEntry").scrollIntoView({behavior:"smooth", block:"start"});
+      }
+      return;
+    }
     const mon = findMonById(parseInt(evoItem.dataset.goto,10));
     if(mon){
       document.getElementById("dexInput").value = pokemonName(mon);
