@@ -128,6 +128,8 @@
   .bm-move-cat-icon{font-size:11px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;color:#fff;flex:none}
   .bm-moves-unknown{font-size:9.5px;color:var(--dim);font-style:italic}
   .bm-item-sprite-big{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));cursor:help}
+  .hd-sprite-loading{opacity:0;transition:opacity .15s}
+  .hd-sprite-loading.loaded{opacity:1}
   .bm-stats-col{width:120px;flex:none;display:flex;flex-direction:column;gap:5px;justify-content:center}
   .bm-stat-row{display:grid;grid-template-columns:28px 28px 1fr;align-items:center;gap:5px;font-size:10.5px}
   .bm-stat-label{font-weight:700}
@@ -935,7 +937,7 @@ function itemSpriteChainedTag(it, cssClass, extraAttrs){
   const candidates = itemSpriteHDCandidates(it);
   const lowRes = itemSpriteUrl(it[2]);
   const chainJson = escAttr(JSON.stringify(candidates));
-  return `<img src="${candidates[0]}" class="${cssClass}" data-hd-candidates="${chainJson}" data-hd-step="0" data-fallback="${escAttr(lowRes)}" ${extraAttrs||""} referrerpolicy="no-referrer" loading="lazy" onerror="handleHDItemImgError(this)">`;
+  return `<img src="${candidates[0]}" class="${cssClass} hd-sprite-loading" data-hd-candidates="${chainJson}" data-hd-step="0" data-fallback="${escAttr(lowRes)}" ${extraAttrs||""} referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add('loaded')" onerror="handleHDItemImgError(this)">`;
 }
 function handleHDItemImgError(img){
   let candidates = [];
@@ -1171,12 +1173,9 @@ function formCategoryLabel(cat){
 function detectFormCategoryQuery(text){
   const f = normText(text);
   if(f.length < 2) return null;
-  const looksLikeRealMon = POKEDEX.some(p=>normText(p[1]).startsWith(f) || normText(POKEDEX_NAMES_ES[String(p[0])]||"").startsWith(f));
   for(const [cat, kw] of Object.entries(FORM_REGION_KEYWORDS)){
-    if(f === kw) return {cat, rest: ""}; // palabra clave exacta, sin ambigüedad posible (ej. "mega")
-    if(looksLikeRealMon) continue; // "megan" (Meganium), "meg" (Meganium)... se prioriza la búsqueda normal
-    if(f.startsWith(kw)) return {cat, rest: f.slice(kw.length).trim()}; // palabra clave + texto extra, ej. "mega char"
-    if(kw.startsWith(f)) return {cat, rest: ""}; // escribiendo la palabra clave a medias, ej. "ga", "hisu"
+    if(f.startsWith(kw)) return {cat, rest: f.slice(kw.length).trim()}; // palabra clave completa (+ texto extra), ej. "mega" o "mega char"
+    if(kw.startsWith(f)) return {cat, rest: ""}; // escribiendo la palabra clave a medias, ej. "me", "ga", "hisu"
   }
   return null;
 }
@@ -1643,7 +1642,7 @@ function teamCardHtml(mon, slot, idx){
   if(resolvedItem && !isEditingField(idx,"item")){
     const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
     const candidates = itemSpriteHDCandidates(resolvedItem);
-    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big team-item-static" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onerror="handleHDItemImgError(this)">`;
+    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big team-item-static hd-sprite-loading" data-idx="${idx}" data-editfield="item" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onload="this.classList.add('loaded')" onerror="handleHDItemImgError(this)">`;
   } else {
     itemAreaHtml = `<input type="text" class="team-item-input teamItemInput" data-idx="${idx}" data-editkey="${idx}-item" value="${slot.item||""}" placeholder="${currentLang==="es"?"objeto":"item"}" autocomplete="off">`;
   }
@@ -2544,7 +2543,7 @@ function breedCardHtml(side){
   if(resolvedItem && !isEditingBreedField(side,"item")){
     const itemTip = `<b>${itemName(resolvedItem)}</b><br>${itemDescText(resolvedItem)}`;
     const candidates = itemSpriteHDCandidates(resolvedItem);
-    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big breedItemStatic" data-side="${side}" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onerror="handleHDItemImgError(this)">`;
+    itemAreaHtml = `<img src="${candidates[0]}" class="bm-item-sprite-big breedItemStatic hd-sprite-loading" data-side="${side}" tabindex="0" referrerpolicy="no-referrer" data-tip="${escAttr(itemTip)}" data-hd-candidates="${escAttr(JSON.stringify(candidates))}" data-hd-step="0" data-fallback="${escAttr(itemSpriteUrl(resolvedItem[2]))}" onload="this.classList.add('loaded')" onerror="handleHDItemImgError(this)">`;
   } else {
     itemAreaHtml = `<input type="text" class="team-item-input breedItemInput" data-side="${side}" value="${resolvedItem?itemName(resolvedItem):''}" placeholder="${currentLang==='es'?'Ninguno':'None'}" autocomplete="off">`;
   }
