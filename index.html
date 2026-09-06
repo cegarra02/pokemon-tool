@@ -268,6 +268,28 @@
   .status-Muerto{background:#5a2323}
   .status-Caja{background:#4a4423}
   .hl-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+
+  .subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+  .subtab{padding:8px 16px;border-radius:8px 8px 0 0;background:var(--panel2);border:1px solid var(--line);border-bottom:none;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--dim);transition:.15s;position:relative;top:1px}
+  .subtab:hover{color:var(--ink)}
+  .subtab.active{background:var(--panel);color:var(--accent);border-color:var(--line)}
+  .subpanel{display:none}
+  .subpanel.active{display:block}
+
+  .nuz-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .nuz-empty{color:var(--dim);font-style:italic;padding:24px;text-align:center;background:var(--panel2);border:1px dashed var(--line);border-radius:10px}
+
+  .grave-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .grave{position:relative;background:linear-gradient(180deg,#3a3a42 0%,#2a2a30 100%);border:1px solid #4a4a52;border-radius:12px 12px 6px 6px;padding:14px 10px 12px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+  .grave::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:60%;height:22px;background:linear-gradient(180deg,#4a4a52 0%,#3a3a42 100%);border-radius:50% 50% 0 0}
+  .grave-cross{font-size:20px;color:#8a8a95;margin-bottom:2px;position:relative;z-index:1}
+  .grave img{width:64px;height:64px;image-rendering:pixelated;filter:grayscale(1) brightness(.75);margin:2px auto}
+  .grave-name{font-weight:800;font-size:13px;color:#d8d8de;margin-top:2px}
+  .grave-species{font-size:11px;color:#9a9aa5}
+  .grave-meta{font-size:10.5px;color:#8a8a95;margin-top:5px;line-height:1.5;border-top:1px solid #4a4a52;padding-top:5px}
+  .grave-remove{position:absolute;top:4px;right:6px;color:#8a8a95;cursor:pointer;font-size:13px;opacity:0;transition:.15s}
+  .grave:hover .grave-remove{opacity:1}
+  .grave-remove:hover{color:var(--danger)}
   .btn{background:var(--accent2);color:#fff;border:none;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600}
   .btn.danger{background:var(--danger)}
   .summary-pills{display:flex;gap:8px;font-size:12px}
@@ -327,7 +349,7 @@
   <div class="tab active" data-tab="equipo">Mi equipo</div>
   <div class="tab" data-tab="cobertura">Cobertura y debilidades</div>
   <div class="tab" data-tab="calc">Calculadora de daño</div>
-  <div class="tab" data-tab="hardlocke">Seguimiento hardlocke</div>
+  <div class="tab" data-tab="hardlocke">Nuzlocke</div>
   <div class="tab" data-tab="cria">Cría</div>
   <div class="tab" data-tab="dex">Pokédex</div>
   <div class="tab" data-tab="movedex">Movimientos</div>
@@ -494,30 +516,56 @@
 </div>
 
 <div class="panel" id="panel-hardlocke">
-  <div class="hl-toolbar">
-    <div class="summary-pills">
-      <span class="pill">Vivos: <b id="cntVivo">0</b></span>
-      <span class="pill">Muertos: <b id="cntMuerto">0</b></span>
-      <span class="pill">En caja: <b id="cntCaja">0</b></span>
-    </div>
-    <div>
-      <button class="btn" id="addRowBtn">+ Añadir fila</button>
-      <button class="btn" id="saveHlBtn">Guardar</button>
-    </div>
+  <div class="subtabs">
+    <div class="subtab active" data-subtab="nuz-run">Partida</div>
+    <div class="subtab" data-subtab="nuz-box">Caja</div>
+    <div class="subtab" data-subtab="nuz-grave">Cementerio</div>
   </div>
-  <table class="hl-table">
-    <thead><tr>
-      <th style="width:16%">Ruta / Zona</th>
-      <th style="width:18%">Especie</th>
-      <th style="width:12%">Apodo</th>
-      <th style="width:8%">Nivel</th>
-      <th style="width:10%">Estado</th>
-      <th>Notas</th>
-      <th style="width:30px"></th>
-    </tr></thead>
-    <tbody id="hlBody"></tbody>
-  </table>
-  <span class="save-note" id="hlSaveNote"></span>
+
+  <div class="subpanel active" id="subpanel-nuz-run">
+    <div class="field" style="max-width:340px">
+      <label>Juego</label>
+      <select id="nuzGameSelect">
+        <option value="">— Selecciona un juego —</option>
+      </select>
+    </div>
+    <div id="nuzGamePlaceholder" class="hint" style="margin:10px 0 14px">Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente en la tabla de abajo.</div>
+
+    <div class="hl-toolbar">
+      <div class="summary-pills">
+        <span class="pill">Vivos: <b id="cntVivo">0</b></span>
+        <span class="pill">Muertos: <b id="cntMuerto">0</b></span>
+        <span class="pill">En caja: <b id="cntCaja">0</b></span>
+      </div>
+      <div>
+        <button class="btn" id="addRowBtn">+ Añadir fila</button>
+        <button class="btn" id="saveHlBtn">Guardar</button>
+      </div>
+    </div>
+    <table class="hl-table">
+      <thead><tr>
+        <th style="width:16%">Ruta / Zona</th>
+        <th style="width:18%">Especie</th>
+        <th style="width:12%">Apodo</th>
+        <th style="width:8%">Nivel</th>
+        <th style="width:10%">Estado</th>
+        <th>Notas</th>
+        <th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="hlBody"></tbody>
+    </table>
+    <span class="save-note" id="hlSaveNote"></span>
+  </div>
+
+  <div class="subpanel" id="subpanel-nuz-box">
+    <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (estado "Vivo" o "Caja" en la tabla de Partida). Edita su objeto, naturaleza, movimientos y EVs igual que en el creador de equipos.</div>
+    <div class="nuz-box-grid" id="nuzBoxGrid"></div>
+  </div>
+
+  <div class="subpanel" id="subpanel-nuz-grave">
+    <div class="hint">Descansen en paz. Los Pokémon marcados como "Muerto" en la tabla de Partida aparecen aquí y ya no se pueden volver a usar.</div>
+    <div class="grave-grid" id="nuzGraveGrid"></div>
+  </div>
 </div>
 
 <div class="panel" id="panel-cria">
@@ -2426,6 +2474,11 @@ function updateCounts(){
   document.getElementById("cntVivo").textContent = hlRows.filter(r=>r.status==="Vivo").length;
   document.getElementById("cntMuerto").textContent = hlRows.filter(r=>r.status==="Muerto").length;
   document.getElementById("cntCaja").textContent = hlRows.filter(r=>r.status==="Caja").length;
+  // mantener sincronizadas la caja y el cementerio si están visibles
+  const boxPanel = document.getElementById("subpanel-nuz-box");
+  const gravePanel = document.getElementById("subpanel-nuz-grave");
+  if(boxPanel && boxPanel.classList.contains("active")) renderNuzBox();
+  if(gravePanel && gravePanel.classList.contains("active")) renderNuzGrave();
 }
 document.getElementById("addRowBtn").addEventListener("click", ()=>{
   hlRows.push({route:"",species:"",nickname:"",level:"",status:"",notes:""});
@@ -2443,6 +2496,114 @@ async function loadHardlocke(){
   if(hlRows.length===0){ hlRows = new Array(6).fill(null).map(()=>({route:"",species:"",nickname:"",level:"",status:"",notes:""})); }
   renderHardlocke(); updateCounts();
 }
+
+// ---------- nuzlocke: sub-pestañas, caja y cementerio ----------
+document.querySelectorAll(".subtab").forEach(st=>{
+  st.addEventListener("click", ()=>{
+    const target = st.dataset.subtab;
+    document.querySelectorAll(".subtab").forEach(x=>x.classList.toggle("active", x===st));
+    document.querySelectorAll(".subpanel").forEach(p=>p.classList.toggle("active", p.id==="subpanel-"+target));
+    if(target==="nuz-box") renderNuzBox();
+    if(target==="nuz-grave") renderNuzGrave();
+  });
+});
+
+function renderNuzBox(){
+  const grid = document.getElementById("nuzBoxGrid");
+  const alive = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && (r.status==="Vivo"||r.status==="Caja"));
+  if(alive.length===0){
+    grid.innerHTML = `<div class="nuz-empty">Todavía no tienes ningún Pokémon vivo registrado.<br>Añádelos en la pestaña <b>Partida</b> con estado "Vivo" o "Caja".</div>`;
+    return;
+  }
+  grid.innerHTML = alive.map(({r,idx})=>{
+    const mon = findMon(r.species);
+    if(!mon) return "";
+    const displayName = r.nickname || pokemonName(mon);
+    const lvl = parseInt(r.level) || 50;
+    const types = mon[2];
+    const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
+    const statusPill = r.status==="Caja" ? `<span class="pill" style="font-size:10px">En caja</span>` : "";
+    const stats = getMonStatsForGen(mon, currentGeneration);
+    const bst = stats.reduce((a,b)=>a+b,0);
+    return `<div class="bm-card breed-bm-card">
+      <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
+        <div class="bm-types">${typeBadges}</div>
+        <div class="bm-header-flex-row">
+          <div class="bm-header-main"><div class="bm-name-col">
+            <div class="bm-meta-line">Nv. ${lvl} · ${r.route||"—"} ${statusPill}</div>
+            <span class="bm-name-input" style="opacity:.95">${displayName}</span>
+            ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
+          </div></div>
+          <img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(mon[1])}'">
+        </div>
+        <div class="bm-bst-corner">${bst}</div>
+      </div>
+      <div class="bm-card-body">
+        <div class="bm-body-left" style="flex:1">
+          <div style="font-size:11px;color:var(--dim);line-height:1.7">
+            ${statBarsFromArray(stats)}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function renderNuzGrave(){
+  const grid = document.getElementById("nuzGraveGrid");
+  const dead = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Muerto");
+  if(dead.length===0){
+    grid.innerHTML = `<div class="nuz-empty">El cementerio está vacío. ¡Larga vida a tu equipo!</div>`;
+    return;
+  }
+  grid.innerHTML = dead.map(({r,idx})=>{
+    const mon = findMon(r.species);
+    const displayName = r.nickname || (mon?pokemonName(mon):r.species);
+    const spriteHtml = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : "";
+    return `<div class="grave">
+      <span class="grave-remove" data-grave-idx="${idx}" title="Quitar del cementerio">✕</span>
+      <div class="grave-cross">✝</div>
+      ${spriteHtml}
+      <div class="grave-name">${displayName}</div>
+      ${r.nickname&&mon?`<div class="grave-species">${pokemonName(mon)}</div>`:""}
+      <div class="grave-meta">
+        ${r.level?`Nv. ${r.level}<br>`:""}
+        ${r.route?`${r.route}<br>`:""}
+        ${r.notes?`<span style="font-style:italic">"${r.notes}"</span>`:""}
+      </div>
+    </div>`;
+  }).join("");
+  grid.querySelectorAll(".grave-remove").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.target.dataset.graveIdx;
+      hlRows[idx].status = "";
+      renderHardlocke(); updateCounts(); renderNuzGrave();
+    });
+  });
+}
+
+// lista de juegos (placeholder — los encuentros por ruta y combates se irán guionizando uno a uno)
+const NUZ_GAMES = [
+  ["rb","Rojo / Azul"],["y","Amarillo"],["gs","Oro / Plata"],["c","Cristal"],
+  ["rs","Rubí / Zafiro"],["e","Esmeralda"],["frlg","Rojo Fuego / Verde Hoja"],
+  ["dp","Diamante / Perla"],["pt","Platino"],["hgss","Oro HeartGold / Plata SoulSilver"],
+  ["bw","Negro / Blanco"],["b2w2","Negro 2 / Blanco 2"],
+  ["xy","X / Y"],["oras","Rubí Omega / Zafiro Alfa"],
+  ["sm","Sol / Luna"],["usum","Ultrasol / Ultraluna"],
+  ["swsh","Espada / Escudo"],["bdsp","Diamante Brillante / Perla Reluciente"],["la","Leyendas: Arceus"],
+  ["sv","Escarlata / Púrpura"],
+];
+(function initNuzGames(){
+  const sel = document.getElementById("nuzGameSelect");
+  if(!sel) return;
+  sel.innerHTML = `<option value="">— Selecciona un juego —</option>` + NUZ_GAMES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+  sel.addEventListener("change", ()=>{
+    const ph = document.getElementById("nuzGamePlaceholder");
+    if(!ph) return;
+    ph.innerHTML = sel.value
+      ? `Juego seleccionado: <b>${NUZ_GAMES.find(g=>g[0]===sel.value)[1]}</b>. Los encuentros por ruta y los combates de este juego aún no están guionizados — de momento registra tus capturas manualmente en la tabla de abajo.`
+      : `Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente en la tabla de abajo.`;
+  });
+})();
 
 // ---------- egg group compatibility ----------
 function genderLabel(gr){
