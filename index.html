@@ -1806,18 +1806,18 @@ function renderAnalysis(){
   document.getElementById("weaknessTable").innerHTML = weakHtml;
 }
 
-document.getElementById("saveTeamBtn").addEventListener("click", async ()=>{
+document.getElementById("saveTeamBtn").addEventListener("click", ()=>{
   try{
-    await window.storage.set("pokemmo-team", JSON.stringify(team), false);
+    localStorage.setItem("pokemmo-team", JSON.stringify(team));
     document.getElementById("teamSaveNote").textContent = "Guardado ✓";
     setTimeout(()=>document.getElementById("teamSaveNote").textContent="",2000);
-  }catch(err){ document.getElementById("teamSaveNote").textContent = "No se pudo guardar."; }
+  }catch(err){ document.getElementById("teamSaveNote").textContent = "No se pudo guardar (¿navegación privada?)."; }
 });
-async function loadTeam(){
+function loadTeam(){
   try{
-    const res = await window.storage.get("pokemmo-team", false);
-    if(res && res.value){
-      const loaded = JSON.parse(res.value);
+    const raw = localStorage.getItem("pokemmo-team");
+    if(raw){
+      const loaded = JSON.parse(raw);
       team = loaded.map(s=>Object.assign(blankSlot(), s));
     }
   }catch(err){}
@@ -2543,15 +2543,15 @@ document.getElementById("addRowBtn").addEventListener("click", ()=>{
   hlRows.push({route:"",species:"",nickname:"",level:"",status:"",notes:""});
   renderHardlocke(); updateCounts();
 });
-document.getElementById("saveHlBtn").addEventListener("click", async ()=>{
+document.getElementById("saveHlBtn").addEventListener("click", ()=>{
   try{
-    await window.storage.set("pokemmo-hardlocke", JSON.stringify(hlRows), false);
+    localStorage.setItem("pokemmo-hardlocke", JSON.stringify(hlRows));
     document.getElementById("hlSaveNote").textContent = "Guardado ✓";
     setTimeout(()=>document.getElementById("hlSaveNote").textContent="",2000);
-  }catch(err){ document.getElementById("hlSaveNote").textContent = "No se pudo guardar."; }
+  }catch(err){ document.getElementById("hlSaveNote").textContent = "No se pudo guardar (¿navegación privada?)."; }
 });
-async function loadHardlocke(){
-  try{ const res = await window.storage.get("pokemmo-hardlocke", false); if(res && res.value) hlRows = JSON.parse(res.value); }catch(err){}
+function loadHardlocke(){
+  try{ const raw = localStorage.getItem("pokemmo-hardlocke"); if(raw) hlRows = JSON.parse(raw); }catch(err){}
   // compatibilidad con partidas antiguas: "Vivo" y "Caja" eran redundantes, "Muerto" pasa a "Cementerio"
   hlRows.forEach(r=>{
     if(r.status==="Vivo") r.status = "Caja";
@@ -2586,7 +2586,7 @@ function renderNuzBox(){
     const lvl = r.level ? `Nv. ${r.level}` : "";
     const types = mon[2];
     const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
-    const stats = getMonStatsForGen(mon, currentGeneration);
+    const {stats} = getMonStatsForGen(mon, currentGeneration);
     const bst = stats.reduce((a,b)=>a+b,0);
     return `<div class="bm-card breed-bm-card">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
