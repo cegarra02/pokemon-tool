@@ -276,10 +276,10 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
-  .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px}
-  .nuz-box-action{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:11px;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s}
-  .nuz-evolve-btn:hover{border-color:var(--accent);color:var(--accent)}
-  .nuz-tograve-btn:hover{border-color:var(--danger);color:var(--danger)}
+  .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px;justify-content:flex-end}
+  .nuz-box-action{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:7px;font-size:14px;line-height:1;color:var(--dim);cursor:pointer;transition:.15s;padding:0}
+  .nuz-evolve-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,203,5,.08)}
+  .nuz-tograve-btn:hover{border-color:var(--danger);color:var(--danger);background:rgba(220,53,69,.08)}
 
   .nuz-encounters{display:flex;flex-direction:column;gap:8px}
   .nuz-row{display:grid;grid-template-columns:56px 1.1fr 1.2fr 1fr 1fr 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:.15s}
@@ -300,8 +300,13 @@
   .nuz-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px;border-radius:6px;transition:.15s}
   .nuz-del:hover{color:var(--danger);background:rgba(220,53,69,.1)}
   @media (max-width:820px){
-    .nuz-row{grid-template-columns:48px 1fr 1fr 28px;gap:8px}
-    .nuz-row-sprite{width:48px;height:48px}
+    .nuz-row{grid-template-columns:48px 1fr 1fr 28px;grid-template-areas:"sprite especie especie del" "sprite ruta estado estado";gap:8px}
+    .nuz-row-sprite{width:48px;height:48px;grid-area:sprite}
+    .nuz-row > .nuz-field:nth-of-type(1){grid-area:ruta}
+    .nuz-row > .nuz-field:nth-of-type(2){grid-area:especie}
+    .nuz-row > .nuz-field:nth-of-type(3){display:none}
+    .nuz-row > .nuz-field:nth-of-type(4){grid-area:estado}
+    .nuz-del{grid-area:del}
   }
 
   .nuz-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
@@ -314,7 +319,9 @@
   .grave img{width:64px;height:64px;image-rendering:pixelated;filter:grayscale(1) brightness(.75);margin:2px auto}
   .grave-name{font-weight:800;font-size:13px;color:#d8d8de;margin-top:2px}
   .grave-species{font-size:11px;color:#9a9aa5}
-  .grave-meta{font-size:10.5px;color:#8a8a95;margin-top:5px;line-height:1.5;border-top:1px solid #4a4a52;padding-top:5px}
+  .grave-types{display:flex;gap:3px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+  .grave-type{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:20px;color:#fff;opacity:.55;filter:grayscale(.4)}
+  .grave-meta{font-size:10.5px;color:#8a8a95;margin-top:6px;line-height:1.5;border-top:1px solid #4a4a52;padding-top:5px}
   .grave-remove{position:absolute;top:4px;right:6px;color:#8a8a95;cursor:pointer;font-size:13px;opacity:0;transition:.15s}
   .grave:hover .grave-remove{opacity:1}
   .grave-remove:hover{color:var(--danger)}
@@ -2593,14 +2600,14 @@ function renderNuzBox(){
     const bst = stats.reduce((a,b)=>a+b,0);
     const evosTo = EVOLUTIONS.filter(e=>e[0]===mon[0]);
     const evoBtn = evosTo.length
-      ? `<button class="nuz-box-action nuz-evolve-btn" data-idx="${idx}" title="Evolucionar">⬆️ Evolucionar</button>`
+      ? `<button class="nuz-box-action nuz-evolve-btn" data-idx="${idx}" title="${currentLang==="es"?"Evolucionar":"Evolve"}" data-tip="${escAttr(currentLang==="es"?"<b>Evolucionar</b>":"<b>Evolve</b>")}">⬆</button>`
       : "";
     return `<div class="bm-card breed-bm-card">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-flex-row">
           <div class="bm-header-main"><div class="bm-name-col">
-            <div class="bm-meta-line">${r.route||"—"}</div>
+            ${r.route?`<div class="bm-meta-line">${r.route}</div>`:""}
             <span class="bm-name-input" style="opacity:.95">${displayName}</span>
             ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
           </div></div>
@@ -2613,7 +2620,7 @@ function renderNuzBox(){
       </div>
       <div class="nuz-box-actions">
         ${evoBtn}
-        <button class="nuz-box-action nuz-tograve-btn" data-idx="${idx}" title="Mandar al cementerio">✝ Cementerio</button>
+        <button class="nuz-box-action nuz-tograve-btn" data-idx="${idx}" title="${currentLang==="es"?"Mandar al cementerio":"Send to graveyard"}" data-tip="${escAttr(currentLang==="es"?"<b>Mandar al cementerio</b>":"<b>Send to graveyard</b>")}">✝</button>
       </div>
     </div>`;
   }).join("");
@@ -2656,15 +2663,18 @@ function renderNuzGrave(){
     const mon = findMon(r.species);
     const displayName = r.nickname || (mon?pokemonName(mon):r.species);
     const spriteHtml = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : "";
+    const typesHtml = mon ? mon[2].map(t=>`<span class="grave-type" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("") : "";
+    // si tiene apodo, la especie va debajo del nombre; si no, ya se muestra como nombre
+    const speciesLine = (r.nickname && mon) ? `<div class="grave-species">${pokemonName(mon)}</div>` : "";
+    const metaHtml = r.route ? `<div class="grave-meta">${currentLang==="es"?"Cayó en":"Fell at"}<br><b>${r.route}</b></div>` : "";
     return `<div class="grave">
       <span class="grave-remove" data-grave-idx="${idx}" title="Sacar del cementerio">✕</span>
       <div class="grave-cross">✝</div>
       ${spriteHtml}
       <div class="grave-name">${displayName}</div>
-      ${r.nickname&&mon?`<div class="grave-species">${pokemonName(mon)}</div>`:""}
-      <div class="grave-meta">
-        ${r.route?`${r.route}`:""}
-      </div>
+      ${speciesLine}
+      ${typesHtml?`<div class="grave-types">${typesHtml}</div>`:""}
+      ${metaHtml}
     </div>`;
   }).join("");
   grid.querySelectorAll(".grave-remove").forEach(btn=>{
