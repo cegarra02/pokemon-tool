@@ -276,6 +276,29 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
+  .nuz-encounters{display:flex;flex-direction:column;gap:8px}
+  .nuz-row{display:grid;grid-template-columns:56px 1.1fr 1.2fr 1fr 64px 1fr 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:.15s}
+  .nuz-row:hover{border-color:var(--accent2)}
+  .nuz-row.is-dead{opacity:.55}
+  .nuz-row.is-dead .nuz-row-sprite img{filter:grayscale(1) brightness(.7)}
+  .nuz-row-sprite{width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:8px;overflow:hidden}
+  .nuz-row-sprite img{width:52px;height:52px;image-rendering:pixelated}
+  .nuz-row-sprite .nuz-row-empty{color:var(--line);font-size:20px}
+  .nuz-field label{display:block;font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+  .nuz-field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-size:12px}
+  .nuz-field input:focus{outline:none;border-color:var(--accent)}
+  .nuz-choice{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-size:12px;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:4px}
+  .nuz-choice:hover{border-color:var(--accent)}
+  .nuz-choice::after{content:"▾";color:var(--dim);font-size:10px}
+  .nuz-choice.status-caja{border-color:var(--good);color:var(--good)}
+  .nuz-choice.status-cementerio{border-color:var(--danger);color:var(--danger)}
+  .nuz-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px;border-radius:6px;transition:.15s}
+  .nuz-del:hover{color:var(--danger);background:rgba(220,53,69,.1)}
+  @media (max-width:820px){
+    .nuz-row{grid-template-columns:48px 1fr 1fr 28px;gap:8px}
+    .nuz-row-sprite{width:48px;height:48px}
+  }
+
   .nuz-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
   .nuz-empty{color:var(--dim);font-style:italic;padding:24px;text-align:center;background:var(--panel2);border:1px dashed var(--line);border-radius:10px}
 
@@ -529,41 +552,30 @@
         <option value="">— Selecciona un juego —</option>
       </select>
     </div>
-    <div id="nuzGamePlaceholder" class="hint" style="margin:10px 0 14px">Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente en la tabla de abajo.</div>
+    <div id="nuzGamePlaceholder" class="hint" style="margin:10px 0 14px">Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente abajo.</div>
 
     <div class="hl-toolbar">
       <div class="summary-pills">
-        <span class="pill">Vivos: <b id="cntVivo">0</b></span>
-        <span class="pill">Muertos: <b id="cntMuerto">0</b></span>
         <span class="pill">En caja: <b id="cntCaja">0</b></span>
+        <span class="pill">En cementerio: <b id="cntMuerto">0</b></span>
+        <span class="pill">Encuentros: <b id="cntTotal">0</b></span>
       </div>
       <div>
-        <button class="btn" id="addRowBtn">+ Añadir fila</button>
+        <button class="btn" id="addRowBtn">+ Añadir encuentro</button>
         <button class="btn" id="saveHlBtn">Guardar</button>
       </div>
     </div>
-    <table class="hl-table">
-      <thead><tr>
-        <th style="width:16%">Ruta / Zona</th>
-        <th style="width:18%">Especie</th>
-        <th style="width:12%">Apodo</th>
-        <th style="width:8%">Nivel</th>
-        <th style="width:10%">Estado</th>
-        <th>Notas</th>
-        <th style="width:30px"></th>
-      </tr></thead>
-      <tbody id="hlBody"></tbody>
-    </table>
+    <div class="nuz-encounters" id="nuzEncounters"></div>
     <span class="save-note" id="hlSaveNote"></span>
   </div>
 
   <div class="subpanel" id="subpanel-nuz-box">
-    <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (estado "Vivo" o "Caja" en la tabla de Partida). Edita su objeto, naturaleza, movimientos y EVs igual que en el creador de equipos.</div>
+    <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (estado "Caja" en la pestaña Partida).</div>
     <div class="nuz-box-grid" id="nuzBoxGrid"></div>
   </div>
 
   <div class="subpanel" id="subpanel-nuz-grave">
-    <div class="hint">Descansen en paz. Los Pokémon marcados como "Muerto" en la tabla de Partida aparecen aquí y ya no se pueden volver a usar.</div>
+    <div class="hint">Descansen en paz. Los Pokémon marcados como "Cementerio" en la pestaña Partida aparecen aquí y ya no se pueden volver a usar.</div>
     <div class="grave-grid" id="nuzGraveGrid"></div>
   </div>
 </div>
@@ -2429,52 +2441,99 @@ function computeDamage(){
     + (notes.length ? `<b>Modificadores aplicados:</b> ${notes.join(" · ")}` : "Sin modificadores adicionales.");
 }
 
-// ---------- hardlocke ----------
+// ---------- nuzlocke ----------
 let hlRows = [];
-function renderHardlocke(){
-  const body = document.getElementById("hlBody");
-  body.innerHTML = "";
-  hlRows.forEach((row, idx)=>{
-    const tr = document.createElement("tr");
-    tr.className = row.status ? `status-${row.status}` : "";
-    tr.innerHTML = `
-      <td><input type="text" value="${row.route||""}" data-idx="${idx}" data-key="route"></td>
-      <td><input type="text" value="${row.species||""}" data-idx="${idx}" data-key="species" class="hlSpeciesInput" autocomplete="off"></td>
-      <td><input type="text" value="${row.nickname||""}" data-idx="${idx}" data-key="nickname"></td>
-      <td><input type="text" value="${row.level||""}" data-idx="${idx}" data-key="level" style="text-align:center"></td>
-      <td><select data-idx="${idx}" data-key="status">
-        <option value="">—</option>
-        <option value="Vivo" ${row.status==="Vivo"?"selected":""}>Vivo</option>
-        <option value="Muerto" ${row.status==="Muerto"?"selected":""}>Muerto</option>
-        <option value="Caja" ${row.status==="Caja"?"selected":""}>Caja</option>
-      </select></td>
-      <td><input type="text" value="${row.notes||""}" data-idx="${idx}" data-key="notes"></td>
-      <td><button class="btn danger" data-idx="${idx}" data-action="del" style="padding:4px 8px">✕</button></td>
-    `;
-    body.appendChild(tr);
-  });
+const NUZ_STATUS_OPTIONS = [
+  {label:"— Sin asignar —", value:""},
+  {label:"Caja", value:"Caja"},
+  {label:"Cementerio", value:"Cementerio"},
+];
 
-  body.querySelectorAll("input:not(.hlSpeciesInput), select").forEach(el=>{
+// rutas conocidas por juego (derivadas de las guías ya guionizadas; el resto permite escribir libremente)
+function nuzRoutesForGame(gameId){
+  const src = gameId==="hgss" ? WALKTHROUGH_HGSS : gameId==="b2w2" ? WALKTHROUGH_B2W2 : null;
+  if(!src) return [];
+  const seen = new Set(), out = [];
+  src.forEach(s=>{
+    String(s.loc||"").split("→").forEach(part=>{
+      const name = part.trim();
+      if(name && !seen.has(name)){ seen.add(name); out.push(name); }
+    });
+  });
+  return out;
+}
+function nuzCurrentGame(){ const sel = document.getElementById("nuzGameSelect"); return sel ? sel.value : ""; }
+
+function renderHardlocke(){
+  const wrap = document.getElementById("nuzEncounters");
+  if(!wrap) return;
+  if(hlRows.length===0){
+    wrap.innerHTML = `<div class="nuz-empty">Todavía no has registrado ningún encuentro.<br>Pulsa <b>+ Añadir encuentro</b> para empezar.</div>`;
+    return;
+  }
+  const routes = nuzRoutesForGame(nuzCurrentGame());
+  wrap.innerHTML = hlRows.map((row, idx)=>{
+    const mon = row.species ? findMon(row.species) : null;
+    const spriteHtml = mon
+      ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+      : `<span class="nuz-row-empty">?</span>`;
+    const statusLabel = row.status || "— Sin asignar —";
+    const statusClass = row.status==="Caja" ? "status-caja" : row.status==="Cementerio" ? "status-cementerio" : "";
+    const routeField = routes.length
+      ? `<div class="nuz-choice nuz-route-choice" data-idx="${idx}">${row.route || "— Elegir ruta —"}</div>`
+      : `<input type="text" value="${escAttr(row.route||"")}" data-idx="${idx}" data-key="route" placeholder="Ruta / zona">`;
+    return `<div class="nuz-row ${row.status==="Cementerio"?"is-dead":""}">
+      <div class="nuz-row-sprite">${spriteHtml}</div>
+      <div class="nuz-field"><label>Ruta / zona</label>${routeField}</div>
+      <div class="nuz-field"><label>Especie</label><input type="text" value="${escAttr(row.species||"")}" data-idx="${idx}" data-key="species" class="hlSpeciesInput" placeholder="Ej: Gengar" autocomplete="off"></div>
+      <div class="nuz-field"><label>Apodo</label><input type="text" value="${escAttr(row.nickname||"")}" data-idx="${idx}" data-key="nickname" placeholder="Opcional"></div>
+      <div class="nuz-field"><label>Nivel</label><input type="text" value="${escAttr(row.level||"")}" data-idx="${idx}" data-key="level" style="text-align:center"></div>
+      <div class="nuz-field"><label>Estado</label><div class="nuz-choice nuz-status-choice ${statusClass}" data-idx="${idx}">${statusLabel}</div></div>
+      <button class="nuz-del" data-idx="${idx}" title="Eliminar encuentro">✕</button>
+    </div>`;
+  }).join("");
+
+  wrap.querySelectorAll('input:not(.hlSpeciesInput)').forEach(el=>{
     el.addEventListener("change", e=>{
-      const idx = +e.target.dataset.idx, key = e.target.dataset.key;
-      hlRows[idx][key] = e.target.value;
+      hlRows[+e.target.dataset.idx][e.target.dataset.key] = e.target.value;
+      updateCounts();
+    });
+  });
+  wrap.querySelectorAll(".hlSpeciesInput").forEach(inp=>{
+    const idx = +inp.dataset.idx;
+    createAutocomplete(inp, (mon)=>{ hlRows[idx].species = pokemonName(mon); renderHardlocke(); updateCounts(); });
+    inp.addEventListener("change", ()=>{ hlRows[idx].species = inp.value.trim(); renderHardlocke(); updateCounts(); });
+  });
+  wrap.querySelectorAll(".nuz-status-choice").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const idx = +el.dataset.idx;
+      openChoiceList(el, NUZ_STATUS_OPTIONS, (opt)=>{
+        hlRows[idx].status = opt.value;
+        renderHardlocke(); updateCounts();
+      });
+    });
+  });
+  wrap.querySelectorAll(".nuz-route-choice").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const idx = +el.dataset.idx;
+      const opts = [{label:"— Elegir ruta —", value:""}, ...routes.map(r=>({label:r, value:r}))];
+      openChoiceList(el, opts, (opt)=>{
+        hlRows[idx].route = opt.value;
+        renderHardlocke(); updateCounts();
+      });
+    });
+  });
+  wrap.querySelectorAll(".nuz-del").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      hlRows.splice(+e.currentTarget.dataset.idx, 1);
       renderHardlocke(); updateCounts();
     });
   });
-  body.querySelectorAll(".hlSpeciesInput").forEach(inp=>{
-    const idx = +inp.dataset.idx;
-    createAutocomplete(inp, (mon)=>{ hlRows[idx].species = pokemonName(mon); renderHardlocke(); updateCounts(); });
-    inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ hlRows[idx].species=""; renderHardlocke(); updateCounts(); } });
-  });
-  body.querySelectorAll('button[data-action="del"]').forEach(btn=>{
-    btn.addEventListener("click", e=>{ hlRows.splice(+e.target.dataset.idx, 1); renderHardlocke(); updateCounts(); });
-  });
 }
 function updateCounts(){
-  document.getElementById("cntVivo").textContent = hlRows.filter(r=>r.status==="Vivo").length;
-  document.getElementById("cntMuerto").textContent = hlRows.filter(r=>r.status==="Muerto").length;
   document.getElementById("cntCaja").textContent = hlRows.filter(r=>r.status==="Caja").length;
-  // mantener sincronizadas la caja y el cementerio si están visibles
+  document.getElementById("cntMuerto").textContent = hlRows.filter(r=>r.status==="Cementerio").length;
+  document.getElementById("cntTotal").textContent = hlRows.filter(r=>r.species).length;
   const boxPanel = document.getElementById("subpanel-nuz-box");
   const gravePanel = document.getElementById("subpanel-nuz-grave");
   if(boxPanel && boxPanel.classList.contains("active")) renderNuzBox();
@@ -2493,7 +2552,11 @@ document.getElementById("saveHlBtn").addEventListener("click", async ()=>{
 });
 async function loadHardlocke(){
   try{ const res = await window.storage.get("pokemmo-hardlocke", false); if(res && res.value) hlRows = JSON.parse(res.value); }catch(err){}
-  if(hlRows.length===0){ hlRows = new Array(6).fill(null).map(()=>({route:"",species:"",nickname:"",level:"",status:"",notes:""})); }
+  // compatibilidad con partidas antiguas: "Vivo" y "Caja" eran redundantes, "Muerto" pasa a "Cementerio"
+  hlRows.forEach(r=>{
+    if(r.status==="Vivo") r.status = "Caja";
+    else if(r.status==="Muerto") r.status = "Cementerio";
+  });
   renderHardlocke(); updateCounts();
 }
 
@@ -2510,19 +2573,19 @@ document.querySelectorAll(".subtab").forEach(st=>{
 
 function renderNuzBox(){
   const grid = document.getElementById("nuzBoxGrid");
-  const alive = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && (r.status==="Vivo"||r.status==="Caja"));
+  if(!grid) return;
+  const alive = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Caja");
   if(alive.length===0){
-    grid.innerHTML = `<div class="nuz-empty">Todavía no tienes ningún Pokémon vivo registrado.<br>Añádelos en la pestaña <b>Partida</b> con estado "Vivo" o "Caja".</div>`;
+    grid.innerHTML = `<div class="nuz-empty">Todavía no tienes ningún Pokémon en la caja.<br>Márcalos como <b>Caja</b> en la pestaña Partida.</div>`;
     return;
   }
-  grid.innerHTML = alive.map(({r,idx})=>{
+  grid.innerHTML = alive.map(({r})=>{
     const mon = findMon(r.species);
-    if(!mon) return "";
+    if(!mon) return `<div class="nuz-empty">No se reconoce la especie "${r.species}".</div>`;
     const displayName = r.nickname || pokemonName(mon);
-    const lvl = parseInt(r.level) || 50;
+    const lvl = r.level ? `Nv. ${r.level}` : "";
     const types = mon[2];
     const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
-    const statusPill = r.status==="Caja" ? `<span class="pill" style="font-size:10px">En caja</span>` : "";
     const stats = getMonStatsForGen(mon, currentGeneration);
     const bst = stats.reduce((a,b)=>a+b,0);
     return `<div class="bm-card breed-bm-card">
@@ -2530,7 +2593,7 @@ function renderNuzBox(){
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-flex-row">
           <div class="bm-header-main"><div class="bm-name-col">
-            <div class="bm-meta-line">Nv. ${lvl} · ${r.route||"—"} ${statusPill}</div>
+            <div class="bm-meta-line">${[lvl, r.route].filter(Boolean).join(" · ")||"—"}</div>
             <span class="bm-name-input" style="opacity:.95">${displayName}</span>
             ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
           </div></div>
@@ -2539,18 +2602,15 @@ function renderNuzBox(){
         <div class="bm-bst-corner">${bst}</div>
       </div>
       <div class="bm-card-body">
-        <div class="bm-body-left" style="flex:1">
-          <div style="font-size:11px;color:var(--dim);line-height:1.7">
-            ${statBarsFromArray(stats)}
-          </div>
-        </div>
+        <div class="bm-body-left" style="flex:1">${statBarsFromArray(stats)}</div>
       </div>
     </div>`;
   }).join("");
 }
 function renderNuzGrave(){
   const grid = document.getElementById("nuzGraveGrid");
-  const dead = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Muerto");
+  if(!grid) return;
+  const dead = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Cementerio");
   if(dead.length===0){
     grid.innerHTML = `<div class="nuz-empty">El cementerio está vacío. ¡Larga vida a tu equipo!</div>`;
     return;
@@ -2560,26 +2620,25 @@ function renderNuzGrave(){
     const displayName = r.nickname || (mon?pokemonName(mon):r.species);
     const spriteHtml = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : "";
     return `<div class="grave">
-      <span class="grave-remove" data-grave-idx="${idx}" title="Quitar del cementerio">✕</span>
+      <span class="grave-remove" data-grave-idx="${idx}" title="Sacar del cementerio">✕</span>
       <div class="grave-cross">✝</div>
       ${spriteHtml}
       <div class="grave-name">${displayName}</div>
       ${r.nickname&&mon?`<div class="grave-species">${pokemonName(mon)}</div>`:""}
       <div class="grave-meta">
         ${r.level?`Nv. ${r.level}<br>`:""}
-        ${r.route?`${r.route}<br>`:""}
-        ${r.notes?`<span style="font-style:italic">"${r.notes}"</span>`:""}
+        ${r.route?`${r.route}`:""}
       </div>
     </div>`;
   }).join("");
   grid.querySelectorAll(".grave-remove").forEach(btn=>{
     btn.addEventListener("click", e=>{
-      const idx = +e.target.dataset.graveIdx;
-      hlRows[idx].status = "";
+      hlRows[+e.target.dataset.graveIdx].status = "Caja";
       renderHardlocke(); updateCounts(); renderNuzGrave();
     });
   });
 }
+
 
 // lista de juegos (placeholder — los encuentros por ruta y combates se irán guionizando uno a uno)
 const NUZ_GAMES = [
@@ -2598,10 +2657,13 @@ const NUZ_GAMES = [
   sel.innerHTML = `<option value="">— Selecciona un juego —</option>` + NUZ_GAMES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
   sel.addEventListener("change", ()=>{
     const ph = document.getElementById("nuzGamePlaceholder");
-    if(!ph) return;
-    ph.innerHTML = sel.value
-      ? `Juego seleccionado: <b>${NUZ_GAMES.find(g=>g[0]===sel.value)[1]}</b>. Los encuentros por ruta y los combates de este juego aún no están guionizados — de momento registra tus capturas manualmente en la tabla de abajo.`
-      : `Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente en la tabla de abajo.`;
+    const routes = nuzRoutesForGame(sel.value);
+    if(ph){
+      ph.innerHTML = sel.value
+        ? `Juego seleccionado: <b>${NUZ_GAMES.find(g=>g[0]===sel.value)[1]}</b>. ${routes.length ? `Las rutas de este juego ya están disponibles en el desplegable de cada encuentro.` : `Las rutas y combates de este juego aún no están guionizados — de momento escribe la zona a mano.`}`
+        : `Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente abajo.`;
+    }
+    renderHardlocke();
   });
 })();
 
