@@ -276,8 +276,13 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
+  .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px}
+  .nuz-box-action{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:11px;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s}
+  .nuz-evolve-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .nuz-tograve-btn:hover{border-color:var(--danger);color:var(--danger)}
+
   .nuz-encounters{display:flex;flex-direction:column;gap:8px}
-  .nuz-row{display:grid;grid-template-columns:56px 1.1fr 1.2fr 1fr 64px 1fr 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:.15s}
+  .nuz-row{display:grid;grid-template-columns:56px 1.1fr 1.2fr 1fr 1fr 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;transition:.15s}
   .nuz-row:hover{border-color:var(--accent2)}
   .nuz-row.is-dead{opacity:.55}
   .nuz-row.is-dead .nuz-row-sprite img{filter:grayscale(1) brightness(.7)}
@@ -2487,7 +2492,6 @@ function renderHardlocke(){
       <div class="nuz-field"><label>Ruta / zona</label>${routeField}</div>
       <div class="nuz-field"><label>Especie</label><input type="text" value="${escAttr(row.species||"")}" data-idx="${idx}" data-key="species" class="hlSpeciesInput" placeholder="Ej: Gengar" autocomplete="off"></div>
       <div class="nuz-field"><label>Apodo</label><input type="text" value="${escAttr(row.nickname||"")}" data-idx="${idx}" data-key="nickname" placeholder="Opcional"></div>
-      <div class="nuz-field"><label>Nivel</label><input type="text" value="${escAttr(row.level||"")}" data-idx="${idx}" data-key="level" style="text-align:center"></div>
       <div class="nuz-field"><label>Estado</label><div class="nuz-choice nuz-status-choice ${statusClass}" data-idx="${idx}">${statusLabel}</div></div>
       <button class="nuz-del" data-idx="${idx}" title="Eliminar encuentro">✕</button>
     </div>`;
@@ -2540,7 +2544,7 @@ function updateCounts(){
   if(gravePanel && gravePanel.classList.contains("active")) renderNuzGrave();
 }
 document.getElementById("addRowBtn").addEventListener("click", ()=>{
-  hlRows.push({route:"",species:"",nickname:"",level:"",status:"",notes:""});
+  hlRows.push({route:"",species:"",nickname:"",status:"",notes:""});
   renderHardlocke(); updateCounts();
 });
 document.getElementById("saveHlBtn").addEventListener("click", ()=>{
@@ -2579,21 +2583,24 @@ function renderNuzBox(){
     grid.innerHTML = `<div class="nuz-empty">Todavía no tienes ningún Pokémon en la caja.<br>Márcalos como <b>Caja</b> en la pestaña Partida.</div>`;
     return;
   }
-  grid.innerHTML = alive.map(({r})=>{
+  grid.innerHTML = alive.map(({r,idx})=>{
     const mon = findMon(r.species);
     if(!mon) return `<div class="nuz-empty">No se reconoce la especie "${r.species}".</div>`;
     const displayName = r.nickname || pokemonName(mon);
-    const lvl = r.level ? `Nv. ${r.level}` : "";
     const types = mon[2];
     const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
     const {stats} = getMonStatsForGen(mon, currentGeneration);
     const bst = stats.reduce((a,b)=>a+b,0);
+    const evosTo = EVOLUTIONS.filter(e=>e[0]===mon[0]);
+    const evoBtn = evosTo.length
+      ? `<button class="nuz-box-action nuz-evolve-btn" data-idx="${idx}" title="Evolucionar">⬆️ Evolucionar</button>`
+      : "";
     return `<div class="bm-card breed-bm-card">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-flex-row">
           <div class="bm-header-main"><div class="bm-name-col">
-            <div class="bm-meta-line">${[lvl, r.route].filter(Boolean).join(" · ")||"—"}</div>
+            <div class="bm-meta-line">${r.route||"—"}</div>
             <span class="bm-name-input" style="opacity:.95">${displayName}</span>
             ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
           </div></div>
@@ -2604,8 +2611,38 @@ function renderNuzBox(){
       <div class="bm-card-body">
         <div class="bm-body-left" style="flex:1">${statBarsFromArray(stats)}</div>
       </div>
+      <div class="nuz-box-actions">
+        ${evoBtn}
+        <button class="nuz-box-action nuz-tograve-btn" data-idx="${idx}" title="Mandar al cementerio">✝ Cementerio</button>
+      </div>
     </div>`;
   }).join("");
+  grid.querySelectorAll(".nuz-evolve-btn").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.currentTarget.dataset.idx;
+      const mon = findMon(hlRows[idx].species);
+      const options = EVOLUTIONS.filter(ev=>ev[0]===mon[0]).map(ev=>{
+        const to = findMonById(ev[1]);
+        return {label: to ? pokemonName(to) : String(ev[1]), value: ev[1]};
+      });
+      if(options.length===1){
+        const to = findMonById(options[0].value);
+        if(to){ hlRows[idx].species = to[1]; renderNuzBox(); renderHardlocke(); }
+      } else {
+        openChoiceList(e.currentTarget, options, (opt)=>{
+          const to = findMonById(opt.value);
+          if(to){ hlRows[idx].species = to[1]; renderNuzBox(); renderHardlocke(); }
+        });
+      }
+    });
+  });
+  grid.querySelectorAll(".nuz-tograve-btn").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.currentTarget.dataset.idx;
+      hlRows[idx].status = "Cementerio";
+      renderHardlocke(); updateCounts(); renderNuzBox();
+    });
+  });
 }
 function renderNuzGrave(){
   const grid = document.getElementById("nuzGraveGrid");
@@ -2626,7 +2663,6 @@ function renderNuzGrave(){
       <div class="grave-name">${displayName}</div>
       ${r.nickname&&mon?`<div class="grave-species">${pokemonName(mon)}</div>`:""}
       <div class="grave-meta">
-        ${r.level?`Nv. ${r.level}<br>`:""}
         ${r.route?`${r.route}`:""}
       </div>
     </div>`;
