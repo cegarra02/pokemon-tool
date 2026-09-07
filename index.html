@@ -382,7 +382,6 @@
 
 <div class="tabs">
   <div class="tab active" data-tab="equipo">Mi equipo</div>
-  <div class="tab" data-tab="cobertura">Cobertura y debilidades</div>
   <div class="tab" data-tab="calc">Calculadora de daño</div>
   <div class="tab" data-tab="hardlocke">Nuzlocke</div>
   <div class="tab" data-tab="cria">Cría</div>
@@ -401,15 +400,6 @@
   <div class="team-grid" id="teamGrid"></div>
   <button class="btn" id="saveTeamBtn">Guardar equipo</button>
   <span class="save-note" id="teamSaveNote"></span>
-</div>
-
-<div class="panel" id="panel-cobertura">
-  <div class="section-title">Cobertura ofensiva (¿qué tipos no golpeas fuerte?)</div>
-  <div class="hint">Calculado automáticamente con los tipos de tu equipo + movimientos de cobertura que hayas añadido.</div>
-  <div id="coverageTable"></div>
-  <div class="section-title">Debilidades compartidas del equipo</div>
-  <div class="hint">Filas resaltadas = 2 o más de tus Pokémon reciben daño x2 (o más) de ese tipo de ataque.</div>
-  <div id="weaknessTable"></div>
 </div>
 
 <div class="panel" id="panel-calc">
@@ -554,6 +544,7 @@
   <div class="subtabs">
     <div class="subtab active" data-subtab="nuz-run">Partida</div>
     <div class="subtab" data-subtab="nuz-box">Caja</div>
+    <div class="subtab" data-subtab="nuz-team">Equipo</div>
     <div class="subtab" data-subtab="nuz-grave">Cementerio</div>
   </div>
 
@@ -584,6 +575,23 @@
   <div class="subpanel" id="subpanel-nuz-box">
     <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (estado "Caja" en la pestaña Partida).</div>
     <div class="nuz-box-grid" id="nuzBoxGrid"></div>
+  </div>
+
+  <div class="subpanel" id="subpanel-nuz-team">
+    <div class="hint">Monta tu equipo con los Pokémon que tienes en la caja. Pulsa <b>Añadir desde la caja</b> en cualquier hueco libre, o escribe la especie a mano como en el creador normal.</div>
+    <div style="margin-bottom:10px">
+      <button class="btn" id="nuzAddFromBoxBtn">+ Añadir desde la caja</button>
+      <button class="btn" id="nuzClearTeamBtn">Vaciar equipo</button>
+      <span class="save-note" id="nuzTeamNote"></span>
+    </div>
+    <div class="team-grid" id="nuzTeamGrid"></div>
+
+    <div class="section-title" style="margin-top:20px">Cobertura ofensiva (¿qué tipos no golpeas fuerte?)</div>
+    <div class="hint">Calculado automáticamente con los tipos de tu equipo + movimientos de cobertura que hayas añadido.</div>
+    <div id="coverageTable"></div>
+    <div class="section-title">Debilidades compartidas del equipo</div>
+    <div class="hint">Filas resaltadas = 2 o más de tus Pokémon reciben daño x2 (o más) de ese tipo de ataque.</div>
+    <div id="weaknessTable"></div>
   </div>
 
   <div class="subpanel" id="subpanel-nuz-grave">
@@ -1397,10 +1405,19 @@ function blankSlot(){
     ivs:{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}};
 }
 let team = new Array(6).fill(null).map(blankSlot);
+let nuzTeam = new Array(6).fill(null).map(blankSlot);
+// El creador de equipos se reutiliza en dos sitios: la pestaña principal y la pestaña Equipo de Nuzlocke.
+// "teamContext" indica sobre cuál se está trabajando en cada momento.
+let teamContext = "main";
+function activeTeam(){ return teamContext === "nuz" ? nuzTeam : team; }
+function activeGridId(){ return teamContext === "nuz" ? "nuzTeamGrid" : "teamGrid"; }
 let teamEditing = {}; // claves tipo "3-name", "3-item", "3-move-2" mientras se está editando ese campo
 let globalHqSprite = false;
 document.getElementById("globalHqSpriteToggle").addEventListener("change", e=>{ globalHqSprite = e.target.checked; renderTeam(); });
-document.getElementById("teamGrid").addEventListener("input", (e)=>{ if(e.target.classList.contains("teamEv") || e.target.classList.contains("teamIv")) handleEvInput(e); });
+["teamGrid","nuzTeamGrid"].forEach(gid=>{
+  const el = document.getElementById(gid);
+  if(el) el.addEventListener("input", (e)=>{ if(e.target.classList.contains("teamEv") || e.target.classList.contains("teamIv")) handleEvInput(e); });
+});
 
 function slotStatBars(mon, slot){
   const nm = slot.nature || "Hardy";
@@ -1426,21 +1443,21 @@ function handleEvInput(e){
   if(!isEv && !isIv) return;
   const idx = +e.target.dataset.idx, key = e.target.dataset.key;
   if(isEv){
-    team[idx].evs[key] = Math.max(0, Math.min(252, parseInt(e.target.value)||0));
+    activeTeam()[idx].evs[key] = Math.max(0, Math.min(252, parseInt(e.target.value)||0));
   } else {
-    if(!team[idx].ivs) team[idx].ivs = {hp:31,atk:31,def:31,spa:31,spd:31,spe:31};
-    team[idx].ivs[key] = Math.max(0, Math.min(31, parseInt(e.target.value)||0));
+    if(!activeTeam()[idx].ivs) activeTeam()[idx].ivs = {hp:31,atk:31,def:31,spa:31,spd:31,spe:31};
+    activeTeam()[idx].ivs[key] = Math.max(0, Math.min(31, parseInt(e.target.value)||0));
   }
   updateEvTotal(idx);
-  const mon = findMon(team[idx].name);
+  const mon = findMon(activeTeam()[idx].name);
   if(mon){
     const box = document.querySelector(`.bm-stats-col[data-idx="${idx}"]`);
     if(box && document.activeElement !== e.target){
-      box.outerHTML = teamStatsColHtml(mon, team[idx], idx);
+      box.outerHTML = teamStatsColHtml(mon, activeTeam()[idx], idx);
     } else if(box){
       // actualizar solo los valores numéricos/barras sin tocar el input que tiene el foco
       const rows = box.querySelectorAll(".bm-stat-row:not(.team-stat-hint-row)");
-      const evs = team[idx].evs, ivs = team[idx].ivs||{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}, level = team[idx].level||100, nm = team[idx].nature||"Hardy";
+      const evs = activeTeam()[idx].evs, ivs = activeTeam()[idx].ivs||{hp:31,atk:31,def:31,spa:31,spd:31,spe:31}, level = activeTeam()[idx].level||100, nm = activeTeam()[idx].nature||"Hardy";
       const finals = [
         calcHP(mon[3],ivs.hp,evs.hp||0,level),
         calcStat(mon[4],ivs.atk,evs.atk||0,level,natureMult(nm,"atk")),
@@ -1461,7 +1478,7 @@ function handleEvInput(e){
   }
 }
 function renderTeam(){
-  const grid = document.getElementById("teamGrid");
+  const grid = document.getElementById(activeGridId());
   // Guardar qué input tenía el foco (y su posición del cursor) para restaurarlo tras redibujar, ya que innerHTML destruye los elementos.
   const active = document.activeElement;
   let focusInfo = null;
@@ -1474,7 +1491,7 @@ function renderTeam(){
     };
   }
   grid.innerHTML = "";
-  team.forEach((slot, idx)=>{
+  activeTeam().forEach((slot, idx)=>{
     const mon = findMon(slot.name);
     const div = document.createElement("div");
     if(mon){
@@ -1489,19 +1506,19 @@ function renderTeam(){
 
   grid.querySelectorAll(".teamNameInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createAutocomplete(inp, (mon)=>{ team[idx].name = mon[1]; setEditingField(idx,"name",false); renderTeam(); renderAnalysis(); });
-    inp.addEventListener("blur", ()=>{ if(team[idx].name){ setEditingField(idx,"name",false); renderTeam(); } });
-    inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ team[idx].name=""; renderTeam(); renderAnalysis(); } });
+    createAutocomplete(inp, (mon)=>{ activeTeam()[idx].name = mon[1]; setEditingField(idx,"name",false); renderTeam(); renderAnalysis(); });
+    inp.addEventListener("blur", ()=>{ if(activeTeam()[idx].name){ setEditingField(idx,"name",false); renderTeam(); } });
+    inp.addEventListener("change", ()=>{ if(inp.value.trim()===""){ activeTeam()[idx].name=""; renderTeam(); renderAnalysis(); } });
   });
   grid.querySelectorAll(".teamLevel").forEach(inp=>{
     inp.addEventListener("input", e=>{
       const idx = +e.target.dataset.idx;
-      team[idx].level = parseInt(e.target.value)||100;
+      activeTeam()[idx].level = parseInt(e.target.value)||100;
       updateTeamLevelDisplay(idx); // solo actualiza las estadísticas, sin redibujar el campo (así no pierde el foco/cursor)
     });
   });
   grid.querySelectorAll(".teamShinyCheck").forEach(cb=>{
-    cb.addEventListener("change", e=>{ team[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
+    cb.addEventListener("change", e=>{ activeTeam()[+e.target.dataset.idx].shiny = e.target.checked; renderTeam(); });
   });
   grid.querySelectorAll('.choice-trigger[data-choice="nature"]').forEach(label=>{
     const idx = +label.dataset.idx;
@@ -1510,13 +1527,13 @@ function renderTeam(){
         value: n[0],
         label: n[1] ? `${currentLang==="es"?(NATURE_ES[n[0]]||n[0]):n[0]} (+${LBL[n[1]]}/-${LBL[n[2]]})` : `${currentLang==="es"?(NATURE_ES[n[0]]||n[0]):n[0]} (${currentLang==='es'?'neutra':'neutral'})`
       }));
-      openChoiceList(label, options, (opt)=>{ team[idx].nature = opt.value; renderTeam(); }, 190);
+      openChoiceList(label, options, (opt)=>{ activeTeam()[idx].nature = opt.value; renderTeam(); }, 190);
     });
   });
   grid.querySelectorAll('.choice-trigger[data-choice="ability"]').forEach(label=>{
     const idx = +label.dataset.idx;
     label.addEventListener("click", ()=>{
-      const mon = findMon(team[idx].name);
+      const mon = findMon(activeTeam()[idx].name);
       const abilityList = mon ? (ABILITIES_BY_ID[String(mon[0])] || []) : [];
       const options = abilityList.map(([n,hid])=>{
         const aid = ABILITY_NAME_TO_ID[n];
@@ -1527,29 +1544,29 @@ function renderTeam(){
       if(options.length===0){
         options.push({value:"", label: currentLang==="es"?"Sin datos para este Pokémon":"No data for this Pokémon"});
       }
-      openChoiceList(label, options, (opt)=>{ if(opt.value) team[idx].ability = opt.value; renderTeam(); }, 190);
+      openChoiceList(label, options, (opt)=>{ if(opt.value) activeTeam()[idx].ability = opt.value; renderTeam(); }, 190);
     });
   });
   grid.querySelectorAll(".teamItemInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createItemAutocomplete(inp, (item)=>{ team[idx].item = item[1]; setEditingField(idx,"item",false); renderTeam(); });
+    createItemAutocomplete(inp, (item)=>{ activeTeam()[idx].item = item[1]; setEditingField(idx,"item",false); renderTeam(); });
     inp.addEventListener("blur", ()=>{
       const raw = inp.value.trim();
       const found = raw ? ITEMS_ALL.find(i=>i[1].toLowerCase()===raw.toLowerCase() || (i[3]&&i[3].toLowerCase()===raw.toLowerCase())) : null;
-      team[idx].item = found ? found[1] : raw;
-      if(team[idx].item) setEditingField(idx,"item",false);
+      activeTeam()[idx].item = found ? found[1] : raw;
+      if(activeTeam()[idx].item) setEditingField(idx,"item",false);
       renderTeam();
     });
   });
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
-    createMoveAutocomplete(inp, (m)=>{ team[idx].moves[mi] = m[1]; setEditingField(idx,"move-"+mi,false); renderTeam(); renderAnalysis(); },
-      ()=>{ const mon = findMon(team[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
+    createMoveAutocomplete(inp, (m)=>{ activeTeam()[idx].moves[mi] = m[1]; setEditingField(idx,"move-"+mi,false); renderTeam(); renderAnalysis(); },
+      ()=>{ const mon = findMon(activeTeam()[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
     inp.addEventListener("blur", ()=>{
       const raw = inp.value.trim();
       const found = raw ? MOVES.find(m=>m[1].toLowerCase()===raw.toLowerCase() || (m[7]&&m[7].toLowerCase()===raw.toLowerCase())) : null;
-      team[idx].moves[mi] = found ? found[1] : raw;
-      if(team[idx].moves[mi]) setEditingField(idx,"move-"+mi,false);
+      activeTeam()[idx].moves[mi] = found ? found[1] : raw;
+      if(activeTeam()[idx].moves[mi]) setEditingField(idx,"move-"+mi,false);
       renderTeam(); renderAnalysis();
     });
   });
@@ -1559,7 +1576,7 @@ function renderTeam(){
     el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); startEditField(idx, field); } });
   });
 
-  team.forEach((slot,idx)=>updateEvTotal(idx));
+  activeTeam().forEach((slot,idx)=>updateEvTotal(idx));
 
   // Restaurar el foco (y la posición del cursor) en el input que se estaba editando, ya que innerHTML lo destruyó.
   if(focusInfo){
@@ -1621,7 +1638,7 @@ function teamStatsColHtml(mon, slot, idx){
   </div>`;
 }
 function updateTeamLevelDisplay(idx){
-  const slot = team[idx];
+  const slot = activeTeam()[idx];
   const mon = findMon(slot.name);
   if(!mon) return;
   const container = document.querySelector(`.team-stats-col[data-idx="${idx}"]`);
@@ -1777,13 +1794,14 @@ function teamCardHtml(mon, slot, idx){
 function updateEvTotal(idx){
   const el = document.querySelector(`.team-ev-total-note[data-idx="${idx}"]`);
   if(!el) return;
-  const total = EV_KEYS.reduce((s,k)=>s+(team[idx].evs[k]||0),0);
+  const total = EV_KEYS.reduce((s,k)=>s+(activeTeam()[idx].evs[k]||0),0);
   el.textContent = `EVs: ${total}/508`;
   el.classList.toggle("over", total>508);
 }
 
 function renderAnalysis(){
-  const attackTypesPerSlot = team.map(slot=>{
+  if(teamContext === "nuz") saveNuzTeam();
+  const attackTypesPerSlot = activeTeam().map(slot=>{
     const mon = findMon(slot.name);
     if(!mon) return [];
     const moveTypes = slot.moves
@@ -1806,7 +1824,7 @@ function renderAnalysis(){
   covHtml += `</table>`;
   document.getElementById("coverageTable").innerHTML = covHtml;
 
-  const teamDefTypes = team.map(slot=>{ const mon = findMon(slot.name); return mon ? mon[2] : null; }).filter(Boolean);
+  const teamDefTypes = activeTeam().map(slot=>{ const mon = findMon(slot.name); return mon ? mon[2] : null; }).filter(Boolean);
   let weakHtml = `<table class="chart"><tr><th>Tipo atacante</th><th>Nº miembros débiles (x2+)</th></tr>`;
   TYPES.forEach(atk=>{
     let count = 0;
@@ -1825,12 +1843,20 @@ document.getElementById("saveTeamBtn").addEventListener("click", ()=>{
     setTimeout(()=>document.getElementById("teamSaveNote").textContent="",2000);
   }catch(err){ document.getElementById("teamSaveNote").textContent = "No se pudo guardar (¿navegación privada?)."; }
 });
+function saveNuzTeam(){
+  try{ localStorage.setItem("pokemmo-nuzteam", JSON.stringify(nuzTeam)); }catch(err){}
+}
 function loadTeam(){
   try{
     const raw = localStorage.getItem("pokemmo-team");
     if(raw){
       const loaded = JSON.parse(raw);
       team = loaded.map(s=>Object.assign(blankSlot(), s));
+    }
+    const rawNuz = localStorage.getItem("pokemmo-nuzteam");
+    if(rawNuz){
+      const loadedNuz = JSON.parse(rawNuz);
+      nuzTeam = loadedNuz.map(s=>Object.assign(blankSlot(), s));
     }
   }catch(err){}
   renderTeam(); renderAnalysis();
@@ -2117,7 +2143,7 @@ function setCategory(cat){
 function renderItemPreview(idx){
   const box = document.querySelector(`.item-preview[data-idx="${idx}"]`);
   if(!box) return;
-  const name = team[idx].item;
+  const name = activeTeam()[idx].item;
   if(!name){ box.innerHTML = ""; return; }
   const found = ITEMS.find(it=>it[1].toLowerCase()===name.toLowerCase() || (it[3]&&it[3].toLowerCase()===name.toLowerCase()));
   if(found){
@@ -2579,7 +2605,45 @@ document.querySelectorAll(".subtab").forEach(st=>{
     document.querySelectorAll(".subpanel").forEach(p=>p.classList.toggle("active", p.id==="subpanel-"+target));
     if(target==="nuz-box") renderNuzBox();
     if(target==="nuz-grave") renderNuzGrave();
+    if(target==="nuz-team"){ teamContext = "nuz"; renderTeam(); renderAnalysis(); }
+    else if(teamContext === "nuz"){ teamContext = "main"; }
   });
+});
+// al salir de la pestaña Nuzlocke, el creador vuelve a trabajar sobre el equipo principal
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    if(t.dataset.tab !== "hardlocke" && teamContext === "nuz"){
+      teamContext = "main";
+      renderTeam(); renderAnalysis();
+    }
+  });
+});
+
+// añadir un Pokémon de la caja al equipo nuzlocke
+document.getElementById("nuzAddFromBoxBtn").addEventListener("click", (e)=>{
+  const boxMons = hlRows.filter(r=>r.species && r.status==="Caja");
+  if(boxMons.length===0){
+    const note = document.getElementById("nuzTeamNote");
+    note.textContent = "No tienes Pokémon en la caja todavía.";
+    setTimeout(()=>note.textContent="", 2500);
+    return;
+  }
+  const options = boxMons.map(r=>{
+    const mon = findMon(r.species);
+    return {label: r.nickname ? `${r.nickname} (${mon?pokemonName(mon):r.species})` : (mon?pokemonName(mon):r.species), value: r.species};
+  });
+  openChoiceList(e.currentTarget, options, (opt)=>{
+    const freeIdx = nuzTeam.findIndex(s=>!s.name);
+    const idx = freeIdx === -1 ? 0 : freeIdx;
+    nuzTeam[idx] = Object.assign(blankSlot(), {name: opt.value});
+    teamContext = "nuz";
+    renderTeam(); renderAnalysis();
+  });
+});
+document.getElementById("nuzClearTeamBtn").addEventListener("click", ()=>{
+  nuzTeam = new Array(6).fill(null).map(blankSlot);
+  teamContext = "nuz";
+  renderTeam(); renderAnalysis();
 });
 
 function renderNuzBox(){
