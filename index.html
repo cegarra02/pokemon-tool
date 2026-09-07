@@ -280,6 +280,30 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
+  #floatBtns{position:fixed;right:18px;bottom:18px;z-index:9998;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .float-btn{width:44px;height:44px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:16px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;transition:.15s;padding:0}
+  .float-btn.show{display:flex}
+  .float-btn:hover{background:var(--accent);color:#111;border-color:var(--accent);transform:translateY(-2px)}
+  #btnLastEncounter:hover{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .nuz-enc.flash-target{animation:nuzFlash 1.4s ease-out}
+  @keyframes nuzFlash{
+    0%,100%{box-shadow:0 0 0 0 rgba(90,160,255,0)}
+    15%{box-shadow:0 0 0 4px rgba(90,160,255,.55)}
+    60%{box-shadow:0 0 0 4px rgba(90,160,255,.25)}
+  }
+  @media (max-width:640px){
+    #floatBtns{right:12px;bottom:12px}
+    .float-btn{width:40px;height:40px;font-size:15px}
+  }
+
+  .nuz-badges{position:absolute;top:8px;left:50%;transform:translateX(-50%);display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:52%;z-index:2}
+  .nuz-badge{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .nuz-defeat-btn{width:30px;height:30px;flex:none;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--dim);font-size:14px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;padding:0}
+  .nuz-defeat-btn:hover{border-color:var(--good);color:var(--good)}
+  .nuz-defeat-btn.is-on{background:var(--good);border-color:var(--good);color:#fff}
+  .nuz-battle.is-defeated{opacity:.6;border-left-color:var(--good);background:linear-gradient(90deg,rgba(46,160,67,.10),transparent)}
+  .nuz-battle.is-defeated .nuz-battle-sprite img{filter:grayscale(.7)}
+
   .nuz-script-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .nuz-enc{display:grid;grid-template-columns:52px 1.1fr 1.3fr 1fr 100px 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;transition:.15s}
   .nuz-enc:hover{border-color:var(--accent2)}
@@ -339,6 +363,12 @@
   .nuz-choice::after{content:"▾";color:var(--dim);font-size:10px}
   .nuz-choice.status-caja{border-color:var(--good);color:var(--good)}
   .nuz-choice.status-cementerio{border-color:var(--danger);color:var(--danger)}
+  .nuz-choice.status-fallado{border-color:var(--dim);color:var(--dim)}
+  .nuz-choice.status-shiny{border-color:#e8c33a;color:#e8c33a}
+  .nuz-enc.is-failed{opacity:.4;border-left:3px solid var(--dim)}
+  .nuz-enc.is-failed .nuz-enc-sprite img{filter:grayscale(1) brightness(.6)}
+  .nuz-enc.is-shiny{border-left:3px solid #e8c33a}
+  .nuz-row.is-failed{opacity:.45}
   .nuz-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px;border-radius:6px;transition:.15s}
   .nuz-del:hover{color:var(--danger);background:rgba(220,53,69,.1)}
   @media (max-width:820px){
@@ -393,6 +423,10 @@
 </head>
 <body>
 <div id="bmTooltip"></div>
+<div id="floatBtns">
+  <button id="btnLastEncounter" class="float-btn" title="Ir al último encuentro completado">📍</button>
+  <button id="btnScrollTop" class="float-btn" title="Volver arriba">▲</button>
+</div>
 
 <h1><span class="ball"></span> PokeMMO Hardlocke Toolkit</h1>
 <div class="sub">Escribe un nombre y elige de la lista que aparece debajo — se rellena todo solo.</div>
@@ -621,7 +655,7 @@
   </div>
 
   <div class="subpanel" id="subpanel-nuz-box">
-    <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (estado "Caja" en la pestaña Partida).</div>
+    <div class="hint">Aquí aparecen los Pokémon que has capturado y siguen vivos (capturados, recibidos, shiny o intercambiados).</div>
     <div class="nuz-box-grid" id="nuzBoxGrid"></div>
   </div>
 
@@ -642,7 +676,7 @@
   </div>
 
   <div class="subpanel" id="subpanel-nuz-grave">
-    <div class="hint">Descansen en paz. Los Pokémon marcados como "Cementerio" en la pestaña Partida aparecen aquí y ya no se pueden volver a usar.</div>
+    <div class="hint">Descansen en paz. Los Pokémon marcados como "Muerto" en la pestaña Partida aparecen aquí y ya no se pueden volver a usar.</div>
     <div class="grave-grid" id="nuzGraveGrid"></div>
   </div>
 </div>
@@ -1451,7 +1485,7 @@ const EV_LABELS = {hp:"PS",atk:"Atq",def:"Def",spa:"AEs",spd:"DEs",spe:"Vel"};
 function openNuzBoxPicker(anchorEl, slotIdx){
   document.querySelectorAll(".ac-list.choice-list, .nuz-box-picker").forEach(el=>el.remove());
   const inTeam = new Set(nuzTeam.filter((s,i)=>s.nuzRowIdx!==undefined && s.name && i!==slotIdx).map(s=>s.nuzRowIdx));
-  const available = hlRows.map((r,idx)=>({r,idx})).filter(({r,idx})=>r.species && r.status==="Caja" && !inTeam.has(idx));
+  const available = hlRows.map((r,idx)=>({r,idx})).filter(({r,idx})=>r.species && nuzInBox(r.status) && !inTeam.has(idx));
 
   const box = document.createElement("div");
   box.className = "ac-list nuz-box-picker";
@@ -1464,7 +1498,7 @@ function openNuzBoxPicker(anchorEl, slotIdx){
     });
     const listHtml = shown.length ? shown.map(({r,idx})=>{
       const mon = findMon(r.species);
-      const sprite = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" style="width:34px;height:34px;image-rendering:pixelated" onerror="this.style.display='none'">` : "";
+      const sprite = mon ? `<img src="${nuzSpriteFor(mon, r.status)}" referrerpolicy="no-referrer" style="width:34px;height:34px;image-rendering:pixelated" onerror="this.style.display='none'">` : "";
       const sub = r.nickname && mon ? `<small style="color:var(--dim)">${pokemonName(mon)}</small>` : (r.route?`<small style="color:var(--dim)">${r.route}</small>`:"");
       const title = r.nickname || (mon?pokemonName(mon):r.species);
       return `<div class="ac-item nuz-picker-item" data-row="${idx}" style="gap:10px;align-items:center">
@@ -1760,7 +1794,7 @@ function renderTeam(){
     btn.addEventListener("click", (e)=>{
       const idx = +e.currentTarget.dataset.idx;
       const rowIdx = nuzTeam[idx].nuzRowIdx;
-      if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].status = "Cementerio";
+      if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].status = "Muerto";
       nuzTeam[idx] = blankSlot(); // sale del equipo al morir
       renderTeam(); renderAnalysis(); renderHardlocke(); updateCounts();
     });
@@ -1913,9 +1947,13 @@ function teamCardHtml(mon, slot, idx){
   const typeBadges = types.map(t=>`<span class="bm-type-badge" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("");
   const headerColor = TYPE_COLORS[types[0]] || "#555";
   const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
-  const normalSprite = slot.shiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
-  const hdSprite = slot.shiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
-  const fallbackAnimated = slot.shiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
+  // en el equipo Nuzlocke, el shiny lo determina el estado del encuentro, no un interruptor manual
+  const nuzRowForSlot = (teamContext === "nuz" && slot.nuzRowIdx!==undefined) ? hlRows[slot.nuzRowIdx] : null;
+  const isNuzShinySlot = !!(nuzRowForSlot && nuzIsShiny(nuzRowForSlot.status));
+  const showShiny = teamContext === "nuz" ? isNuzShinySlot : slot.shiny;
+  const normalSprite = showShiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
+  const hdSprite = showShiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
+  const fallbackAnimated = showShiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
   const spriteSrc = globalHqSprite ? hdSprite : normalSprite;
   const spriteClass = globalHqSprite ? "bm-sprite-corner team-sprite-hd" : "bm-sprite-corner";
   const nm = slot.nature || "Hardy";
@@ -1979,9 +2017,12 @@ function teamCardHtml(mon, slot, idx){
   return `<div class="bm-card team-bm-card">
     <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
       <div class="bm-types">${typeBadges}</div>
-      <label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
+      ${teamContext === "nuz" && nuzRowForSlot ? nuzBadgesHtml(nuzRowForSlot.route) : ""}
+      ${teamContext === "nuz"
+        ? (isNuzShinySlot ? `<span class="team-shiny-toggle is-shiny" title="${currentLang==="es"?"Shiny (marcado en el encuentro)":"Shiny (set on the encounter)"}" style="cursor:default">✨</span>` : "")
+        : `<label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
         <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
-      </label>
+      </label>`}
       <div class="bm-header-flex-row">
         <div class="bm-header-main">
           <div class="bm-lvl-col">
@@ -2707,11 +2748,85 @@ function computeDamage(){
 
 // ---------- nuzlocke ----------
 let hlRows = [];
+// medallas de Hoenn asociadas a cada líder de gimnasio
+const NUZ_BADGES = {
+  "Petra":      {file:"Stone_Badge.png",   name:"Medalla Piedra"},
+  "Marcial":    {file:"Knuckle_Badge.png", name:"Medalla Puño"},
+  "Erico":      {file:"Dynamo_Badge.png",  name:"Medalla Dinamo"},
+  "Candela":    {file:"Heat_Badge.png",    name:"Medalla Calor"},
+  "Norman":     {file:"Balance_Badge.png", name:"Medalla Equilibrio"},
+  "Alana":      {file:"Feather_Badge.png", name:"Medalla Pluma"},
+  "Vito y Leti":{file:"Mind_Badge.png",    name:"Medalla Mente"},
+  "Plubio":     {file:"Rain_Badge.png",    name:"Medalla Lluvia"},
+};
+function nuzBadgeUrl(file){ return `https://archives.bulbagarden.net/wiki/Special:FilePath/${file}`; }
+
+// combates ya derrotados y medallas conseguidas por cada Pokémon
+let nuzDefeated = {};   // { "oras|12": true }
+let nuzMonBadges = {};  // { "<zona>": ["Petra","Marcial"] }  (la zona identifica al Pokémon capturado)
+function loadNuzProgress(){
+  try{ const a = localStorage.getItem("pokemmo-nuzdefeated"); if(a) nuzDefeated = JSON.parse(a); }catch(err){}
+  try{ const b = localStorage.getItem("pokemmo-nuzbadges"); if(b) nuzMonBadges = JSON.parse(b); }catch(err){}
+}
+function saveNuzProgress(){
+  try{
+    localStorage.setItem("pokemmo-nuzdefeated", JSON.stringify(nuzDefeated));
+    localStorage.setItem("pokemmo-nuzbadges", JSON.stringify(nuzMonBadges));
+  }catch(err){}
+}
+// medallas que ha ganado el Pokémon capturado en una zona concreta
+function nuzBadgesForZone(zone){
+  const list = nuzMonBadges[zone] || [];
+  return list.map(leader=>NUZ_BADGES[leader]).filter(Boolean);
+}
+function nuzBadgesHtml(zone){
+  const badges = nuzBadgesForZone(zone);
+  if(!badges.length) return "";
+  return `<div class="nuz-badges">${badges.map(b=>
+    `<img src="${nuzBadgeUrl(b.file)}" class="nuz-badge" title="${b.name}" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none'">`
+  ).join("")}</div>`;
+}
+// al derrotar a un líder, los Pokémon que estén en el equipo en ese momento ganan su medalla
+function nuzAwardBadge(leader){
+  if(!NUZ_BADGES[leader]) return;
+  nuzTeam.forEach(slot=>{
+    if(!slot.name || slot.nuzRowIdx===undefined) return;
+    const row = hlRows[slot.nuzRowIdx];
+    if(!row || !row.route) return;
+    const list = nuzMonBadges[row.route] || (nuzMonBadges[row.route] = []);
+    if(!list.includes(leader)) list.push(leader);
+  });
+}
+function nuzRevokeBadge(leader){
+  Object.keys(nuzMonBadges).forEach(zone=>{
+    nuzMonBadges[zone] = nuzMonBadges[zone].filter(l=>l!==leader);
+    if(nuzMonBadges[zone].length===0) delete nuzMonBadges[zone];
+  });
+}
+
 const NUZ_STATUS_OPTIONS = [
   {label:"— Sin asignar —", value:""},
-  {label:"Caja", value:"Caja"},
-  {label:"Cementerio", value:"Cementerio"},
+  {label:"Capturado", value:"Capturado"},
+  {label:"Muerto", value:"Muerto"},
+  {label:"Fallado", value:"Fallado"},
+  {label:"Recibido", value:"Recibido"},
+  {label:"Shiny ✨", value:"Shiny"},
+  {label:"Intercambiado", value:"Intercambiado"},
 ];
+// estados que dejan al Pokémon disponible en la caja
+const NUZ_BOX_STATUSES = ["Capturado","Recibido","Shiny","Intercambiado"];
+function nuzInBox(status){ return NUZ_BOX_STATUSES.includes(status); }
+function nuzIsDead(status){ return status === "Muerto"; }
+function nuzIsFailed(status){ return status === "Fallado"; }
+function nuzIsShiny(status){ return status === "Shiny"; }
+// sprite normal o shiny según el estado del encuentro
+function nuzSpriteFor(mon, status){ return nuzIsShiny(status) ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]); }
+function nuzStatusClass(status){
+  if(nuzIsDead(status)) return "status-cementerio";
+  if(nuzIsFailed(status)) return "status-fallado";
+  if(nuzIsShiny(status)) return "status-shiny";
+  return nuzInBox(status) ? "status-caja" : "";
+}
 
 // rutas conocidas por juego (derivadas de las guías ya guionizadas; el resto permite escribir libremente)
 // ---------- guion de encuentros y combates por juego ----------
@@ -2894,13 +3009,15 @@ function renderNuzScript(){
       const r = entry ? entry.r : null;
       const idx = entry ? entry.idx : null;
       const mon = r && r.species ? findMon(r.species) : null;
-      const dead = r && r.status === "Cementerio";
-      const stateClass = mon ? (dead ? "is-dead" : "is-done") : "";
+      const dead = r && nuzIsDead(r.status);
+      const stateClass = mon
+        ? (dead ? "is-dead" : nuzIsFailed(r.status) ? "is-failed" : nuzIsShiny(r.status) ? "is-done is-shiny" : "is-done")
+        : (r && nuzIsFailed(r.status) ? "is-failed" : "");
       const spriteHtml = mon
-        ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+        ? `<img src="${nuzSpriteFor(mon, r.status)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
         : `<span class="nuz-enc-q">?</span>`;
       const statusLabel = r && r.status ? r.status : "—";
-      const statusClass = r && r.status==="Caja" ? "status-caja" : dead ? "status-cementerio" : "";
+      const statusClass = r ? nuzStatusClass(r.status) : "";
       return `<div class="nuz-enc ${stateClass}" data-zone="${escAttr(s.z)}">
         <div class="nuz-enc-sprite">${spriteHtml}</div>
         <div class="nuz-enc-zone">${s.z}${s.starter?` <small style="color:var(--dim)">(inicial)</small>`:""}</div>
@@ -2928,13 +3045,15 @@ function renderNuzScript(){
           ? `<span class="nuz-script-cap">Lv. máx <input type="text" class="nuzCapInput" data-key="${battleKey}" value="${cap}"></span>`
           : `<span class="nuz-script-cap">Lv. máx ${cap}</span>`)
       : (nuzRandomMode ? `<span class="nuz-script-cap">Lv. máx <input type="text" class="nuzCapInput" data-key="${battleKey}" value="" placeholder="—"></span>` : "");
-    return `<div class="nuz-battle">
+    return `<div class="nuz-battle ${nuzDefeated[gameId+"|"+battleKey]?"is-defeated":""}">
       <div class="nuz-battle-sprite">${spriteHtml}</div>
       <div class="nuz-battle-info">
         <b>${s.n}</b>
         <small>${s.loc}</small>
       </div>
       ${capHtml}
+      <button class="nuz-defeat-btn ${nuzDefeated[gameId+"|"+battleKey]?"is-on":""}" data-key="${battleKey}" data-leader="${escAttr(s.n)}"
+        title="${currentLang==="es"?"Marcar como derrotado":"Mark as defeated"}">✓</button>
     </div>`;
   }).join("");
 
@@ -2954,10 +3073,10 @@ function renderNuzScript(){
   wrap.querySelectorAll(".nuzEncSpecies").forEach(inp=>{
     const zone = inp.dataset.zone;
     createAutocomplete(inp, (mon)=>{
-      applyRow(zone, e=>{ e.species = pokemonName(mon); if(!e.status) e.status = "Caja"; });
+      applyRow(zone, e=>{ e.species = pokemonName(mon); if(!e.status) e.status = "Capturado"; });
     });
     inp.addEventListener("change", ()=>{
-      applyRow(zone, e=>{ e.species = inp.value.trim(); if(e.species && !e.status) e.status = "Caja"; });
+      applyRow(zone, e=>{ e.species = inp.value.trim(); if(e.species && !e.status) e.status = "Capturado"; });
     });
   });
   wrap.querySelectorAll(".nuzEncNick").forEach(inp=>{
@@ -2968,7 +3087,7 @@ function renderNuzScript(){
       openChoiceList(el, NUZ_STATUS_OPTIONS, (opt)=>{
         const zone = el.dataset.zone;
         applyRow(zone, e=>{ e.status = opt.value; });
-        if(opt.value !== "Caja"){
+        if(!nuzInBox(opt.value)){
           const i = hlRows.findIndex(r=>r.route===zone);
           nuzTeam.forEach((s,ti)=>{ if(s.nuzRowIdx===i) nuzTeam[ti] = blankSlot(); });
         }
@@ -2995,6 +3114,23 @@ function renderNuzScript(){
       saveNuzCaps();
     });
   });
+  wrap.querySelectorAll(".nuz-defeat-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const k = gameId+"|"+btn.dataset.key;
+      const leader = btn.dataset.leader;
+      if(nuzDefeated[k]){
+        delete nuzDefeated[k];
+        nuzRevokeBadge(leader); // al desmarcar, se retira la medalla
+      } else {
+        nuzDefeated[k] = true;
+        nuzAwardBadge(leader); // los del equipo en este momento ganan la medalla
+      }
+      saveNuzProgress();
+      renderNuzScript();
+      if(teamContext === "nuz") renderTeam();
+    });
+  });
+  if(window.refreshNuzFloatButtons) window.refreshNuzFloatButtons();
 }
 
 function nuzCurrentGame(){ const sel = document.getElementById("nuzGameSelect"); return sel ? sel.value : ""; }
@@ -3016,14 +3152,14 @@ function renderHardlocke(){
   wrap.innerHTML = hlRows.map((row, idx)=>{
     const mon = row.species ? findMon(row.species) : null;
     const spriteHtml = mon
-      ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+      ? `<img src="${nuzSpriteFor(mon, row.status)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
       : `<span class="nuz-row-empty">?</span>`;
     const statusLabel = row.status || "— Sin asignar —";
-    const statusClass = row.status==="Caja" ? "status-caja" : row.status==="Cementerio" ? "status-cementerio" : "";
+    const statusClass = nuzStatusClass(row.status);
     const routeField = routes.length
       ? `<div class="nuz-choice nuz-route-choice" data-idx="${idx}">${row.route || "— Elegir ruta —"}</div>`
       : `<input type="text" value="${escAttr(row.route||"")}" data-idx="${idx}" data-key="route" placeholder="Ruta / zona">`;
-    return `<div class="nuz-row ${row.status==="Cementerio"?"is-dead":""}">
+    return `<div class="nuz-row ${nuzIsDead(row.status)?"is-dead":nuzIsFailed(row.status)?"is-failed":""}">
       <div class="nuz-row-sprite">${spriteHtml}</div>
       <div class="nuz-field"><label>Ruta / zona</label>${routeField}</div>
       <div class="nuz-field"><label>Especie</label><input type="text" value="${escAttr(row.species||"")}" data-idx="${idx}" data-key="species" class="hlSpeciesInput" placeholder="Ej: Gengar" autocomplete="off"></div>
@@ -3050,7 +3186,7 @@ function renderHardlocke(){
       openChoiceList(el, NUZ_STATUS_OPTIONS, (opt)=>{
         hlRows[idx].status = opt.value;
         // si deja de estar en la caja, sale del equipo
-        if(opt.value !== "Caja") nuzTeam.forEach((s,i)=>{ if(s.nuzRowIdx===idx) nuzTeam[i] = blankSlot(); });
+        if(!nuzInBox(opt.value)) nuzTeam.forEach((s,i)=>{ if(s.nuzRowIdx===idx) nuzTeam[i] = blankSlot(); });
         renderHardlocke(); updateCounts();
       });
     });
@@ -3074,8 +3210,8 @@ function renderHardlocke(){
   renderNuzScript();
 }
 function updateCounts(){
-  document.getElementById("cntCaja").textContent = hlRows.filter(r=>r.status==="Caja").length;
-  document.getElementById("cntMuerto").textContent = hlRows.filter(r=>r.status==="Cementerio").length;
+  document.getElementById("cntCaja").textContent = hlRows.filter(r=>nuzInBox(r.status)).length;
+  document.getElementById("cntMuerto").textContent = hlRows.filter(r=>nuzIsDead(r.status)).length;
   document.getElementById("cntTotal").textContent = hlRows.filter(r=>r.species).length;
   const boxPanel = document.getElementById("subpanel-nuz-box");
   const gravePanel = document.getElementById("subpanel-nuz-grave");
@@ -3095,11 +3231,12 @@ document.getElementById("saveHlBtn").addEventListener("click", ()=>{
 });
 function loadHardlocke(){
   loadNuzCaps();
+  loadNuzProgress();
   try{ const raw = localStorage.getItem("pokemmo-hardlocke"); if(raw) hlRows = JSON.parse(raw); }catch(err){}
-  // compatibilidad con partidas antiguas: "Vivo" y "Caja" eran redundantes, "Muerto" pasa a "Cementerio"
+  // compatibilidad con partidas antiguas
   hlRows.forEach(r=>{
-    if(r.status==="Vivo") r.status = "Caja";
-    else if(r.status==="Muerto") r.status = "Cementerio";
+    if(r.status==="Vivo" || r.status==="Caja") r.status = "Capturado";
+    else if(r.status==="Cementerio") r.status = "Muerto";
   });
   renderHardlocke(); updateCounts();
 }
@@ -3153,7 +3290,7 @@ document.getElementById("nuzClearTeamBtn").addEventListener("click", ()=>{
 function renderNuzBox(){
   const grid = document.getElementById("nuzBoxGrid");
   if(!grid) return;
-  const alive = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Caja");
+  const alive = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && nuzInBox(r.status));
   if(alive.length===0){
     grid.innerHTML = `<div class="nuz-empty">Todavía no tienes ningún Pokémon en la caja.<br>Márcalos como <b>Caja</b> en la pestaña Partida.</div>`;
     return;
@@ -3176,13 +3313,14 @@ function renderNuzBox(){
     return `<div class="bm-card breed-bm-card">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
+        ${nuzBadgesHtml(r.route)}
         <div class="bm-header-flex-row">
           <div class="bm-header-main"><div class="bm-name-col">
             ${r.route?`<div class="bm-meta-line">${nuzCaptureLabel(r.route)}</div>`:""}
             <span class="bm-name-input" style="opacity:.95">${displayName}</span>
             ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
           </div></div>
-          <img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(mon[1])}'">
+          <img src="${nuzSpriteFor(mon, r.status)}" referrerpolicy="no-referrer" class="bm-sprite-corner" onerror="this.onerror=function(){this.style.display='none'};this.src='${animatedSpriteUrl(mon[1])}'">
         </div>
         <div class="bm-bst-corner">${bst}</div>
       </div>
@@ -3238,7 +3376,7 @@ function renderNuzBox(){
   grid.querySelectorAll(".nuz-tograve-btn").forEach(btn=>{
     btn.addEventListener("click", e=>{
       const idx = +e.currentTarget.dataset.idx;
-      hlRows[idx].status = "Cementerio";
+      hlRows[idx].status = "Muerto";
       // si estaba en el equipo, sale de él
       nuzTeam.forEach((s,i)=>{ if(s.nuzRowIdx===idx) nuzTeam[i] = blankSlot(); });
       renderHardlocke(); updateCounts(); renderNuzBox();
@@ -3256,7 +3394,7 @@ function syncNuzTeamFromBox(){
 function renderNuzGrave(){
   const grid = document.getElementById("nuzGraveGrid");
   if(!grid) return;
-  const dead = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && r.status==="Cementerio");
+  const dead = hlRows.map((r,idx)=>({r,idx})).filter(({r})=>r.species && nuzIsDead(r.status));
   if(dead.length===0){
     grid.innerHTML = `<div class="nuz-empty">El cementerio está vacío. ¡Larga vida a tu equipo!</div>`;
     return;
@@ -3264,7 +3402,7 @@ function renderNuzGrave(){
   grid.innerHTML = dead.map(({r,idx})=>{
     const mon = findMon(r.species);
     const displayName = r.nickname || (mon?pokemonName(mon):r.species);
-    const spriteHtml = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : "";
+    const spriteHtml = mon ? `<img src="${nuzSpriteFor(mon, r.status)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : "";
     const typesHtml = mon ? mon[2].map(t=>`<span class="grave-type" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("") : "";
     // si tiene apodo, la especie va debajo del nombre; si no, ya se muestra como nombre
     const speciesLine = (r.nickname && mon) ? `<div class="grave-species">${pokemonName(mon)}</div>` : "";
@@ -3281,7 +3419,7 @@ function renderNuzGrave(){
   }).join("");
   grid.querySelectorAll(".grave-remove").forEach(btn=>{
     btn.addEventListener("click", e=>{
-      hlRows[+e.target.dataset.graveIdx].status = "Caja";
+      hlRows[+e.target.dataset.graveIdx].status = "Capturado";
       renderHardlocke(); updateCounts(); renderNuzGrave();
     });
   });
@@ -4905,6 +5043,48 @@ renderWalkthrough();
 // ---------- init ----------
 loadTeam();
 loadHardlocke();
+
+// ---------- botones flotantes de navegación ----------
+(function initFloatButtons(){
+  const btnTop = document.getElementById("btnScrollTop");
+  const btnLast = document.getElementById("btnLastEncounter");
+  if(!btnTop || !btnLast) return;
+
+  // devuelve la última zona del guion que ya tiene un Pokémon capturado
+  function lastCompletedEncounterEl(){
+    const script = NUZ_SCRIPTS[nuzCurrentGame()];
+    if(!script) return null;
+    const done = new Set(hlRows.filter(r=>r.route && r.species).map(r=>r.route));
+    let lastZone = null;
+    script.forEach(s=>{ if(s.t==="e" && done.has(s.z)) lastZone = s.z; });
+    if(!lastZone) return null;
+    return document.querySelector(`.nuz-enc[data-zone="${CSS.escape(lastZone)}"]`);
+  }
+  function nuzPanelVisible(){
+    const p = document.getElementById("panel-hardlocke");
+    const sub = document.getElementById("subpanel-nuz-run");
+    return p && p.classList.contains("active") && sub && sub.classList.contains("active");
+  }
+  function refresh(){
+    btnTop.classList.toggle("show", window.scrollY > 320);
+    btnLast.classList.toggle("show", nuzPanelVisible() && !!lastCompletedEncounterEl());
+  }
+  window.addEventListener("scroll", refresh, {passive:true});
+  document.addEventListener("click", ()=>setTimeout(refresh, 60), true);
+
+  btnTop.addEventListener("click", ()=>window.scrollTo({top:0, behavior:"smooth"}));
+  btnLast.addEventListener("click", ()=>{
+    const el = lastCompletedEncounterEl();
+    if(!el) return;
+    el.scrollIntoView({behavior:"smooth", block:"center"});
+    el.classList.remove("flash-target");
+    void el.offsetWidth; // reinicia la animación
+    el.classList.add("flash-target");
+    setTimeout(()=>el.classList.remove("flash-target"), 1600);
+  });
+  window.refreshNuzFloatButtons = refresh;
+  refresh();
+})();
 computeDamage();
 </script>
 </body>
