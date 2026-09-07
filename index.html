@@ -381,7 +381,11 @@
     .nuz-del{grid-area:del}
   }
 
-  .nuz-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .nuz-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:12px;align-items:start}
+  .nuz-box-grid .bm-card{width:100%;max-width:100%}
+  @media (max-width:520px){
+    .nuz-box-grid{grid-template-columns:1fr}
+  }
   .nuz-empty{color:var(--dim);font-style:italic;padding:24px;text-align:center;background:var(--panel2);border:1px dashed var(--line);border-radius:10px}
 
   .grave-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
@@ -1520,7 +1524,9 @@ function openNuzBoxPicker(anchorEl, slotIdx){
       item.addEventListener("mousedown", (ev)=>{
         ev.preventDefault();
         const rowIdx = +item.dataset.row;
-        nuzTeam[slotIdx] = Object.assign(blankSlot(), {name: hlRows[rowIdx].species, nuzRowIdx: rowIdx});
+        stashNuzBuilds(); // conserva lo del Pokémon que estuviera en este hueco
+        const zone = hlRows[rowIdx].route;
+        nuzTeam[slotIdx] = applyNuzBuild(Object.assign(blankSlot(), {name: hlRows[rowIdx].species, nuzRowIdx: rowIdx}), zone);
         box.remove();
         renderTeam(); renderAnalysis();
       });
@@ -1786,6 +1792,7 @@ function renderTeam(){
   grid.querySelectorAll(".nuzTeamRemove").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       const idx = +e.currentTarget.dataset.idx;
+      stashNuzBuilds(); // conserva su configuración para la próxima vez
       nuzTeam[idx] = blankSlot(); // vuelve a estar disponible en la caja
       renderTeam(); renderAnalysis();
     });
@@ -1795,6 +1802,7 @@ function renderTeam(){
       const idx = +e.currentTarget.dataset.idx;
       const rowIdx = nuzTeam[idx].nuzRowIdx;
       if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].status = "Muerto";
+      stashNuzBuilds(); // conserva su configuración aunque muera
       nuzTeam[idx] = blankSlot(); // sale del equipo al morir
       renderTeam(); renderAnalysis(); renderHardlocke(); updateCounts();
     });
@@ -2067,7 +2075,7 @@ function updateEvTotal(idx){
 }
 
 function renderAnalysis(){
-  if(teamContext === "nuz") saveNuzTeam();
+  if(teamContext === "nuz"){ saveNuzTeam(); stashNuzBuilds(); }
   const attackTypesPerSlot = activeTeam().map(slot=>{
     const mon = findMon(slot.name);
     if(!mon) return [];
@@ -2804,6 +2812,39 @@ function nuzRevokeBadge(leader){
   });
 }
 
+// Configuración guardada de cada Pokémon (naturaleza, objeto, movimientos, IVs/EVs...),
+// asociada a la zona donde se capturó, para no tener que rellenarla otra vez.
+let nuzMonBuilds = {};
+function loadNuzBuilds(){
+  try{ const raw = localStorage.getItem("pokemmo-nuzbuilds"); if(raw) nuzMonBuilds = JSON.parse(raw); }catch(err){}
+}
+function saveNuzBuilds(){
+  try{ localStorage.setItem("pokemmo-nuzbuilds", JSON.stringify(nuzMonBuilds)); }catch(err){}
+}
+// guarda lo que hay ahora en el equipo, para cada Pokémon, en su zona
+function stashNuzBuilds(){
+  nuzTeam.forEach(slot=>{
+    if(!slot.name || slot.nuzRowIdx===undefined) return;
+    const row = hlRows[slot.nuzRowIdx];
+    if(!row || !row.route) return;
+    nuzMonBuilds[row.route] = {
+      nature: slot.nature, ability: slot.ability, item: slot.item, level: slot.level,
+      moves: (slot.moves||[]).slice(), evs: Object.assign({}, slot.evs), ivs: Object.assign({}, slot.ivs),
+    };
+  });
+  saveNuzBuilds();
+}
+// recupera la configuración guardada de un Pokémon al añadirlo al equipo
+function applyNuzBuild(slot, zone){
+  const b = nuzMonBuilds[zone];
+  if(!b) return slot;
+  return Object.assign(slot, {
+    nature: b.nature || slot.nature, ability: b.ability || "", item: b.item || "",
+    level: b.level || slot.level, moves: (b.moves||["","","",""]).slice(),
+    evs: Object.assign({}, slot.evs, b.evs||{}), ivs: Object.assign({}, slot.ivs, b.ivs||{}),
+  });
+}
+
 const NUZ_STATUS_OPTIONS = [
   {label:"— Sin asignar —", value:""},
   {label:"Capturado", value:"Capturado"},
@@ -2972,6 +3013,7 @@ const NUZ_TRAINER_SLUG = {
   "Magno":"maxie", "Tatiano":"tabitha", "Carola":"courtney", "Blasco":"wally",
   "Tatiano y Recluta":"tabitha", "Carola y Recluta":"courtney",
   "Rival":"brendan",
+  "Perico":"aarune",
 };
 // En Showdown, varios entrenadores de Hoenn solo existen con sufijo de generación
 // (maxie-gen3, tateandliza-gen6...), así que se prueban las variantes en cadena.
@@ -3242,6 +3284,7 @@ document.getElementById("saveHlBtn").addEventListener("click", ()=>{
 function loadHardlocke(){
   loadNuzCaps();
   loadNuzProgress();
+  loadNuzBuilds();
   try{ const raw = localStorage.getItem("pokemmo-hardlocke"); if(raw) hlRows = JSON.parse(raw); }catch(err){}
   // compatibilidad con partidas antiguas
   hlRows.forEach(r=>{
