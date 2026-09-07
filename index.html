@@ -280,6 +280,25 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
+  .nuz-script-box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+  .nuz-script-box summary{padding:10px 14px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent);user-select:none}
+  .nuz-script-box summary:hover{background:var(--panel)}
+  .nuz-script-list{max-height:420px;overflow-y:auto;border-top:1px solid var(--line)}
+  .nuz-script-row{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+  .nuz-script-row:last-child{border-bottom:none}
+  .nuz-script-icon{color:var(--line);font-size:10px;flex:none}
+  .nuz-script-row.is-done .nuz-script-icon{color:var(--good)}
+  .nuz-script-row.is-dead{opacity:.5}
+  .nuz-script-row.is-dead .nuz-script-icon{color:var(--danger)}
+  .nuz-script-row.is-battle{background:rgba(255,255,255,.025)}
+  .nuz-script-row.is-battle .nuz-script-icon{color:var(--accent2)}
+  .nuz-script-zone{flex:1;min-width:0}
+  .nuz-script-mon{display:flex;align-items:center;gap:5px;font-weight:700;color:var(--ink)}
+  .nuz-script-mon img{width:26px;height:26px;image-rendering:pixelated}
+  .nuz-script-pending{color:var(--dim);font-size:11px;font-style:italic}
+  .nuz-script-badge{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff;white-space:nowrap}
+  .nuz-script-cap{font-size:10px;font-weight:700;color:var(--accent);background:var(--panel);border:1px solid var(--line);padding:2px 7px;border-radius:20px;white-space:nowrap}
+
   .nuz-box-picker{max-height:340px;overflow-y:auto}
   .nuz-box-picker .nuz-picker-item{padding:7px 10px}
   .slot-head .nuz-choice{width:100%}
@@ -568,6 +587,7 @@
       </select>
     </div>
     <div id="nuzGamePlaceholder" class="hint" style="margin:10px 0 14px">Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente abajo.</div>
+    <div id="nuzScriptWrap"></div>
 
     <div class="hl-toolbar">
       <div class="summary-pills">
@@ -1686,7 +1706,7 @@ function renderTeam(){
         // el Pokémon evoluciona también en su ficha de la caja
         const rowIdx = nuzTeam[idx].nuzRowIdx;
         if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].species = to[1];
-        renderTeam(); renderAnalysis(); updateCounts();
+        renderTeam(); renderAnalysis(); renderHardlocke(); updateCounts();
       };
       if(options.length===1) applyEvo(options[0].value);
       else openChoiceList(e.currentTarget, options, (opt)=>applyEvo(opt.value));
@@ -1707,7 +1727,7 @@ function renderTeam(){
         nuzTeam[idx].name = from[1];
         const rowIdx = nuzTeam[idx].nuzRowIdx;
         if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].species = from[1];
-        renderTeam(); renderAnalysis(); updateCounts();
+        renderTeam(); renderAnalysis(); renderHardlocke(); updateCounts();
       };
       if(options.length===1) applyDevo(options[0].value);
       else openChoiceList(e.currentTarget, options, (opt)=>applyDevo(opt.value));
@@ -2678,7 +2698,129 @@ const NUZ_STATUS_OPTIONS = [
 ];
 
 // rutas conocidas por juego (derivadas de las guías ya guionizadas; el resto permite escribir libremente)
+// ---------- guion de encuentros y combates por juego ----------
+// Cada entrada es un encuentro (zona donde capturas) o un combate importante.
+// cap = tope de nivel tras ganar ese combate.
+const NUZ_SCRIPTS = {
+  oras: [
+    {t:"e", z:"Inicial", starter:true},
+    {t:"e", z:"Ruta 101"},
+    {t:"e", z:"Ruta 102"},
+    {t:"e", z:"Ruta 103"},
+    {t:"b", n:"Rival", loc:"Ruta 103"},
+    {t:"e", z:"Ciudad Petalia"},
+    {t:"e", z:"Ruta 104"},
+    {t:"e", z:"Bosque Petalia"},
+    {t:"e", z:"Ciudad Férrica"},
+    {t:"b", n:"Petra", loc:"Ciudad Férrica", gym:"Rock", cap:14},
+    {t:"e", z:"Ruta 105"},
+    {t:"e", z:"Ruta 116"},
+    {t:"e", z:"Túnel Fervergal"},
+    {t:"e", z:"Pueblo Azuliza"},
+    {t:"b", n:"Marcial", loc:"Pueblo Azuliza", gym:"Fighting", cap:16},
+    {t:"e", z:"Ruta 106"},
+    {t:"e", z:"Cueva Granito"},
+    {t:"e", z:"Ruta 107"},
+    {t:"e", z:"Ciudad Portual"},
+    {t:"e", z:"Ruta 110"},
+    {t:"b", n:"Rival", loc:"Ruta 110"},
+    {t:"e", z:"Ciudad Malvalona"},
+    {t:"b", n:"Blasco", loc:"Ciudad Malvalona"},
+    {t:"b", n:"Erico", loc:"Ciudad Malvalona", gym:"Electric", cap:21},
+    {t:"e", z:"Ruta 117"},
+    {t:"e", z:"Pueblo Verdegal"},
+    {t:"e", z:"Ruta 111"},
+    {t:"e", z:"Ruta 112"},
+    {t:"e", z:"Senda Ígnea"},
+    {t:"e", z:"Ruta 113"},
+    {t:"e", z:"Pueblo Pardal"},
+    {t:"e", z:"Ruta 114"},
+    {t:"e", z:"Cascada Meteoro"},
+    {t:"b", n:"Tatiano y Recluta", loc:"Cascada Meteoro", double:true},
+    {t:"e", z:"Ruta 115"},
+    {t:"b", n:"Tatiano", loc:"Monte Cenizo"},
+    {t:"b", n:"Magno", loc:"Monte Cenizo"},
+    {t:"e", z:"Desfiladero"},
+    {t:"e", z:"Pueblo Lavacalda"},
+    {t:"b", n:"Candela", loc:"Pueblo Lavacalda", gym:"Fire", cap:28},
+    {t:"b", n:"Norman", loc:"Ciudad Petalia", gym:"Normal", cap:30},
+    {t:"e", z:"Ruta 118"},
+    {t:"e", z:"Isla del Sur"},
+    {t:"b", n:"Carola y Recluta", loc:"Isla del Sur", double:true},
+    {t:"e", z:"Ruta 119"},
+    {t:"b", n:"Tatiano", loc:"Instituto Meteorológico"},
+    {t:"b", n:"Rival", loc:"Ruta 119"},
+    {t:"e", z:"Ciudad Arborada"},
+    {t:"b", n:"Perico", loc:"Ciudad Arborada"},
+    {t:"b", n:"Alana", loc:"Ciudad Arborada", gym:"Flying", cap:35},
+    {t:"e", z:"Ruta 120"},
+    {t:"e", z:"Gruta Solar"},
+    {t:"e", z:"Ruta 121"},
+    {t:"e", z:"Ruta 122"},
+    {t:"e", z:"Monte Pírico"},
+    {t:"b", n:"Carola", loc:"Monte Pírico"},
+    {t:"e", z:"Ruta 123"},
+    {t:"e", z:"Zona Safari"},
+    {t:"e", z:"Ciudad Calagua"},
+    {t:"b", n:"Rival", loc:"Ciudad Calagua"},
+    {t:"e", z:"Guarida Magma"},
+    {t:"b", n:"Carola", loc:"Guarida Magma B1F"},
+    {t:"e", z:"Ruta 124"},
+    {t:"e", z:"Ciudad Algaria"},
+    {t:"b", n:"Vito y Leti", loc:"Ciudad Algaria", gym:"Psychic", cap:45},
+    {t:"e", z:"Ruta 125"},
+    {t:"e", z:"Cueva Cardumen"},
+    {t:"e", z:"Ruta 127"},
+    {t:"e", z:"Ruta 128"},
+    {t:"e", z:"Caverna Abisal"},
+    {t:"b", n:"Magno", loc:"Caverna Abisal"},
+    {t:"e", z:"Ruta 126"},
+    {t:"e", z:"Arrecípolis"},
+    {t:"b", n:"Plubio", loc:"Arrecípolis", gym:"Water", cap:46},
+    {t:"e", z:"Cueva Ancestral"},
+    {t:"e", z:"Ultra vuelo"},
+    {t:"e", z:"Ruta 129"},
+    {t:"e", z:"Ruta 130"},
+    {t:"e", z:"Ruta 131"},
+    {t:"e", z:"Pilar Celeste"},
+    {t:"e", z:"Espacio Exterior"},
+    {t:"e", z:"Pueblo Oromar"},
+    {t:"e", z:"Isla Espejismo"},
+    {t:"e", z:"Ruta 108"},
+    {t:"e", z:"Malvamar"},
+    {t:"e", z:"Ruta 109"},
+    {t:"e", z:"Ruta 132"},
+    {t:"e", z:"Ruta 133"},
+    {t:"e", z:"Ruta 134"},
+    {t:"e", z:"Ciudad Colosalia"},
+    {t:"e", z:"Calle Victoria"},
+    {t:"b", n:"Blasco", loc:"Calle Victoria"},
+    {t:"b", n:"Sixto", loc:"Liga Pokémon", gym:"Dark", elite:true, cap:52},
+    {t:"b", n:"Fátima", loc:"Liga Pokémon", gym:"Ghost", elite:true, cap:53},
+    {t:"b", n:"Nívea", loc:"Liga Pokémon", gym:"Ice", elite:true, cap:54},
+    {t:"b", n:"Dracón", loc:"Liga Pokémon", gym:"Dragon", elite:true, cap:55},
+    {t:"b", n:"Máximo", loc:"Liga Pokémon", champion:true, cap:59},
+    {t:"e", z:"S.S. Marea"},
+    {t:"e", z:"Llanura Sin Nombre"},
+    {t:"e", z:"Cueva Ignota"},
+    {t:"e", z:"Cueva Incierta"},
+    {t:"e", z:"Boquete Irregular"},
+    {t:"e", z:"Bosque Virgen"},
+    {t:"e", z:"Isla Creciente"},
+    {t:"e", z:"Resort Batalla"},
+    {t:"e", z:"Cueva Espejismo"},
+    {t:"e", z:"Bosque Espejismo"},
+    {t:"e", z:"Monte Espejismo"},
+  ],
+};
+// texto que se muestra como "lugar de captura" de un Pokémon
+function nuzCaptureLabel(zone){
+  if(!zone) return "";
+  return zone === "Inicial" ? "Capturado en un encuentro fortuito" : `Capturado en ${zone}`;
+}
 function nuzRoutesForGame(gameId){
+  const script = NUZ_SCRIPTS[gameId];
+  if(script) return script.filter(s=>s.t==="e").map(s=>s.z);
   const src = gameId==="hgss" ? WALKTHROUGH_HGSS : gameId==="b2w2" ? WALKTHROUGH_B2W2 : null;
   if(!src) return [];
   const seen = new Set(), out = [];
@@ -2690,6 +2832,58 @@ function nuzRoutesForGame(gameId){
   });
   return out;
 }
+// muestra el guion del juego: zonas de encuentro y combates importantes, en orden
+function renderNuzScript(){
+  const wrap = document.getElementById("nuzScriptWrap");
+  if(!wrap) return;
+  const script = NUZ_SCRIPTS[nuzCurrentGame()];
+  if(!script){ wrap.innerHTML = ""; return; }
+
+  // zonas donde ya tienes un encuentro registrado
+  const usedZones = new Map();
+  hlRows.forEach(r=>{ if(r.route) usedZones.set(r.route, r); });
+
+  let currentCap = null;
+  const rowsHtml = script.map(s=>{
+    if(s.t === "e"){
+      const row = usedZones.get(s.z);
+      const mon = row && row.species ? findMon(row.species) : null;
+      const dead = row && row.status === "Cementerio";
+      const doneClass = row && row.species ? (dead ? "is-dead" : "is-done") : "";
+      const info = row && row.species
+        ? `<span class="nuz-script-mon">${mon?`<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:""}${row.nickname || (mon?pokemonName(mon):row.species)}${dead?" ✝":""}</span>`
+        : `<span class="nuz-script-pending">${currentLang==="es"?"sin encuentro":"no encounter"}</span>`;
+      return `<div class="nuz-script-row ${doneClass}">
+        <span class="nuz-script-icon">◆</span>
+        <span class="nuz-script-zone">${s.z}</span>
+        ${info}
+      </div>`;
+    }
+    // combate
+    if(s.cap) currentCap = s.cap;
+    const typeColor = s.gym ? TYPE_COLORS[s.gym] : null;
+    const badge = s.champion
+      ? `<span class="nuz-script-badge" style="background:#c9a227">${currentLang==="es"?"Campeón":"Champion"}</span>`
+      : s.elite ? `<span class="nuz-script-badge" style="background:${typeColor||"#666"}">${currentLang==="es"?"Alto Mando":"Elite Four"}</span>`
+      : s.gym ? `<span class="nuz-script-badge" style="background:${typeColor}">${currentLang==="es"?"Gimnasio":"Gym"} · ${typeLabel(s.gym)}</span>`
+      : s.double ? `<span class="nuz-script-badge" style="background:#7a5ea8">${currentLang==="es"?"Combate doble":"Double battle"}</span>`
+      : "";
+    const capHtml = s.cap ? `<span class="nuz-script-cap">Lv. máx ${s.cap}</span>` : "";
+    return `<div class="nuz-script-row is-battle">
+      <span class="nuz-script-icon">⚔</span>
+      <span class="nuz-script-zone"><b>${s.n}</b> <small style="color:var(--dim)">· ${s.loc}</small></span>
+      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${badge}${capHtml}</span>
+    </div>`;
+  }).join("");
+
+  wrap.innerHTML = `<details class="nuz-script-box" ${wrap.dataset.open==="1"?"open":""}>
+    <summary>${currentLang==="es"?"Guion del juego":"Game script"} <small style="color:var(--dim)">(${script.filter(s=>s.t==="e").length} ${currentLang==="es"?"zonas":"zones"} · ${script.filter(s=>s.t==="b").length} ${currentLang==="es"?"combates":"battles"})</small></summary>
+    <div class="nuz-script-list">${rowsHtml}</div>
+  </details>`;
+  const det = wrap.querySelector("details");
+  det.addEventListener("toggle", ()=>{ wrap.dataset.open = det.open ? "1" : "0"; });
+}
+
 function nuzCurrentGame(){ const sel = document.getElementById("nuzGameSelect"); return sel ? sel.value : ""; }
 
 function renderHardlocke(){
@@ -2697,6 +2891,7 @@ function renderHardlocke(){
   if(!wrap) return;
   if(hlRows.length===0){
     wrap.innerHTML = `<div class="nuz-empty">Todavía no has registrado ningún encuentro.<br>Pulsa <b>+ Añadir encuentro</b> para empezar.</div>`;
+    renderNuzScript();
     return;
   }
   const routes = nuzRoutesForGame(nuzCurrentGame());
@@ -2758,6 +2953,7 @@ function renderHardlocke(){
       renderHardlocke(); updateCounts();
     });
   });
+  renderNuzScript();
 }
 function updateCounts(){
   document.getElementById("cntCaja").textContent = hlRows.filter(r=>r.status==="Caja").length;
@@ -2862,7 +3058,7 @@ function renderNuzBox(){
         <div class="bm-types">${typeBadges}</div>
         <div class="bm-header-flex-row">
           <div class="bm-header-main"><div class="bm-name-col">
-            ${r.route?`<div class="bm-meta-line">${r.route}</div>`:""}
+            ${r.route?`<div class="bm-meta-line">${nuzCaptureLabel(r.route)}</div>`:""}
             <span class="bm-name-input" style="opacity:.95">${displayName}</span>
             ${r.nickname?`<div class="bm-meta-line" style="opacity:.8">${pokemonName(mon)}</div>`:""}
           </div></div>
