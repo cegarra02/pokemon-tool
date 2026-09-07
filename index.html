@@ -280,24 +280,38 @@
   .subpanel{display:none}
   .subpanel.active{display:block}
 
-  .nuz-script-box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
-  .nuz-script-box summary{padding:10px 14px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent);user-select:none}
-  .nuz-script-box summary:hover{background:var(--panel)}
-  .nuz-script-list{max-height:420px;overflow-y:auto;border-top:1px solid var(--line)}
-  .nuz-script-row{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
-  .nuz-script-row:last-child{border-bottom:none}
-  .nuz-script-icon{color:var(--line);font-size:10px;flex:none}
-  .nuz-script-row.is-done .nuz-script-icon{color:var(--good)}
-  .nuz-script-row.is-dead{opacity:.5}
-  .nuz-script-row.is-dead .nuz-script-icon{color:var(--danger)}
-  .nuz-script-row.is-battle{background:rgba(255,255,255,.025)}
-  .nuz-script-row.is-battle .nuz-script-icon{color:var(--accent2)}
-  .nuz-script-zone{flex:1;min-width:0}
-  .nuz-script-mon{display:flex;align-items:center;gap:5px;font-weight:700;color:var(--ink)}
-  .nuz-script-mon img{width:26px;height:26px;image-rendering:pixelated}
-  .nuz-script-pending{color:var(--dim);font-size:11px;font-style:italic}
-  .nuz-script-badge{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff;white-space:nowrap}
-  .nuz-script-cap{font-size:10px;font-weight:700;color:var(--accent);background:var(--panel);border:1px solid var(--line);padding:2px 7px;border-radius:20px;white-space:nowrap}
+  .nuz-script-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .nuz-enc{display:grid;grid-template-columns:52px 1.1fr 1.3fr 1fr 100px 28px;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;transition:.15s}
+  .nuz-enc:hover{border-color:var(--accent2)}
+  .nuz-enc.is-done{border-left:3px solid var(--good)}
+  .nuz-enc.is-dead{opacity:.5;border-left:3px solid var(--danger)}
+  .nuz-enc.is-dead .nuz-enc-sprite img{filter:grayscale(1) brightness(.7)}
+  .nuz-enc-sprite{width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:8px}
+  .nuz-enc-sprite img{width:48px;height:48px;image-rendering:pixelated}
+  .nuz-enc-q{color:var(--line);font-size:20px;font-weight:800}
+  .nuz-enc-zone{font-size:12px;font-weight:700}
+  .nuz-enc-field input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-size:12px}
+  .nuz-enc-field input:focus{outline:none;border-color:var(--accent)}
+  .nuz-enc-field input:disabled{opacity:.35;cursor:not-allowed}
+  .nuz-battle{display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,rgba(90,160,255,.10),transparent);border:1px solid var(--line);border-left:3px solid var(--accent2);border-radius:10px;padding:8px 12px}
+  .nuz-battle-sprite{width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex:none}
+  .nuz-battle-sprite img{max-width:56px;max-height:56px;image-rendering:pixelated}
+  .nuz-battle-q{color:var(--accent2);font-size:20px}
+  .nuz-battle-info{flex:1;display:flex;flex-direction:column;line-height:1.4}
+  .nuz-battle-info b{font-size:13px}
+  .nuz-battle-info small{color:var(--dim);font-size:11px}
+  .nuz-script-cap{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--panel);border:1px solid var(--line);padding:4px 9px;border-radius:20px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+  .nuzCapInput{width:38px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;color:var(--accent);font-size:11px;font-weight:700;text-align:center;padding:2px 3px}
+  .nuzCapInput:focus{outline:none;border-color:var(--accent)}
+  @media (max-width:820px){
+    .nuz-enc{grid-template-columns:44px 1fr 28px;grid-template-areas:"sprite zona del" "sprite especie especie" "sprite apodo estado"}
+    .nuz-enc-sprite{width:44px;height:44px;grid-area:sprite}
+    .nuz-enc-zone{grid-area:zona}
+    .nuz-enc > .nuz-enc-field:nth-of-type(1){grid-area:especie}
+    .nuz-enc > .nuz-enc-field:nth-of-type(2){grid-area:apodo}
+    .nuzEncStatus{grid-area:estado}
+    .nuzEncClear{grid-area:del}
+  }
 
   .nuz-box-picker{max-height:340px;overflow-y:auto}
   .nuz-box-picker .nuz-picker-item{padding:7px 10px}
@@ -587,8 +601,6 @@
       </select>
     </div>
     <div id="nuzGamePlaceholder" class="hint" style="margin:10px 0 14px">Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente abajo.</div>
-    <div id="nuzScriptWrap"></div>
-
     <div class="hl-toolbar">
       <div class="summary-pills">
         <span class="pill">En caja: <b id="cntCaja">0</b></span>
@@ -596,11 +608,15 @@
         <span class="pill">Encuentros: <b id="cntTotal">0</b></span>
       </div>
       <div>
-        <button class="btn" id="addRowBtn">+ Añadir encuentro</button>
         <button class="btn" id="saveHlBtn">Guardar</button>
       </div>
     </div>
-    <div class="nuz-encounters" id="nuzEncounters"></div>
+    <div id="nuzScriptWrap"></div>
+
+    <div id="nuzManualBox">
+      <div style="margin-bottom:8px"><button class="btn" id="addRowBtn">+ Añadir encuentro</button></div>
+      <div class="nuz-encounters" id="nuzEncounters"></div>
+    </div>
     <span class="save-note" id="hlSaveNote"></span>
   </div>
 
@@ -2833,55 +2849,152 @@ function nuzRoutesForGame(gameId){
   return out;
 }
 // muestra el guion del juego: zonas de encuentro y combates importantes, en orden
+// sprites de entrenador (Pokémon Showdown) para los combates guionizados
+const NUZ_TRAINER_SLUG = {
+  "Petra":"roxanne", "Marcial":"brawly", "Erico":"wattson", "Candela":"flannery",
+  "Norman":"norman", "Alana":"winona", "Vito y Leti":"tateandliza", "Plubio":"wallace",
+  "Sixto":"sidney", "Fátima":"phoebe", "Nívea":"glacia", "Dracón":"drake", "Máximo":"steven",
+  "Magno":"maxie", "Tatiano":"tabitha", "Carola":"courtney", "Blasco":"wally",
+  "Tatiano y Recluta":"tabitha", "Carola y Recluta":"courtney",
+  "Rival":"brendan",
+};
+function nuzTrainerSprite(name){
+  const slug = NUZ_TRAINER_SLUG[name];
+  return slug ? `https://play.pokemonshowdown.com/sprites/trainers/${slug}.png` : null;
+}
+// topes de nivel personalizados (editables en modo randomlocke)
+let nuzCustomCaps = {};
+function loadNuzCaps(){
+  try{ const raw = localStorage.getItem("pokemmo-nuzcaps"); if(raw) nuzCustomCaps = JSON.parse(raw); }catch(err){}
+}
+function saveNuzCaps(){
+  try{ localStorage.setItem("pokemmo-nuzcaps", JSON.stringify(nuzCustomCaps)); }catch(err){}
+}
+function nuzCapFor(gameId, battleKey, defaultCap){
+  const k = gameId+"|"+battleKey;
+  return nuzCustomCaps[k] !== undefined ? nuzCustomCaps[k] : defaultCap;
+}
+
+// El guion es la propia interfaz de captura: cada zona permite elegir el Pokémon
+// capturado y su apodo, con los combates importantes intercalados.
 function renderNuzScript(){
   const wrap = document.getElementById("nuzScriptWrap");
   if(!wrap) return;
-  const script = NUZ_SCRIPTS[nuzCurrentGame()];
+  const gameId = nuzCurrentGame();
+  const script = NUZ_SCRIPTS[gameId];
   if(!script){ wrap.innerHTML = ""; return; }
 
-  // zonas donde ya tienes un encuentro registrado
-  const usedZones = new Map();
-  hlRows.forEach(r=>{ if(r.route) usedZones.set(r.route, r); });
+  // fila registrada para cada zona (una por zona)
+  const rowByZone = new Map();
+  hlRows.forEach((r,idx)=>{ if(r.route && !rowByZone.has(r.route)) rowByZone.set(r.route, {r, idx}); });
 
-  let currentCap = null;
-  const rowsHtml = script.map(s=>{
+  const html = script.map((s,si)=>{
     if(s.t === "e"){
-      const row = usedZones.get(s.z);
-      const mon = row && row.species ? findMon(row.species) : null;
-      const dead = row && row.status === "Cementerio";
-      const doneClass = row && row.species ? (dead ? "is-dead" : "is-done") : "";
-      const info = row && row.species
-        ? `<span class="nuz-script-mon">${mon?`<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:""}${row.nickname || (mon?pokemonName(mon):row.species)}${dead?" ✝":""}</span>`
-        : `<span class="nuz-script-pending">${currentLang==="es"?"sin encuentro":"no encounter"}</span>`;
-      return `<div class="nuz-script-row ${doneClass}">
-        <span class="nuz-script-icon">◆</span>
-        <span class="nuz-script-zone">${s.z}</span>
-        ${info}
+      const entry = rowByZone.get(s.z);
+      const r = entry ? entry.r : null;
+      const idx = entry ? entry.idx : null;
+      const mon = r && r.species ? findMon(r.species) : null;
+      const dead = r && r.status === "Cementerio";
+      const stateClass = mon ? (dead ? "is-dead" : "is-done") : "";
+      const spriteHtml = mon
+        ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+        : `<span class="nuz-enc-q">?</span>`;
+      const statusLabel = r && r.status ? r.status : "—";
+      const statusClass = r && r.status==="Caja" ? "status-caja" : dead ? "status-cementerio" : "";
+      return `<div class="nuz-enc ${stateClass}" data-zone="${escAttr(s.z)}">
+        <div class="nuz-enc-sprite">${spriteHtml}</div>
+        <div class="nuz-enc-zone">${s.z}${s.starter?` <small style="color:var(--dim)">(inicial)</small>`:""}</div>
+        <div class="nuz-enc-field">
+          <input type="text" class="nuzEncSpecies" data-zone="${escAttr(s.z)}" value="${escAttr(r?r.species:"")}"
+            placeholder="${currentLang==="es"?"Pokémon capturado":"Caught Pokémon"}" autocomplete="off">
+        </div>
+        <div class="nuz-enc-field">
+          <input type="text" class="nuzEncNick" data-zone="${escAttr(s.z)}" value="${escAttr(r?r.nickname:"")}"
+            placeholder="${currentLang==="es"?"Apodo":"Nickname"}" ${mon?"":"disabled"}>
+        </div>
+        <div class="nuz-choice nuzEncStatus ${statusClass}" data-zone="${escAttr(s.z)}" ${mon?"":'style="opacity:.4;pointer-events:none"'}>${statusLabel}</div>
+        <button class="nuz-del nuzEncClear" data-zone="${escAttr(s.z)}" title="${currentLang==="es"?"Borrar encuentro":"Clear encounter"}" ${mon?"":'style="visibility:hidden"'}>✕</button>
       </div>`;
     }
     // combate
-    if(s.cap) currentCap = s.cap;
-    const typeColor = s.gym ? TYPE_COLORS[s.gym] : null;
-    const badge = s.champion
-      ? `<span class="nuz-script-badge" style="background:#c9a227">${currentLang==="es"?"Campeón":"Champion"}</span>`
-      : s.elite ? `<span class="nuz-script-badge" style="background:${typeColor||"#666"}">${currentLang==="es"?"Alto Mando":"Elite Four"}</span>`
-      : s.gym ? `<span class="nuz-script-badge" style="background:${typeColor}">${currentLang==="es"?"Gimnasio":"Gym"} · ${typeLabel(s.gym)}</span>`
-      : s.double ? `<span class="nuz-script-badge" style="background:#7a5ea8">${currentLang==="es"?"Combate doble":"Double battle"}</span>`
-      : "";
-    const capHtml = s.cap ? `<span class="nuz-script-cap">Lv. máx ${s.cap}</span>` : "";
-    return `<div class="nuz-script-row is-battle">
-      <span class="nuz-script-icon">⚔</span>
-      <span class="nuz-script-zone"><b>${s.n}</b> <small style="color:var(--dim)">· ${s.loc}</small></span>
-      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${badge}${capHtml}</span>
+    const battleKey = `${si}`;
+    const cap = nuzCapFor(gameId, battleKey, s.cap);
+    const sprite = nuzTrainerSprite(s.n);
+    const spriteHtml = sprite
+      ? `<img src="${sprite}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+      : `<span class="nuz-battle-q">⚔</span>`;
+    const capHtml = cap!==undefined && cap!==null
+      ? (nuzRandomMode
+          ? `<span class="nuz-script-cap">Lv. máx <input type="text" class="nuzCapInput" data-key="${battleKey}" value="${cap}"></span>`
+          : `<span class="nuz-script-cap">Lv. máx ${cap}</span>`)
+      : (nuzRandomMode ? `<span class="nuz-script-cap">Lv. máx <input type="text" class="nuzCapInput" data-key="${battleKey}" value="" placeholder="—"></span>` : "");
+    return `<div class="nuz-battle">
+      <div class="nuz-battle-sprite">${spriteHtml}</div>
+      <div class="nuz-battle-info">
+        <b>${s.n}</b>
+        <small>${s.loc}</small>
+      </div>
+      ${capHtml}
     </div>`;
   }).join("");
 
-  wrap.innerHTML = `<details class="nuz-script-box" ${wrap.dataset.open==="1"?"open":""}>
-    <summary>${currentLang==="es"?"Guion del juego":"Game script"} <small style="color:var(--dim)">(${script.filter(s=>s.t==="e").length} ${currentLang==="es"?"zonas":"zones"} · ${script.filter(s=>s.t==="b").length} ${currentLang==="es"?"combates":"battles"})</small></summary>
-    <div class="nuz-script-list">${rowsHtml}</div>
-  </details>`;
-  const det = wrap.querySelector("details");
-  det.addEventListener("toggle", ()=>{ wrap.dataset.open = det.open ? "1" : "0"; });
+  wrap.innerHTML = `<div class="nuz-script-list">${html}</div>`;
+
+  // ---- eventos ----
+  const applyRow = (zone, mutate)=>{
+    let entry = hlRows.find(r=>r.route === zone);
+    if(!entry){ entry = {route:zone, species:"", nickname:"", status:"", notes:""}; hlRows.push(entry); }
+    mutate(entry);
+    if(!entry.species){ // sin especie no tiene sentido guardar la fila
+      const i = hlRows.indexOf(entry);
+      if(i>=0) hlRows.splice(i,1);
+    }
+    renderHardlocke(); updateCounts();
+  };
+  wrap.querySelectorAll(".nuzEncSpecies").forEach(inp=>{
+    const zone = inp.dataset.zone;
+    createAutocomplete(inp, (mon)=>{
+      applyRow(zone, e=>{ e.species = pokemonName(mon); if(!e.status) e.status = "Caja"; });
+    });
+    inp.addEventListener("change", ()=>{
+      applyRow(zone, e=>{ e.species = inp.value.trim(); if(e.species && !e.status) e.status = "Caja"; });
+    });
+  });
+  wrap.querySelectorAll(".nuzEncNick").forEach(inp=>{
+    inp.addEventListener("change", ()=>{ applyRow(inp.dataset.zone, e=>{ e.nickname = inp.value.trim(); }); });
+  });
+  wrap.querySelectorAll(".nuzEncStatus").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      openChoiceList(el, NUZ_STATUS_OPTIONS, (opt)=>{
+        const zone = el.dataset.zone;
+        applyRow(zone, e=>{ e.status = opt.value; });
+        if(opt.value !== "Caja"){
+          const i = hlRows.findIndex(r=>r.route===zone);
+          nuzTeam.forEach((s,ti)=>{ if(s.nuzRowIdx===i) nuzTeam[ti] = blankSlot(); });
+        }
+      });
+    });
+  });
+  wrap.querySelectorAll(".nuzEncClear").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const zone = btn.dataset.zone;
+      const i = hlRows.findIndex(r=>r.route===zone);
+      if(i>=0){
+        nuzTeam.forEach((s,ti)=>{ if(s.nuzRowIdx===i) nuzTeam[ti] = blankSlot(); });
+        hlRows.splice(i,1);
+      }
+      renderHardlocke(); updateCounts();
+    });
+  });
+  wrap.querySelectorAll(".nuzCapInput").forEach(inp=>{
+    inp.addEventListener("change", ()=>{
+      const k = gameId+"|"+inp.dataset.key;
+      const v = inp.value.trim();
+      if(v==="") delete nuzCustomCaps[k];
+      else nuzCustomCaps[k] = parseInt(v,10)||0;
+      saveNuzCaps();
+    });
+  });
 }
 
 function nuzCurrentGame(){ const sel = document.getElementById("nuzGameSelect"); return sel ? sel.value : ""; }
@@ -2889,6 +3002,11 @@ function nuzCurrentGame(){ const sel = document.getElementById("nuzGameSelect");
 function renderHardlocke(){
   const wrap = document.getElementById("nuzEncounters");
   if(!wrap) return;
+  const hasScript = !!NUZ_SCRIPTS[nuzCurrentGame()];
+  // con guion, los encuentros se registran en el propio guion; la tabla manual se oculta
+  const manualBox = document.getElementById("nuzManualBox");
+  if(manualBox) manualBox.style.display = hasScript ? "none" : "";
+  if(hasScript){ wrap.innerHTML = ""; renderNuzScript(); return; }
   if(hlRows.length===0){
     wrap.innerHTML = `<div class="nuz-empty">Todavía no has registrado ningún encuentro.<br>Pulsa <b>+ Añadir encuentro</b> para empezar.</div>`;
     renderNuzScript();
@@ -2976,6 +3094,7 @@ document.getElementById("saveHlBtn").addEventListener("click", ()=>{
   }catch(err){ document.getElementById("hlSaveNote").textContent = "No se pudo guardar (¿navegación privada?)."; }
 });
 function loadHardlocke(){
+  loadNuzCaps();
   try{ const raw = localStorage.getItem("pokemmo-hardlocke"); if(raw) hlRows = JSON.parse(raw); }catch(err){}
   // compatibilidad con partidas antiguas: "Vivo" y "Caja" eran redundantes, "Muerto" pasa a "Cementerio"
   hlRows.forEach(r=>{
@@ -3020,6 +3139,7 @@ document.querySelectorAll(".tab").forEach(t=>{
     nuzRandomMode = cb.checked;
     if(label) label.classList.toggle("is-on", nuzRandomMode);
     try{ localStorage.setItem("pokemmo-nuzrandom", nuzRandomMode?"1":"0"); }catch(err){}
+    renderNuzScript(); // los topes de nivel solo son editables en modo randomlocke
     if(teamContext === "nuz"){ renderTeam(); renderAnalysis(); }
   });
 })();
