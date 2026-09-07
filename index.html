@@ -284,9 +284,10 @@
   .nuz-box-picker .nuz-picker-item{padding:7px 10px}
   .slot-head .nuz-choice{width:100%}
 
-  .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px;justify-content:flex-end}
+  .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px;justify-content:flex-end;background:var(--panel2)}
   .nuz-box-action{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:7px;font-size:14px;line-height:1;color:var(--dim);cursor:pointer;transition:.15s;padding:0}
   .nuz-evolve-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,203,5,.08)}
+  .nuz-devolve-btn:hover,.nuzTeamDevolve:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(90,160,255,.08)}
   .nuz-tograve-btn:hover{border-color:var(--danger);color:var(--danger);background:rgba(220,53,69,.08)}
 
   .nuz-encounters{display:flex;flex-direction:column;gap:8px}
@@ -1691,6 +1692,27 @@ function renderTeam(){
       else openChoiceList(e.currentTarget, options, (opt)=>applyEvo(opt.value));
     });
   });
+  grid.querySelectorAll(".nuzTeamDevolve").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const idx = +e.currentTarget.dataset.idx;
+      const mon = findMon(nuzTeam[idx].name);
+      if(!mon) return;
+      const options = EVOLUTIONS.filter(ev=>ev[1]===mon[0]).map(ev=>{
+        const from = findMonById(ev[0]);
+        return {label: from ? pokemonName(from) : String(ev[0]), value: ev[0]};
+      });
+      const applyDevo = (fromId)=>{
+        const from = findMonById(fromId);
+        if(!from) return;
+        nuzTeam[idx].name = from[1];
+        const rowIdx = nuzTeam[idx].nuzRowIdx;
+        if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].species = from[1];
+        renderTeam(); renderAnalysis(); updateCounts();
+      };
+      if(options.length===1) applyDevo(options[0].value);
+      else openChoiceList(e.currentTarget, options, (opt)=>applyDevo(opt.value));
+    });
+  });
   grid.querySelectorAll(".nuzTeamRemove").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       const idx = +e.currentTarget.dataset.idx;
@@ -1806,23 +1828,48 @@ function closeChoiceList(){
 function closeChoiceListOnOutsideClick(e){
   if(activeChoiceList && !activeChoiceList.contains(e.target)) closeChoiceList();
 }
-function openChoiceList(anchorEl, options, onPick, minWidth){
+function openChoiceList(anchorEl, options, onPick, minWidth, searchable){
   if(window.hideBmTooltip) window.hideBmTooltip();
   closeChoiceList();
   const list = document.createElement('div');
   list.className = 'ac-list';
-  list.innerHTML = options.map((opt,i)=>`<div class="ac-item" data-i="${i}">${opt.label}</div>`).join('');
+  // con muchas opciones (p. ej. todas las habilidades en modo randomlocke) se añade un buscador
+  const useSearch = searchable !== undefined ? searchable : options.length > 15;
+  const searchId = "choiceListSearch";
+  function paint(filter){
+    const f = normText(filter||"");
+    const shown = options.map((opt,i)=>({opt,i})).filter(({opt})=>!f || normText(opt.label).includes(f));
+    const itemsHtml = shown.length
+      ? shown.map(({opt,i})=>`<div class="ac-item" data-i="${i}">${opt.label}</div>`).join('')
+      : `<div class="ac-item" style="cursor:default;color:var(--dim)">${currentLang==="es"?"Sin coincidencias":"No matches"}</div>`;
+    if(useSearch){
+      list.innerHTML = `<div style="padding:6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:1">
+          <input type="text" id="${searchId}" placeholder="${currentLang==="es"?"Buscar...":"Search..."}" autocomplete="off"
+            style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-size:12px">
+        </div>${itemsHtml}`;
+      const s = list.querySelector("#"+searchId);
+      s.value = filter||"";
+      s.addEventListener('input', ()=>{ const v = s.value; paint(v); const ns = list.querySelector("#"+searchId); if(ns){ ns.focus(); ns.setSelectionRange(v.length, v.length); } });
+      s.addEventListener('click', (e)=>e.stopPropagation());
+      s.addEventListener('mousedown', (e)=>e.stopPropagation());
+    } else {
+      list.innerHTML = itemsHtml;
+    }
+  }
+  paint("");
   document.body.appendChild(list);
   list.style.display = 'block';
+  if(useSearch) list.style.maxHeight = '320px';
   positionAcList(anchorEl, list, minWidth||160);
   list.addEventListener('mousedown', (e)=>{
     const item = e.target.closest('.ac-item');
-    if(item){ onPick(options[+item.dataset.i]); closeChoiceList(); }
+    if(item && item.dataset.i !== undefined){ onPick(options[+item.dataset.i]); closeChoiceList(); }
   });
   activeChoiceList = list;
   setTimeout(()=>{
     document.addEventListener('click', closeChoiceListOnOutsideClick, true);
     document.addEventListener('touchstart', closeChoiceListOnOutsideClick, true);
+    if(useSearch){ const s = list.querySelector("#"+searchId); if(s) s.focus(); }
   }, 0);
 }
 function teamCardHtml(mon, slot, idx){
@@ -1927,6 +1974,7 @@ function teamCardHtml(mon, slot, idx){
     </div>
     <div class="team-ev-total-note" data-idx="${idx}">EVs: ${evTotal}/508</div>
     ${teamContext === "nuz" ? `<div class="nuz-box-actions" style="padding:0 10px 10px">
+      ${EVOLUTIONS.some(e=>e[1]===mon[0]) ? `<button class="nuz-box-action nuzTeamDevolve" data-idx="${idx}" title="${currentLang==="es"?"Involucionar (deshacer evolución)":"Devolve (undo evolution)"}">⬇</button>` : ""}
       ${EVOLUTIONS.some(e=>e[0]===mon[0]) ? `<button class="nuz-box-action nuzTeamEvolve" data-idx="${idx}" title="${currentLang==="es"?"Evolucionar":"Evolve"}">⬆</button>` : ""}
       <button class="nuz-box-action nuzTeamRemove" data-idx="${idx}" title="${currentLang==="es"?"Quitar del equipo (vuelve a la caja)":"Remove from team (back to box)"}">↩</button>
       <button class="nuz-box-action nuzTeamGrave" data-idx="${idx}" title="${currentLang==="es"?"Mandar al cementerio":"Send to graveyard"}">✝</button>
@@ -2806,6 +2854,9 @@ function renderNuzBox(){
     const evoBtn = evosTo.length
       ? `<button class="nuz-box-action nuz-evolve-btn" data-idx="${idx}" title="${currentLang==="es"?"Evolucionar":"Evolve"}" data-tip="${escAttr(currentLang==="es"?"<b>Evolucionar</b>":"<b>Evolve</b>")}">⬆</button>`
       : "";
+    const devoBtn = EVOLUTIONS.some(e=>e[1]===mon[0])
+      ? `<button class="nuz-box-action nuz-devolve-btn" data-idx="${idx}" title="${currentLang==="es"?"Involucionar (deshacer evolución)":"Devolve (undo evolution)"}">⬇</button>`
+      : "";
     return `<div class="bm-card breed-bm-card">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
@@ -2823,6 +2874,7 @@ function renderNuzBox(){
         <div class="bm-body-left" style="flex:1">${statBarsFromArray(stats)}</div>
       </div>
       <div class="nuz-box-actions">
+        ${devoBtn}
         ${evoBtn}
         <button class="nuz-box-action nuz-tograve-btn" data-idx="${idx}" title="${currentLang==="es"?"Mandar al cementerio":"Send to graveyard"}" data-tip="${escAttr(currentLang==="es"?"<b>Mandar al cementerio</b>":"<b>Send to graveyard</b>")}">✝</button>
       </div>
@@ -2845,6 +2897,26 @@ function renderNuzBox(){
           if(to){ hlRows[idx].species = to[1]; syncNuzTeamFromBox(); renderNuzBox(); renderHardlocke(); }
         });
       }
+    });
+  });
+  grid.querySelectorAll(".nuz-devolve-btn").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.currentTarget.dataset.idx;
+      const mon = findMon(hlRows[idx].species);
+      if(!mon) return;
+      const options = EVOLUTIONS.filter(ev=>ev[1]===mon[0]).map(ev=>{
+        const from = findMonById(ev[0]);
+        return {label: from ? pokemonName(from) : String(ev[0]), value: ev[0]};
+      });
+      const applyDevo = (fromId)=>{
+        const from = findMonById(fromId);
+        if(!from) return;
+        hlRows[idx].species = from[1];
+        syncNuzTeamFromBox();
+        renderNuzBox(); renderHardlocke();
+      };
+      if(options.length===1) applyDevo(options[0].value);
+      else openChoiceList(e.currentTarget, options, (opt)=>applyDevo(opt.value));
     });
   });
   grid.querySelectorAll(".nuz-tograve-btn").forEach(btn=>{
