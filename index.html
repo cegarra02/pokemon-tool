@@ -2973,9 +2973,19 @@ const NUZ_TRAINER_SLUG = {
   "Tatiano y Recluta":"tabitha", "Carola y Recluta":"courtney",
   "Rival":"brendan",
 };
-function nuzTrainerSprite(name){
+// En Showdown, varios entrenadores de Hoenn solo existen con sufijo de generación
+// (maxie-gen3, tateandliza-gen6...), así que se prueban las variantes en cadena.
+function nuzTrainerSpriteCandidates(name){
   const slug = NUZ_TRAINER_SLUG[name];
-  return slug ? `https://play.pokemonshowdown.com/sprites/trainers/${slug}.png` : null;
+  if(!slug) return [];
+  const base = "https://play.pokemonshowdown.com/sprites/trainers/";
+  return [`${base}${slug}.png`, `${base}${slug}-gen6.png`, `${base}${slug}-gen3.png`];
+}
+function handleTrainerImgError(img){
+  const list = JSON.parse(img.dataset.tcand || "[]");
+  let step = parseInt(img.dataset.tstep || "0", 10) + 1;
+  if(step < list.length){ img.dataset.tstep = step; img.src = list[step]; }
+  else { img.style.display = "none"; }
 }
 // topes de nivel personalizados (editables en modo randomlocke)
 let nuzCustomCaps = {};
@@ -3036,9 +3046,9 @@ function renderNuzScript(){
     // combate
     const battleKey = `${si}`;
     const cap = nuzCapFor(gameId, battleKey, s.cap);
-    const sprite = nuzTrainerSprite(s.n);
-    const spriteHtml = sprite
-      ? `<img src="${sprite}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+    const tcand = nuzTrainerSpriteCandidates(s.n);
+    const spriteHtml = tcand.length
+      ? `<img src="${tcand[0]}" referrerpolicy="no-referrer" data-tcand="${escAttr(JSON.stringify(tcand))}" data-tstep="0" onerror="handleTrainerImgError(this)">`
       : `<span class="nuz-battle-q">⚔</span>`;
     const capHtml = cap!==undefined && cap!==null
       ? (nuzRandomMode
