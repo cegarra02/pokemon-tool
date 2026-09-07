@@ -269,12 +269,20 @@
   .status-Caja{background:#4a4423}
   .hl-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 
-  .subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+  .subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0;align-items:center}
+  .nuz-mode-toggle{margin-left:auto;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer;user-select:none;transition:.15s}
+  .nuz-mode-toggle:hover{color:var(--ink)}
+  .nuz-mode-toggle input{margin:0;cursor:pointer}
+  .nuz-mode-toggle.is-on{color:var(--accent);border-color:var(--accent);background:rgba(255,203,5,.08)}
   .subtab{padding:8px 16px;border-radius:8px 8px 0 0;background:var(--panel2);border:1px solid var(--line);border-bottom:none;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--dim);transition:.15s;position:relative;top:1px}
   .subtab:hover{color:var(--ink)}
   .subtab.active{background:var(--panel);color:var(--accent);border-color:var(--line)}
   .subpanel{display:none}
   .subpanel.active{display:block}
+
+  .nuz-box-picker{max-height:340px;overflow-y:auto}
+  .nuz-box-picker .nuz-picker-item{padding:7px 10px}
+  .slot-head .nuz-choice{width:100%}
 
   .nuz-box-actions{display:flex;gap:6px;padding:0 12px 12px;justify-content:flex-end}
   .nuz-box-action{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:7px;font-size:14px;line-height:1;color:var(--dim);cursor:pointer;transition:.15s;padding:0}
@@ -546,6 +554,9 @@
     <div class="subtab" data-subtab="nuz-box">Caja</div>
     <div class="subtab" data-subtab="nuz-team">Equipo</div>
     <div class="subtab" data-subtab="nuz-grave">Cementerio</div>
+    <label class="nuz-mode-toggle" title="En randomlocke los Pokémon pueden tener cualquier habilidad y cualquier movimiento, no solo los suyos">
+      <input type="checkbox" id="nuzRandomModeToggle"> Modo randomlocke
+    </label>
   </div>
 
   <div class="subpanel active" id="subpanel-nuz-run">
@@ -578,9 +589,8 @@
   </div>
 
   <div class="subpanel" id="subpanel-nuz-team">
-    <div class="hint">Monta tu equipo con los Pokémon que tienes en la caja. Pulsa <b>Añadir desde la caja</b> en cualquier hueco libre, o escribe la especie a mano como en el creador normal.</div>
+    <div class="hint">Monta tu equipo con los Pokémon que tienes en la caja. Pulsa cualquier hueco libre para elegir uno, o pulsa el nombre de un Pokémon del equipo para cambiarlo por otro.</div>
     <div style="margin-bottom:10px">
-      <button class="btn" id="nuzAddFromBoxBtn">+ Añadir desde la caja</button>
       <button class="btn" id="nuzClearTeamBtn">Vaciar equipo</button>
       <span class="save-note" id="nuzTeamNote"></span>
     </div>
@@ -1399,6 +1409,65 @@ document.querySelectorAll(".tab").forEach(tab=>{
 // ---------- team ----------
 const EV_KEYS = ["hp","atk","def","spa","spd","spe"];
 const EV_LABELS = {hp:"PS",atk:"Atq",def:"Def",spa:"AEs",spd:"DEs",spe:"Vel"};
+// Desplegable de la caja: muestra los Pokémon disponibles con su sprite y un buscador.
+// Actúa como una previsualización de la caja al elegir un Pokémon para el equipo.
+function openNuzBoxPicker(anchorEl, slotIdx){
+  document.querySelectorAll(".ac-list.choice-list, .nuz-box-picker").forEach(el=>el.remove());
+  const inTeam = new Set(nuzTeam.filter((s,i)=>s.nuzRowIdx!==undefined && s.name && i!==slotIdx).map(s=>s.nuzRowIdx));
+  const available = hlRows.map((r,idx)=>({r,idx})).filter(({r,idx})=>r.species && r.status==="Caja" && !inTeam.has(idx));
+
+  const box = document.createElement("div");
+  box.className = "ac-list nuz-box-picker";
+  const searchId = "nuzPickerSearch";
+  function renderList(filter){
+    const f = normText(filter||"");
+    const shown = available.filter(({r})=>{
+      const mon = findMon(r.species);
+      return !f || normText(r.nickname||"").includes(f) || (mon && normText(pokemonName(mon)).includes(f));
+    });
+    const listHtml = shown.length ? shown.map(({r,idx})=>{
+      const mon = findMon(r.species);
+      const sprite = mon ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" style="width:34px;height:34px;image-rendering:pixelated" onerror="this.style.display='none'">` : "";
+      const sub = r.nickname && mon ? `<small style="color:var(--dim)">${pokemonName(mon)}</small>` : (r.route?`<small style="color:var(--dim)">${r.route}</small>`:"");
+      const title = r.nickname || (mon?pokemonName(mon):r.species);
+      return `<div class="ac-item nuz-picker-item" data-row="${idx}" style="gap:10px;align-items:center">
+        ${sprite}<span style="display:flex;flex-direction:column;line-height:1.3"><b>${title}</b>${sub}</span>
+      </div>`;
+    }).join("") : `<div class="ac-item" style="cursor:default;color:var(--dim)">${
+      available.length===0
+        ? (currentLang==="es"?"No hay Pokémon disponibles en la caja":"No Pokémon available in the box")
+        : (currentLang==="es"?"Sin coincidencias":"No matches")
+    }</div>`;
+    box.innerHTML = `<div style="padding:6px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)">
+        <input type="text" id="${searchId}" placeholder="${currentLang==="es"?"Buscar en la caja...":"Search box..."}" autocomplete="off"
+          style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-size:12px">
+      </div>${listHtml}`;
+    const search = box.querySelector("#"+searchId);
+    search.value = filter||"";
+    search.addEventListener("input", ()=>{ const v=search.value; renderList(v); box.querySelector("#"+searchId).focus(); });
+    box.querySelectorAll(".nuz-picker-item").forEach(item=>{
+      item.addEventListener("mousedown", (ev)=>{
+        ev.preventDefault();
+        const rowIdx = +item.dataset.row;
+        nuzTeam[slotIdx] = Object.assign(blankSlot(), {name: hlRows[rowIdx].species, nuzRowIdx: rowIdx});
+        box.remove();
+        renderTeam(); renderAnalysis();
+      });
+    });
+  }
+  renderList("");
+  document.body.appendChild(box);
+  positionAcList(anchorEl, box, 240);
+  box.style.display = "block";
+  setTimeout(()=>{ const s = box.querySelector("#"+searchId); if(s) s.focus(); }, 30);
+  const close = (ev)=>{
+    if(!box.contains(ev.target) && ev.target !== anchorEl){
+      box.remove(); document.removeEventListener("mousedown", close);
+    }
+  };
+  setTimeout(()=>document.addEventListener("mousedown", close), 50);
+}
+
 function blankSlot(){
   return {name:"", nature:"Hardy", ability:"", item:"", level:100, shiny:false, hqSprite:false,
     moves:["","","",""], evs:{hp:0,atk:0,def:0,spa:0,spd:0,spe:0},
@@ -1409,6 +1478,8 @@ let nuzTeam = new Array(6).fill(null).map(blankSlot);
 // El creador de equipos se reutiliza en dos sitios: la pestaña principal y la pestaña Equipo de Nuzlocke.
 // "teamContext" indica sobre cuál se está trabajando en cada momento.
 let teamContext = "main";
+// modo randomlocke: en el equipo de Nuzlocke se permite cualquier habilidad y cualquier movimiento
+let nuzRandomMode = false;
 function activeTeam(){ return teamContext === "nuz" ? nuzTeam : team; }
 function activeGridId(){ return teamContext === "nuz" ? "nuzTeamGrid" : "teamGrid"; }
 let teamEditing = {}; // claves tipo "3-name", "3-item", "3-move-2" mientras se está editando ese campo
@@ -1498,12 +1569,23 @@ function renderTeam(){
       div.innerHTML = teamCardHtml(mon, slot, idx);
     } else {
       div.className = "slot";
-      div.innerHTML = `<div class="slot-head"><input type="text" placeholder="Pokémon #${idx+1}" value="${slot.name||""}" data-idx="${idx}" class="teamNameInput" autocomplete="off"></div>
-        <div class="empty-slot">${currentLang==="es"?"Escribe un nombre arriba":"Type a name above"}</div>`;
+      if(teamContext === "nuz"){
+        div.innerHTML = `<div class="slot-head"><div class="nuz-choice nuzBoxPick" data-idx="${idx}">${currentLang==="es"?`Elegir de la caja...`:`Choose from box...`}</div></div>
+          <div class="empty-slot">${currentLang==="es"?"Hueco libre":"Empty slot"}</div>`;
+      } else {
+        div.innerHTML = `<div class="slot-head"><input type="text" placeholder="Pokémon #${idx+1}" value="${slot.name||""}" data-idx="${idx}" class="teamNameInput" autocomplete="off"></div>
+          <div class="empty-slot">${currentLang==="es"?"Escribe un nombre arriba":"Type a name above"}</div>`;
+      }
     }
     grid.appendChild(div);
   });
 
+  grid.querySelectorAll(".nuzBoxPick").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      openNuzBoxPicker(el, +el.dataset.idx);
+    });
+  });
   grid.querySelectorAll(".teamNameInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
     createAutocomplete(inp, (mon)=>{ activeTeam()[idx].name = mon[1]; setEditingField(idx,"name",false); renderTeam(); renderAnalysis(); });
@@ -1534,15 +1616,21 @@ function renderTeam(){
     const idx = +label.dataset.idx;
     label.addEventListener("click", ()=>{
       const mon = findMon(activeTeam()[idx].name);
-      const abilityList = mon ? (ABILITIES_BY_ID[String(mon[0])] || []) : [];
-      const options = abilityList.map(([n,hid])=>{
-        const aid = ABILITY_NAME_TO_ID[n];
-        const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
-        const label = ab ? abilityName(ab) : n;
-        return { value:n, label: label + (hid?(currentLang==="es"?" (oculta)":" (hidden)"):"") };
-      });
-      if(options.length===0){
-        options.push({value:"", label: currentLang==="es"?"Sin datos para este Pokémon":"No data for this Pokémon"});
+      let options;
+      if(nuzRandomMode && teamContext === "nuz"){
+        // randomlocke: cualquier habilidad del juego
+        options = ABILITIES_ALL.map(ab=>({ value: ab[1], label: abilityName(ab) }));
+      } else {
+        const abilityList = mon ? (ABILITIES_BY_ID[String(mon[0])] || []) : [];
+        options = abilityList.map(([n,hid])=>{
+          const aid = ABILITY_NAME_TO_ID[n];
+          const ab = aid!==undefined ? ABILITIES_ALL.find(a=>a[0]===aid) : null;
+          const label = ab ? abilityName(ab) : n;
+          return { value:n, label: label + (hid?(currentLang==="es"?" (oculta)":" (hidden)"):"") };
+        });
+        if(options.length===0){
+          options.push({value:"", label: currentLang==="es"?"Sin datos para este Pokémon":"No data for this Pokémon"});
+        }
       }
       openChoiceList(label, options, (opt)=>{ if(opt.value) activeTeam()[idx].ability = opt.value; renderTeam(); }, 190);
     });
@@ -1561,7 +1649,12 @@ function renderTeam(){
   grid.querySelectorAll(".teamMoveInput").forEach(inp=>{
     const idx = +inp.dataset.idx, mi = +inp.dataset.mi;
     createMoveAutocomplete(inp, (m)=>{ activeTeam()[idx].moves[mi] = m[1]; setEditingField(idx,"move-"+mi,false); renderTeam(); renderAnalysis(); },
-      ()=>{ const mon = findMon(activeTeam()[idx].name); return mon ? learnableMoves(mon[0], currentGeneration) : null; });
+      ()=>{
+        const mon = findMon(activeTeam()[idx].name);
+        if(!mon) return null;
+        if(nuzRandomMode && teamContext === "nuz") return MOVES; // randomlocke: cualquier movimiento del juego
+        return learnableMoves(mon[0], currentGeneration);
+      });
     inp.addEventListener("blur", ()=>{
       const raw = inp.value.trim();
       const found = raw ? MOVES.find(m=>m[1].toLowerCase()===raw.toLowerCase() || (m[7]&&m[7].toLowerCase()===raw.toLowerCase())) : null;
@@ -1574,6 +1667,45 @@ function renderTeam(){
     const idx = +el.dataset.idx, field = el.dataset.editfield;
     el.addEventListener("click", ()=>startEditField(idx, field));
     el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); startEditField(idx, field); } });
+  });
+
+  grid.querySelectorAll(".nuzTeamEvolve").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const idx = +e.currentTarget.dataset.idx;
+      const mon = findMon(nuzTeam[idx].name);
+      if(!mon) return;
+      const options = EVOLUTIONS.filter(ev=>ev[0]===mon[0]).map(ev=>{
+        const to = findMonById(ev[1]);
+        return {label: to ? pokemonName(to) : String(ev[1]), value: ev[1]};
+      });
+      const applyEvo = (toId)=>{
+        const to = findMonById(toId);
+        if(!to) return;
+        nuzTeam[idx].name = to[1];
+        // el Pokémon evoluciona también en su ficha de la caja
+        const rowIdx = nuzTeam[idx].nuzRowIdx;
+        if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].species = to[1];
+        renderTeam(); renderAnalysis(); updateCounts();
+      };
+      if(options.length===1) applyEvo(options[0].value);
+      else openChoiceList(e.currentTarget, options, (opt)=>applyEvo(opt.value));
+    });
+  });
+  grid.querySelectorAll(".nuzTeamRemove").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const idx = +e.currentTarget.dataset.idx;
+      nuzTeam[idx] = blankSlot(); // vuelve a estar disponible en la caja
+      renderTeam(); renderAnalysis();
+    });
+  });
+  grid.querySelectorAll(".nuzTeamGrave").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const idx = +e.currentTarget.dataset.idx;
+      const rowIdx = nuzTeam[idx].nuzRowIdx;
+      if(rowIdx!==undefined && hlRows[rowIdx]) hlRows[rowIdx].status = "Cementerio";
+      nuzTeam[idx] = blankSlot(); // sale del equipo al morir
+      renderTeam(); renderAnalysis(); renderHardlocke(); updateCounts();
+    });
   });
 
   activeTeam().forEach((slot,idx)=>updateEvTotal(idx));
@@ -1719,7 +1851,12 @@ function teamCardHtml(mon, slot, idx){
 
   // ---- nombre: texto limpio si ya está elegido y no se está editando ----
   let nameHtml;
-  if(slot.name && !isEditingField(idx,"name")){
+  if(teamContext === "nuz"){
+    // en el equipo Nuzlocke los Pokémon solo se eligen desde la caja, no se escriben
+    const boxRow = slot.nuzRowIdx!==undefined ? hlRows[slot.nuzRowIdx] : null;
+    const shown = (boxRow && boxRow.nickname) ? boxRow.nickname : pokemonName(mon);
+    nameHtml = `<span class="bm-name-input bm-name-static nuzBoxPick" data-idx="${idx}" tabindex="0" title="${currentLang==="es"?"Cambiar por otro de la caja":"Swap with another from the box"}">${shown}</span>`;
+  } else if(slot.name && !isEditingField(idx,"name")){
     nameHtml = `<span class="bm-name-input bm-name-static" data-idx="${idx}" data-editfield="name" tabindex="0">${pokemonName(mon)}</span>`;
   } else {
     nameHtml = `<input type="text" class="bm-name-input teamNameInput" data-idx="${idx}" data-editkey="${idx}-name" value="${slot.name||""}" placeholder="Pokémon #${idx+1}" autocomplete="off">`;
@@ -1789,6 +1926,11 @@ function teamCardHtml(mon, slot, idx){
       ${statsHtml}
     </div>
     <div class="team-ev-total-note" data-idx="${idx}">EVs: ${evTotal}/508</div>
+    ${teamContext === "nuz" ? `<div class="nuz-box-actions" style="padding:0 10px 10px">
+      ${EVOLUTIONS.some(e=>e[0]===mon[0]) ? `<button class="nuz-box-action nuzTeamEvolve" data-idx="${idx}" title="${currentLang==="es"?"Evolucionar":"Evolve"}">⬆</button>` : ""}
+      <button class="nuz-box-action nuzTeamRemove" data-idx="${idx}" title="${currentLang==="es"?"Quitar del equipo (vuelve a la caja)":"Remove from team (back to box)"}">↩</button>
+      <button class="nuz-box-action nuzTeamGrave" data-idx="${idx}" title="${currentLang==="es"?"Mandar al cementerio":"Send to graveyard"}">✝</button>
+    </div>` : ""}
   </div>`;
 }
 function updateEvTotal(idx){
@@ -2538,14 +2680,16 @@ function renderHardlocke(){
   });
   wrap.querySelectorAll(".hlSpeciesInput").forEach(inp=>{
     const idx = +inp.dataset.idx;
-    createAutocomplete(inp, (mon)=>{ hlRows[idx].species = pokemonName(mon); renderHardlocke(); updateCounts(); });
-    inp.addEventListener("change", ()=>{ hlRows[idx].species = inp.value.trim(); renderHardlocke(); updateCounts(); });
+    createAutocomplete(inp, (mon)=>{ hlRows[idx].species = pokemonName(mon); syncNuzTeamFromBox(); renderHardlocke(); updateCounts(); });
+    inp.addEventListener("change", ()=>{ hlRows[idx].species = inp.value.trim(); syncNuzTeamFromBox(); renderHardlocke(); updateCounts(); });
   });
   wrap.querySelectorAll(".nuz-status-choice").forEach(el=>{
     el.addEventListener("click", ()=>{
       const idx = +el.dataset.idx;
       openChoiceList(el, NUZ_STATUS_OPTIONS, (opt)=>{
         hlRows[idx].status = opt.value;
+        // si deja de estar en la caja, sale del equipo
+        if(opt.value !== "Caja") nuzTeam.forEach((s,i)=>{ if(s.nuzRowIdx===idx) nuzTeam[i] = blankSlot(); });
         renderHardlocke(); updateCounts();
       });
     });
@@ -2620,26 +2764,22 @@ document.querySelectorAll(".tab").forEach(t=>{
 });
 
 // añadir un Pokémon de la caja al equipo nuzlocke
-document.getElementById("nuzAddFromBoxBtn").addEventListener("click", (e)=>{
-  const boxMons = hlRows.filter(r=>r.species && r.status==="Caja");
-  if(boxMons.length===0){
-    const note = document.getElementById("nuzTeamNote");
-    note.textContent = "No tienes Pokémon en la caja todavía.";
-    setTimeout(()=>note.textContent="", 2500);
-    return;
-  }
-  const options = boxMons.map(r=>{
-    const mon = findMon(r.species);
-    return {label: r.nickname ? `${r.nickname} (${mon?pokemonName(mon):r.species})` : (mon?pokemonName(mon):r.species), value: r.species};
+// modo randomlocke
+(function initNuzRandomMode(){
+  const cb = document.getElementById("nuzRandomModeToggle");
+  if(!cb) return;
+  const label = cb.closest(".nuz-mode-toggle");
+  try{ nuzRandomMode = localStorage.getItem("pokemmo-nuzrandom") === "1"; }catch(err){}
+  cb.checked = nuzRandomMode;
+  if(label) label.classList.toggle("is-on", nuzRandomMode);
+  cb.addEventListener("change", ()=>{
+    nuzRandomMode = cb.checked;
+    if(label) label.classList.toggle("is-on", nuzRandomMode);
+    try{ localStorage.setItem("pokemmo-nuzrandom", nuzRandomMode?"1":"0"); }catch(err){}
+    if(teamContext === "nuz"){ renderTeam(); renderAnalysis(); }
   });
-  openChoiceList(e.currentTarget, options, (opt)=>{
-    const freeIdx = nuzTeam.findIndex(s=>!s.name);
-    const idx = freeIdx === -1 ? 0 : freeIdx;
-    nuzTeam[idx] = Object.assign(blankSlot(), {name: opt.value});
-    teamContext = "nuz";
-    renderTeam(); renderAnalysis();
-  });
-});
+})();
+
 document.getElementById("nuzClearTeamBtn").addEventListener("click", ()=>{
   nuzTeam = new Array(6).fill(null).map(blankSlot);
   teamContext = "nuz";
@@ -2698,11 +2838,11 @@ function renderNuzBox(){
       });
       if(options.length===1){
         const to = findMonById(options[0].value);
-        if(to){ hlRows[idx].species = to[1]; renderNuzBox(); renderHardlocke(); }
+        if(to){ hlRows[idx].species = to[1]; syncNuzTeamFromBox(); renderNuzBox(); renderHardlocke(); }
       } else {
         openChoiceList(e.currentTarget, options, (opt)=>{
           const to = findMonById(opt.value);
-          if(to){ hlRows[idx].species = to[1]; renderNuzBox(); renderHardlocke(); }
+          if(to){ hlRows[idx].species = to[1]; syncNuzTeamFromBox(); renderNuzBox(); renderHardlocke(); }
         });
       }
     });
@@ -2711,8 +2851,18 @@ function renderNuzBox(){
     btn.addEventListener("click", e=>{
       const idx = +e.currentTarget.dataset.idx;
       hlRows[idx].status = "Cementerio";
+      // si estaba en el equipo, sale de él
+      nuzTeam.forEach((s,i)=>{ if(s.nuzRowIdx===idx) nuzTeam[i] = blankSlot(); });
       renderHardlocke(); updateCounts(); renderNuzBox();
     });
+  });
+}
+// mantiene el equipo sincronizado con la especie actual de cada ficha de la caja
+function syncNuzTeamFromBox(){
+  nuzTeam.forEach(s=>{
+    if(s.nuzRowIdx!==undefined && hlRows[s.nuzRowIdx] && s.name){
+      s.name = hlRows[s.nuzRowIdx].species;
+    }
   });
 }
 function renderNuzGrave(){
@@ -2765,7 +2915,7 @@ const NUZ_GAMES = [
   const sel = document.getElementById("nuzGameSelect");
   if(!sel) return;
   sel.innerHTML = `<option value="">— Selecciona un juego —</option>` + NUZ_GAMES.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
-  sel.addEventListener("change", ()=>{
+  function refreshGameInfo(){
     const ph = document.getElementById("nuzGamePlaceholder");
     const routes = nuzRoutesForGame(sel.value);
     if(ph){
@@ -2773,6 +2923,16 @@ const NUZ_GAMES = [
         ? `Juego seleccionado: <b>${NUZ_GAMES.find(g=>g[0]===sel.value)[1]}</b>. ${routes.length ? `Las rutas de este juego ya están disponibles en el desplegable de cada encuentro.` : `Las rutas y combates de este juego aún no están guionizados — de momento escribe la zona a mano.`}`
         : `Los encuentros por ruta y los combates de cada juego se añadirán guionizados uno a uno. De momento puedes registrar tus capturas manualmente abajo.`;
     }
+  }
+  // restaurar el juego elegido en la sesión anterior
+  try{
+    const saved = localStorage.getItem("pokemmo-nuzgame");
+    if(saved && NUZ_GAMES.some(g=>g[0]===saved)) sel.value = saved;
+  }catch(err){}
+  refreshGameInfo();
+  sel.addEventListener("change", ()=>{
+    try{ localStorage.setItem("pokemmo-nuzgame", sel.value); }catch(err){}
+    refreshGameInfo();
     renderHardlocke();
   });
 })();
