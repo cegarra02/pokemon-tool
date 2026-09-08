@@ -337,6 +337,16 @@
     .nuzEncClear{grid-area:del}
   }
 
+  .nuz-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10001;overflow-y:auto;padding:24px 12px}
+  .nuz-modal.open{display:block}
+  .nuz-modal-inner{max-width:480px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+  .nuz-modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--accent)}
+  .nuz-modal-head button{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .nuz-modal-head button:hover{color:var(--danger);background:rgba(220,53,69,.1)}
+  #nuzEditGrid .bm-card{width:100%;cursor:default}
+  #nuzEditGrid .bm-card:hover{transform:none}
+  .nuz-box-grid .bm-card{cursor:pointer}
+
   .nuz-box-picker{max-height:340px;overflow-y:auto}
   .nuz-box-picker .nuz-picker-item{padding:7px 10px}
   .slot-head .nuz-choice{width:100%}
@@ -427,6 +437,15 @@
 </head>
 <body>
 <div id="bmTooltip"></div>
+<div id="nuzEditModal" class="nuz-modal">
+  <div class="nuz-modal-inner">
+    <div class="nuz-modal-head">
+      <span id="nuzEditTitle">Editar Pokémon</span>
+      <button id="nuzEditClose" title="Cerrar">✕</button>
+    </div>
+    <div class="team-grid" id="nuzEditGrid"></div>
+  </div>
+</div>
 <div id="floatBtns">
   <button id="btnLastEncounter" class="float-btn" title="Ir al último encuentro completado">📍</button>
   <button id="btnScrollTop" class="float-btn" title="Volver arriba">▲</button>
@@ -1557,12 +1576,17 @@ let nuzTeam = new Array(6).fill(null).map(blankSlot);
 let teamContext = "main";
 // modo randomlocke: en el equipo de Nuzlocke se permite cualquier habilidad y cualquier movimiento
 let nuzRandomMode = false;
-function activeTeam(){ return teamContext === "nuz" ? nuzTeam : team; }
-function activeGridId(){ return teamContext === "nuz" ? "nuzTeamGrid" : "teamGrid"; }
+// equipo de un solo hueco, usado al editar un Pokémon desde la caja
+let nuzEditTeam = [blankSlot()];
+let nuzEditZone = null;
+function activeTeam(){ return teamContext === "nuz" ? nuzTeam : teamContext === "nuzedit" ? nuzEditTeam : team; }
+function activeGridId(){ return teamContext === "nuz" ? "nuzTeamGrid" : teamContext === "nuzedit" ? "nuzEditGrid" : "teamGrid"; }
+// contextos donde el shiny y las medallas vienen del encuentro
+function isNuzContext(){ return teamContext === "nuz" || teamContext === "nuzedit"; }
 let teamEditing = {}; // claves tipo "3-name", "3-item", "3-move-2" mientras se está editando ese campo
 let globalHqSprite = false;
 document.getElementById("globalHqSpriteToggle").addEventListener("change", e=>{ globalHqSprite = e.target.checked; renderTeam(); });
-["teamGrid","nuzTeamGrid"].forEach(gid=>{
+["teamGrid","nuzTeamGrid","nuzEditGrid"].forEach(gid=>{
   const el = document.getElementById(gid);
   if(el) el.addEventListener("input", (e)=>{ if(e.target.classList.contains("teamEv") || e.target.classList.contains("teamIv")) handleEvInput(e); });
 });
@@ -1694,7 +1718,7 @@ function renderTeam(){
     label.addEventListener("click", ()=>{
       const mon = findMon(activeTeam()[idx].name);
       let options;
-      if(nuzRandomMode && teamContext === "nuz"){
+      if(nuzRandomMode && isNuzContext()){
         // randomlocke: cualquier habilidad del juego
         options = ABILITIES_ALL.map(ab=>({ value: ab[1], label: abilityName(ab) }));
       } else {
@@ -1729,7 +1753,7 @@ function renderTeam(){
       ()=>{
         const mon = findMon(activeTeam()[idx].name);
         if(!mon) return null;
-        if(nuzRandomMode && teamContext === "nuz") return MOVES; // randomlocke: cualquier movimiento del juego
+        if(nuzRandomMode && isNuzContext()) return MOVES; // randomlocke: cualquier movimiento del juego
         return learnableMoves(mon[0], currentGeneration);
       });
     inp.addEventListener("blur", ()=>{
@@ -1956,9 +1980,9 @@ function teamCardHtml(mon, slot, idx){
   const headerColor = TYPE_COLORS[types[0]] || "#555";
   const abilityList = ABILITIES_BY_ID[String(mon[0])] || [];
   // en el equipo Nuzlocke, el shiny lo determina el estado del encuentro, no un interruptor manual
-  const nuzRowForSlot = (teamContext === "nuz" && slot.nuzRowIdx!==undefined) ? hlRows[slot.nuzRowIdx] : null;
+  const nuzRowForSlot = (isNuzContext() && slot.nuzRowIdx!==undefined) ? hlRows[slot.nuzRowIdx] : null;
   const isNuzShinySlot = !!(nuzRowForSlot && nuzIsShiny(nuzRowForSlot.status));
-  const showShiny = teamContext === "nuz" ? isNuzShinySlot : slot.shiny;
+  const showShiny = isNuzContext() ? isNuzShinySlot : slot.shiny;
   const normalSprite = showShiny ? shinySpriteUrl(mon[0]) : spriteUrl(mon[0]);
   const hdSprite = showShiny ? homeSpriteUrlShiny(mon[0]) : homeSpriteUrl(mon[0]);
   const fallbackAnimated = showShiny ? animatedShinySpriteUrl(mon[1]) : animatedSpriteUrl(mon[1]);
@@ -1980,7 +2004,7 @@ function teamCardHtml(mon, slot, idx){
 
   // ---- nombre: texto limpio si ya está elegido y no se está editando ----
   let nameHtml;
-  if(teamContext === "nuz"){
+  if(isNuzContext()){
     // en el equipo Nuzlocke los Pokémon solo se eligen desde la caja, no se escriben
     const boxRow = slot.nuzRowIdx!==undefined ? hlRows[slot.nuzRowIdx] : null;
     const shown = (boxRow && boxRow.nickname) ? boxRow.nickname : pokemonName(mon);
@@ -2025,8 +2049,8 @@ function teamCardHtml(mon, slot, idx){
   return `<div class="bm-card team-bm-card">
     <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
       <div class="bm-types">${typeBadges}</div>
-      ${teamContext === "nuz" && nuzRowForSlot ? nuzBadgesHtml(nuzRowForSlot.route) : ""}
-      ${teamContext === "nuz"
+      ${isNuzContext() && nuzRowForSlot ? nuzBadgesHtml(nuzRowForSlot.route) : ""}
+      ${isNuzContext()
         ? (isNuzShinySlot ? `<span class="team-shiny-toggle is-shiny" title="${currentLang==="es"?"Shiny (marcado en el encuentro)":"Shiny (set on the encounter)"}" style="cursor:default">✨</span>` : "")
         : `<label class="team-shiny-toggle ${slot.shiny?'is-shiny':''}" title="Shiny">
         <input type="checkbox" class="teamShinyCheck" data-idx="${idx}" ${slot.shiny?"checked":""}>✨
@@ -3340,6 +3364,53 @@ document.getElementById("nuzClearTeamBtn").addEventListener("click", ()=>{
   renderTeam(); renderAnalysis();
 });
 
+// Abre la ficha editable de un Pokémon de la caja, reutilizando el creador de equipos.
+// Los cambios se guardan en su configuración y se reflejan si además está en el equipo.
+function openNuzEdit(rowIdx){
+  const row = hlRows[rowIdx];
+  if(!row || !row.species) return;
+  nuzEditZone = row.route;
+  nuzEditTeam = [applyNuzBuild(Object.assign(blankSlot(), {name: row.species, nuzRowIdx: rowIdx}), row.route)];
+  const prevContext = teamContext;
+  teamContext = "nuzedit";
+  document.getElementById("nuzEditTitle").textContent = row.nickname
+    ? `${row.nickname} · ${row.species}`
+    : row.species;
+  document.getElementById("nuzEditModal").classList.add("open");
+  renderTeam();
+  document.getElementById("nuzEditModal").dataset.prev = prevContext;
+}
+function closeNuzEdit(){
+  const modal = document.getElementById("nuzEditModal");
+  if(!modal.classList.contains("open")) return;
+  // guardar la configuración editada
+  const slot = nuzEditTeam[0];
+  if(nuzEditZone && slot && slot.name){
+    nuzMonBuilds[nuzEditZone] = {
+      nature: slot.nature, ability: slot.ability, item: slot.item, level: slot.level,
+      moves: (slot.moves||[]).slice(), evs: Object.assign({}, slot.evs), ivs: Object.assign({}, slot.ivs),
+    };
+    saveNuzBuilds();
+    // si además está en el equipo, aplicar los cambios allí
+    nuzTeam.forEach((s,i)=>{
+      if(s.name && s.nuzRowIdx!==undefined && hlRows[s.nuzRowIdx] && hlRows[s.nuzRowIdx].route === nuzEditZone){
+        nuzTeam[i] = applyNuzBuild(s, nuzEditZone);
+      }
+    });
+    saveNuzTeam();
+  }
+  modal.classList.remove("open");
+  teamContext = modal.dataset.prev === "nuz" ? "nuz" : "main";
+  nuzEditZone = null;
+  renderNuzBox();
+  if(teamContext === "nuz"){ renderTeam(); renderAnalysis(); }
+}
+document.getElementById("nuzEditClose").addEventListener("click", closeNuzEdit);
+document.getElementById("nuzEditModal").addEventListener("click", (e)=>{
+  if(e.target.id === "nuzEditModal") closeNuzEdit(); // clic fuera de la ficha
+});
+document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeNuzEdit(); });
+
 function renderNuzBox(){
   const grid = document.getElementById("nuzBoxGrid");
   if(!grid) return;
@@ -3363,7 +3434,7 @@ function renderNuzBox(){
     const devoBtn = EVOLUTIONS.some(e=>e[1]===mon[0])
       ? `<button class="nuz-box-action nuz-devolve-btn" data-idx="${idx}" title="${currentLang==="es"?"Involucionar (deshacer evolución)":"Devolve (undo evolution)"}">⬇</button>`
       : "";
-    return `<div class="bm-card breed-bm-card">
+    return `<div class="bm-card breed-bm-card nuzBoxCard" data-idx="${idx}" title="${currentLang==="es"?"Clic para editar naturaleza, objeto, movimientos y EVs":"Click to edit nature, item, moves and EVs"}">
       <div class="bm-card-header" style="background:${cardHeaderGradient(types)}">
         <div class="bm-types">${typeBadges}</div>
         ${nuzBadgesHtml(r.route)}
@@ -3404,6 +3475,12 @@ function renderNuzBox(){
           if(to){ hlRows[idx].species = to[1]; syncNuzTeamFromBox(); renderNuzBox(); renderHardlocke(); }
         });
       }
+    });
+  });
+  grid.querySelectorAll(".nuzBoxCard").forEach(card=>{
+    card.addEventListener("click", (e)=>{
+      if(e.target.closest(".nuz-box-action")) return; // los botones tienen su propia acción
+      openNuzEdit(+card.dataset.idx);
     });
   });
   grid.querySelectorAll(".nuz-devolve-btn").forEach(btn=>{
@@ -3459,7 +3536,7 @@ function renderNuzGrave(){
     const typesHtml = mon ? mon[2].map(t=>`<span class="grave-type" style="background:${TYPE_COLORS[t]}">${typeLabel(t)}</span>`).join("") : "";
     // si tiene apodo, la especie va debajo del nombre; si no, ya se muestra como nombre
     const speciesLine = (r.nickname && mon) ? `<div class="grave-species">${pokemonName(mon)}</div>` : "";
-    const metaHtml = r.route ? `<div class="grave-meta">${currentLang==="es"?"Cayó en":"Fell at"}<br><b>${r.route}</b></div>` : "";
+    const metaHtml = r.route ? `<div class="grave-meta">${nuzCaptureLabel(r.route)}</div>` : "";
     return `<div class="grave">
       <span class="grave-remove" data-grave-idx="${idx}" title="Sacar del cementerio">✕</span>
       <div class="grave-cross">✝</div>
