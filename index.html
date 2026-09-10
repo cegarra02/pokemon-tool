@@ -342,21 +342,22 @@
   }
 
   .team-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .team-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px;margin-bottom:18px}
-  .team-slot-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;cursor:pointer;transition:.15s}
+  .team-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:6px}
+  .team-slot-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s}
   .team-slot-card:hover{border-color:var(--accent2);transform:translateY(-1px)}
   .team-slot-card.is-current{border-color:var(--accent);background:rgba(255,203,5,.07);box-shadow:0 0 0 1px var(--accent) inset}
-  .team-slot-title{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:7px}
-  .team-slot-name{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px;padding:1px 3px;transition:.15s}
+  .team-slot-title{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:8px}
+  .team-slot-name{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px;padding:1px 3px;transition:.15s}
   .team-slot-name:hover{background:rgba(255,255,255,.08);color:var(--accent)}
   .team-slot-name.is-placeholder{color:var(--dim);font-weight:600}
   .team-slot-card.is-current .team-slot-name{color:var(--accent)}
   .team-slot-count{font-size:9.5px;color:var(--dim);flex:none;background:var(--panel);border-radius:20px;padding:1px 7px}
-  .team-slot-name-input{width:100%;background:var(--panel);border:1px solid var(--accent);border-radius:5px;color:var(--ink);font-size:12px;font-weight:700;padding:2px 5px}
+  .team-slot-name-input{width:100%;background:var(--panel);border:1px solid var(--accent);border-radius:5px;color:var(--ink);font-size:12.5px;font-weight:700;padding:2px 5px}
   .team-slot-name-input:focus{outline:none}
-  .team-slot-sprites{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;align-items:center;justify-items:center}
-  .team-slot-sprites img{width:26px;height:26px;image-rendering:pixelated}
-  .team-slot-dot{width:7px;height:7px;border-radius:50%;background:var(--line);display:block}
+  .team-slot-sprites{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4px;align-items:center;justify-items:center}
+  .team-slot-sprite-cell{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:7px}
+  .team-slot-sprites img{width:100%;max-width:56px;height:auto;image-rendering:pixelated}
+  .team-slot-dot{width:8px;height:8px;border-radius:50%;background:var(--line);display:block}
   #exportText{width:100%;min-height:300px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;padding:10px;resize:vertical}
   #exportText:focus{outline:none;border-color:var(--accent)}
 
@@ -525,14 +526,14 @@
 <div class="panel active" id="panel-equipo">
   <div class="hint">Estilo Pokémon Showdown: elige especie, habilidad real, naturaleza, objeto, 4 movimientos y EVs. La cobertura y las debilidades se recalculan solas con los movimientos que pongas.</div>
   <label class="team-hd-global-toggle"><input type="checkbox" id="globalHqSpriteToggle"> Sprites en alta resolución</label>
-  <div class="section-title" style="margin-top:0">Mis equipos</div>
-  <div class="team-slots" id="teamSlots"></div>
   <div class="team-grid" id="teamGrid"></div>
   <div class="team-actions">
     <button class="btn" id="saveTeamBtn">Guardar equipo</button>
     <button class="btn" id="exportTeamBtn">📋 Exportar a Showdown</button>
     <span class="save-note" id="teamSaveNote"></span>
   </div>
+  <div class="section-title">Mis equipos</div>
+  <div class="team-slots" id="teamSlots"></div>
 </div>
 
 <div id="exportModal" class="nuz-modal">
@@ -2342,9 +2343,10 @@ function renderTeamSlots(){
     const spritesHtml = Array.from({length:6}, (_,j)=>{
       const s = mons[j];
       const mon = s && s.name ? findMon(s.name) : null;
-      return mon
+      const inner = mon
         ? `<img src="${spriteUrl(mon[0])}" referrerpolicy="no-referrer" loading="lazy" title="${escAttr(pokemonName(mon))}" onerror="this.style.display='none'">`
         : `<span class="team-slot-dot"></span>`;
+      return `<div class="team-slot-sprite-cell">${inner}</div>`;
     }).join("");
     const title = (entry && entry.name) ? entry.name : `${currentLang==="es"?"Equipo":"Team"} ${n}`;
     const sub = filled.length
