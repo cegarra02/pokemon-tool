@@ -529,6 +529,7 @@
   <div class="team-grid" id="teamGrid"></div>
   <div class="team-actions">
     <button class="btn" id="saveTeamBtn">Guardar equipo</button>
+    <button class="btn" id="clearTeamBtn">Vaciar equipo</button>
     <button class="btn" id="exportTeamBtn">📋 Exportar a Showdown</button>
     <span class="save-note" id="teamSaveNote"></span>
   </div>
@@ -1863,6 +1864,13 @@ function renderTeam(){
       else openChoiceList(e.currentTarget, options, (opt)=>applyDevo(opt.value));
     });
   });
+  grid.querySelectorAll(".teamSlotRemove").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      const idx = +e.currentTarget.dataset.idx;
+      team[idx] = blankSlot();
+      renderTeam(); renderAnalysis();
+    });
+  });
   grid.querySelectorAll(".nuzTeamRemove").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
       const idx = +e.currentTarget.dataset.idx;
@@ -2137,6 +2145,8 @@ function teamCardHtml(mon, slot, idx){
       ${EVOLUTIONS.some(e=>e[0]===mon[0]) ? `<button class="nuz-box-action nuzTeamEvolve" data-idx="${idx}" title="${currentLang==="es"?"Evolucionar":"Evolve"}">⬆</button>` : ""}
       <button class="nuz-box-action nuzTeamRemove" data-idx="${idx}" title="${currentLang==="es"?"Quitar del equipo (vuelve a la caja)":"Remove from team (back to box)"}">↩</button>
       <button class="nuz-box-action nuzTeamGrave" data-idx="${idx}" title="${currentLang==="es"?"Mandar al cementerio":"Send to graveyard"}">✝</button>
+    </div>` : teamContext === "main" ? `<div class="nuz-box-actions" style="padding:0 10px 10px">
+      <button class="nuz-box-action teamSlotRemove" data-idx="${idx}" title="${currentLang==="es"?"Quitar del equipo":"Remove from team"}">✕</button>
     </div>` : ""}
   </div>`;
 }
@@ -2292,6 +2302,14 @@ document.getElementById("exportCopyBtn").addEventListener("click", async ()=>{
     note.textContent = "Selecciona y copia con Ctrl+C";
   }
   setTimeout(()=>note.textContent="", 2500);
+});
+document.getElementById("clearTeamBtn").addEventListener("click", ()=>{
+  team = new Array(6).fill(null).map(blankSlot);
+  teamContext = "main";
+  renderTeam(); renderAnalysis();
+  const note = document.getElementById("teamSaveNote");
+  note.textContent = currentLang==="es" ? "Equipo vaciado" : "Team cleared";
+  setTimeout(()=>note.textContent="", 2000);
 });
 document.getElementById("exportTeamBtn").addEventListener("click", ()=>openExportModal(team));
 document.getElementById("nuzExportTeamBtn").addEventListener("click", ()=>openExportModal(nuzTeam));
