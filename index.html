@@ -341,6 +341,16 @@
     .nuz-enc-menu{grid-area:del}
   }
 
+  .team-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .team-slots{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .team-slots-label{font-size:11px;color:var(--dim);margin-right:2px}
+  .team-slot-btn{width:30px;height:30px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);color:var(--dim);font-size:12px;font-weight:700;cursor:pointer;transition:.15s;padding:0}
+  .team-slot-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .team-slot-btn.is-used{color:var(--ink);border-color:var(--accent2)}
+  .team-slot-btn.is-current{background:var(--accent);color:#111;border-color:var(--accent)}
+  #exportText{width:100%;min-height:300px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;padding:10px;resize:vertical}
+  #exportText:focus{outline:none;border-color:var(--accent)}
+
   .nuz-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10001;overflow-y:auto;padding:24px 12px}
   .nuz-modal.open{display:block}
   .nuz-modal-inner{width:-moz-fit-content;width:fit-content;max-width:100%;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
@@ -507,8 +517,26 @@
   <div class="hint">Estilo Pokémon Showdown: elige especie, habilidad real, naturaleza, objeto, 4 movimientos y EVs. La cobertura y las debilidades se recalculan solas con los movimientos que pongas.</div>
   <label class="team-hd-global-toggle"><input type="checkbox" id="globalHqSpriteToggle"> Sprites en alta resolución</label>
   <div class="team-grid" id="teamGrid"></div>
-  <button class="btn" id="saveTeamBtn">Guardar equipo</button>
-  <span class="save-note" id="teamSaveNote"></span>
+  <div class="team-actions">
+    <div class="team-slots" id="teamSlots"></div>
+    <button class="btn" id="saveTeamBtn">Guardar equipo</button>
+    <button class="btn" id="exportTeamBtn">📋 Exportar a Showdown</button>
+    <span class="save-note" id="teamSaveNote"></span>
+  </div>
+</div>
+
+<div id="exportModal" class="nuz-modal">
+  <div class="nuz-modal-inner" style="width:min(560px,100%)">
+    <div class="nuz-modal-head">
+      <span>Exportar equipo (formato Showdown)</span>
+      <button id="exportClose" title="Cerrar">✕</button>
+    </div>
+    <textarea id="exportText" readonly spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <button class="btn" id="exportCopyBtn">Copiar al portapapeles</button>
+      <span class="save-note" id="exportNote"></span>
+    </div>
+  </div>
 </div>
 
 <div class="panel" id="panel-calc">
@@ -696,6 +724,7 @@
     <div class="hint">Monta tu equipo con los Pokémon que tienes en la caja. Pulsa cualquier hueco libre para elegir uno, o pulsa el nombre de un Pokémon del equipo para cambiarlo por otro.</div>
     <div style="margin-bottom:10px">
       <button class="btn" id="nuzClearTeamBtn">Vaciar equipo</button>
+      <button class="btn" id="nuzExportTeamBtn">📋 Exportar a Showdown</button>
       <span class="save-note" id="nuzTeamNote"></span>
     </div>
     <div class="team-grid" id="nuzTeamGrid"></div>
@@ -2148,7 +2177,9 @@ function renderAnalysis(){
 document.getElementById("saveTeamBtn").addEventListener("click", ()=>{
   try{
     localStorage.setItem("pokemmo-team", JSON.stringify(team));
-    document.getElementById("teamSaveNote").textContent = "Guardado ✓";
+    teamSlotData[currentTeamSlot] = team.map(s=>Object.assign({}, s));
+    saveTeamSlots(); renderTeamSlots();
+    document.getElementById("teamSaveNote").textContent = `Guardado en equipo ${currentTeamSlot} ✓`;
     setTimeout(()=>document.getElementById("teamSaveNote").textContent="",2000);
   }catch(err){ document.getElementById("teamSaveNote").textContent = "No se pudo guardar (¿navegación privada?)."; }
 });
@@ -2157,10 +2188,16 @@ function saveNuzTeam(){
 }
 function loadTeam(){
   try{
-    const raw = localStorage.getItem("pokemmo-team");
-    if(raw){
-      const loaded = JSON.parse(raw);
-      team = loaded.map(s=>Object.assign(blankSlot(), s));
+    loadTeamSlots();
+    // el equipo activo sale de su slot; si no hay slots aún, se usa el equipo suelto antiguo
+    if(teamSlotData[currentTeamSlot]){
+      team = teamSlotData[currentTeamSlot].map(s=>Object.assign(blankSlot(), s));
+    } else {
+      const raw = localStorage.getItem("pokemmo-team");
+      if(raw){
+        const loaded = JSON.parse(raw);
+        team = loaded.map(s=>Object.assign(blankSlot(), s));
+      }
     }
     const rawNuz = localStorage.getItem("pokemmo-nuzteam");
     if(rawNuz){
@@ -2168,7 +2205,129 @@ function loadTeam(){
       nuzTeam = loadedNuz.map(s=>Object.assign(blankSlot(), s));
     }
   }catch(err){}
-  renderTeam(); renderAnalysis();
+  renderTeam(); renderAnalysis(); renderTeamSlots();
+}
+
+// ---------- exportar a formato Showdown ----------
+const SHOWDOWN_EV_LABEL = {hp:"HP",atk:"Atk",def:"Def",spa:"SpA",spd:"SpD",spe:"Spe"};
+function teamToShowdown(arr){
+  const blocks = [];
+  arr.forEach(slot=>{
+    const mon = findMon(slot.name);
+    if(!mon) return;
+    const speciesEn = mon[1];
+    const lines = [];
+    // Showdown usa el nombre en inglés; el apodo va delante entre paréntesis
+    let head = speciesEn;
+    if(slot.item){
+      const it = ITEMS_ALL.find(i=>i[1]===slot.item || i[3]===slot.item);
+      head += ` @ ${it ? it[1] : slot.item}`;
+    }
+    lines.push(head);
+    if(slot.ability) lines.push(`Ability: ${slot.ability}`);
+    if(slot.level && slot.level !== 100) lines.push(`Level: ${slot.level}`);
+    if(slot.shiny) lines.push("Shiny: Yes");
+
+    const evs = slot.evs || {};
+    const evParts = Object.keys(SHOWDOWN_EV_LABEL)
+      .filter(k=>(evs[k]||0) > 0)
+      .map(k=>`${evs[k]} ${SHOWDOWN_EV_LABEL[k]}`);
+    if(evParts.length) lines.push(`EVs: ${evParts.join(" / ")}`);
+
+    lines.push(`${slot.nature || "Hardy"} Nature`);
+
+    const ivs = slot.ivs || {};
+    const ivParts = Object.keys(SHOWDOWN_EV_LABEL)
+      .filter(k=>ivs[k] !== undefined && ivs[k] !== 31)
+      .map(k=>`${ivs[k]} ${SHOWDOWN_EV_LABEL[k]}`);
+    if(ivParts.length) lines.push(`IVs: ${ivParts.join(" / ")}`);
+
+    (slot.moves || []).forEach(mv=>{
+      if(!mv) return;
+      const found = MOVES.find(m=>m[1]===mv || m[7]===mv);
+      lines.push(`- ${found ? found[1] : mv}`);
+    });
+    blocks.push(lines.join("\n"));
+  });
+  return blocks.join("\n\n");
+}
+function openExportModal(arr, label){
+  const text = teamToShowdown(arr);
+  const ta = document.getElementById("exportText");
+  ta.value = text || (currentLang==="es"?"El equipo está vacío.":"The team is empty.");
+  document.getElementById("exportNote").textContent = "";
+  document.getElementById("exportModal").classList.add("open");
+  setTimeout(()=>{ ta.focus(); ta.select(); }, 40);
+}
+function closeExportModal(){ document.getElementById("exportModal").classList.remove("open"); }
+document.getElementById("exportClose").addEventListener("click", closeExportModal);
+document.getElementById("exportModal").addEventListener("click", (e)=>{
+  if(e.target.id === "exportModal") closeExportModal();
+});
+document.getElementById("exportCopyBtn").addEventListener("click", async ()=>{
+  const ta = document.getElementById("exportText");
+  const note = document.getElementById("exportNote");
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    note.textContent = "Copiado ✓";
+  }catch(err){
+    ta.select(); // reserva: seleccionar para copiar a mano
+    note.textContent = "Selecciona y copia con Ctrl+C";
+  }
+  setTimeout(()=>note.textContent="", 2500);
+});
+document.getElementById("exportTeamBtn").addEventListener("click", ()=>openExportModal(team));
+document.getElementById("nuzExportTeamBtn").addEventListener("click", ()=>openExportModal(nuzTeam));
+
+// ---------- slots de equipos guardados ----------
+const TEAM_SLOT_COUNT = 6;
+let teamSlotData = {};   // { "1": [...6 slots...] }
+let currentTeamSlot = "1";
+function loadTeamSlots(){
+  try{
+    const raw = localStorage.getItem("pokemmo-teamslots");
+    if(raw) teamSlotData = JSON.parse(raw);
+    const cur = localStorage.getItem("pokemmo-teamslot-current");
+    if(cur) currentTeamSlot = cur;
+  }catch(err){}
+}
+function saveTeamSlots(){
+  try{
+    localStorage.setItem("pokemmo-teamslots", JSON.stringify(teamSlotData));
+    localStorage.setItem("pokemmo-teamslot-current", currentTeamSlot);
+  }catch(err){}
+}
+function teamSlotLabel(n){
+  const data = teamSlotData[n];
+  if(!data) return "";
+  const names = data.filter(s=>s.name).map(s=>{ const m = findMon(s.name); return m ? pokemonName(m) : s.name; });
+  return names.length ? names.join(", ") : "";
+}
+function renderTeamSlots(){
+  const box = document.getElementById("teamSlots");
+  if(!box) return;
+  box.innerHTML = `<span class="team-slots-label">${currentLang==="es"?"Equipos:":"Teams:"}</span>` +
+    Array.from({length:TEAM_SLOT_COUNT}, (_,i)=>{
+      const n = String(i+1);
+      const used = !!(teamSlotData[n] && teamSlotData[n].some(s=>s.name));
+      const tip = teamSlotLabel(n) || (currentLang==="es"?"Vacío":"Empty");
+      return `<button class="team-slot-btn ${currentTeamSlot===n?"is-current":""} ${used?"is-used":""}" data-slot="${n}" title="${escAttr(tip)}">${n}</button>`;
+    }).join("");
+  box.querySelectorAll(".team-slot-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const n = btn.dataset.slot;
+      if(n === currentTeamSlot) return;
+      teamSlotData[currentTeamSlot] = team.map(s=>Object.assign({}, s)); // guarda el actual antes de cambiar
+      currentTeamSlot = n;
+      team = (teamSlotData[n] || new Array(6).fill(null).map(blankSlot)).map(s=>Object.assign(blankSlot(), s));
+      saveTeamSlots();
+      teamContext = "main";
+      renderTeam(); renderAnalysis(); renderTeamSlots();
+      const note = document.getElementById("teamSaveNote");
+      note.textContent = `Equipo ${n}`;
+      setTimeout(()=>note.textContent="", 1800);
+    });
+  });
 }
 
 // ---------- natures ----------
@@ -3490,6 +3649,8 @@ document.getElementById("nuzEditModal").addEventListener("click", (e)=>{
 document.addEventListener("keydown", (e)=>{
   if(e.key !== "Escape") return;
   if(activeChoiceList){ closeChoiceList(); return; } // primero cierra el desplegable
+  const exportModal = document.getElementById("exportModal");
+  if(exportModal && exportModal.classList.contains("open")){ closeExportModal(); return; }
   closeNuzEdit();
 });
 
