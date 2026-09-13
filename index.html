@@ -526,6 +526,9 @@
 <div class="panel active" id="panel-equipo">
   <div class="hint">Estilo Pokémon Showdown: elige especie, habilidad real, naturaleza, objeto, 4 movimientos y EVs. La cobertura y las debilidades se recalculan solas con los movimientos que pongas.</div>
   <label class="team-hd-global-toggle"><input type="checkbox" id="globalHqSpriteToggle"> Sprites en alta resolución</label>
+  <label class="nuz-mode-toggle" id="teamRandomLabel" style="margin-left:8px" title="Permite poner cualquier habilidad y cualquier movimiento, sin las restricciones de cada Pokémon">
+    <input type="checkbox" id="teamRandomModeToggle"> Modo libre (cualquier habilidad y ataque)
+  </label>
   <div class="team-grid" id="teamGrid"></div>
   <div class="team-actions">
     <button class="btn" id="saveTeamBtn">Guardar equipo</button>
@@ -1634,6 +1637,10 @@ function activeTeam(){ return teamContext === "nuz" ? nuzTeam : teamContext === 
 function activeGridId(){ return teamContext === "nuz" ? "nuzTeamGrid" : teamContext === "nuzedit" ? "nuzEditGrid" : "teamGrid"; }
 // contextos donde el shiny y las medallas vienen del encuentro
 function isNuzContext(){ return teamContext === "nuz" || teamContext === "nuzedit"; }
+// modo libre: sin restricciones de habilidad/movimientos. En Nuzlocke lo activa el modo randomlocke;
+// en el creador normal, su propio interruptor.
+let teamRandomMode = false;
+function freeModeActive(){ return isNuzContext() ? nuzRandomMode : teamRandomMode; }
 let teamEditing = {}; // claves tipo "3-name", "3-item", "3-move-2" mientras se está editando ese campo
 let globalHqSprite = false;
 document.getElementById("globalHqSpriteToggle").addEventListener("change", e=>{ globalHqSprite = e.target.checked; renderTeam(); });
@@ -1769,7 +1776,7 @@ function renderTeam(){
     label.addEventListener("click", ()=>{
       const mon = findMon(activeTeam()[idx].name);
       let options;
-      if(nuzRandomMode && isNuzContext()){
+      if(freeModeActive()){
         // randomlocke: cualquier habilidad del juego
         options = ABILITIES_ALL.map(ab=>({ value: ab[1], label: abilityName(ab) }));
       } else {
@@ -1804,7 +1811,7 @@ function renderTeam(){
       ()=>{
         const mon = findMon(activeTeam()[idx].name);
         if(!mon) return null;
-        if(nuzRandomMode && isNuzContext()) return MOVES; // randomlocke: cualquier movimiento del juego
+        if(freeModeActive()) return MOVES; // modo libre: cualquier movimiento del juego
         return learnableMoves(mon[0], currentGeneration);
       });
     inp.addEventListener("blur", ()=>{
@@ -2303,6 +2310,22 @@ document.getElementById("exportCopyBtn").addEventListener("click", async ()=>{
   }
   setTimeout(()=>note.textContent="", 2500);
 });
+// modo libre del creador de equipos normal
+(function initTeamRandomMode(){
+  const cb = document.getElementById("teamRandomModeToggle");
+  if(!cb) return;
+  const label = document.getElementById("teamRandomLabel");
+  try{ teamRandomMode = localStorage.getItem("pokemmo-teamrandom") === "1"; }catch(err){}
+  cb.checked = teamRandomMode;
+  if(label) label.classList.toggle("is-on", teamRandomMode);
+  cb.addEventListener("change", ()=>{
+    teamRandomMode = cb.checked;
+    if(label) label.classList.toggle("is-on", teamRandomMode);
+    try{ localStorage.setItem("pokemmo-teamrandom", teamRandomMode?"1":"0"); }catch(err){}
+    if(teamContext === "main"){ renderTeam(); renderAnalysis(); }
+  });
+})();
+
 document.getElementById("clearTeamBtn").addEventListener("click", ()=>{
   team = new Array(6).fill(null).map(blankSlot);
   teamContext = "main";
